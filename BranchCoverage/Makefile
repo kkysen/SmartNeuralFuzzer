@@ -11,4 +11,4 @@ run: all
 	$(MAIN)
 
 valgrind: all
-	valgrind $(MAIN)
+	valgrind --leak-check=full --show-leak-kinds=definite $(MAIN)

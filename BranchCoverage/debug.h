@@ -9,9 +9,10 @@
 #include <signal.h>
 #include <iostream>
 #include <sstream>
-#include <llvm/Support/raw_ostream.h>
+#include "llvm/Support/raw_ostream.h"
 #include <unistd.h>
 #include <syscall.h>
+#include "llvm/IR/BasicBlock.h"
 #include "numbers.h"
 
 namespace debug {
@@ -50,6 +51,9 @@ namespace debug {
         
         std::string_view name;
         const T& expression;
+        
+        constexpr Expression(std::string_view name, const T& expression) noexcept
+                : name(name), expression(expression) {}
         
     };
     
@@ -146,11 +150,14 @@ namespace debug {
     
     private:
         
-        void message2(std::string_view message1, std::string_view message2) const noexcept {
+        void message2(std::string_view message1, std::string_view message2, bool printError = true) const noexcept {
             auto print = printer();
             print.idLocation();
-            print << ": " << message1 << message2 << ": ";
-            print.error();
+            print << ": " << message1 << message2;
+            if (printError) {
+                print << ": ";
+                print.error();
+            }
             print << "\n";
         }
     
@@ -165,13 +172,13 @@ namespace debug {
         }
         
         void message(std::string_view message) const noexcept {
-            message2(message, "");
+            message2(message, "", false);
         }
         
         template <typename T>
         void expression(Expression<T> expr) const noexcept {
             if constexpr (std::is_pointer_v<T>) {
-                return expression<std::remove_pointer_t<T>>({.name = expr.name, .expression = *expr.expression});
+                return expression<std::remove_pointer_t<T>>(Expression(expr.name, *expr.expression));
             }
             auto print = printer();
             print.idLocation();
@@ -195,6 +202,10 @@ namespace debug {
 }
 
 namespace llvm {
+    
+    raw_ostream& operator<<(raw_ostream& out, bool boolean) {
+        return out << (boolean ? "true" : "false");
+    }
     
     raw_ostream& operator<<(raw_ostream& out, std::string_view view) {
         return out << StringRef(view.data(), view.size());
@@ -247,9 +258,16 @@ namespace llvm {
         return out << to_string_view(typeId);
     }
     
+    std::string uuid(BasicBlock& block) {
+        std::string s;
+        raw_string_ostream out(s);
+        block.printAsOperand(out, false);
+        return out.str();
+    }
+    
 }
 
-#define debug_info() ((debug::Info) { \
+#define debug_info() (debug::Info { \
     .funcName = __func__, \
     .fileName = __FILE__, \
     .lineNum = __LINE__, \
@@ -259,8 +277,10 @@ namespace llvm {
 
 #define _debug(out) debug::Debug(out, debug_errorInfo())
 
-#define _expr(expr) ((debug::Expression<decltype(expr)>) {.name = ""#expr, .expression = expr})
+#define _expr(expr) debug::Expression(""#expr, expr)
 
 #define _dbg(expr) _debug(*debug::out)(_expr(expr))
 
-#define llvm_dbg(expr) _debug(llvm::errs())(_expr(expr))
+#define llvm_debug() _debug(llvm::errs())
+
+#define llvm_dbg(expr) llvm_debug()(_expr(expr))

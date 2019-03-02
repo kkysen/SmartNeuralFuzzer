@@ -67,7 +67,8 @@ namespace llvm {
         template <typename Return, typename... Args>
         FunctionType* function(bool isVarArg = false) const noexcept {
             // FunctionType doesn't need to hold memory for args/params; it copies them in some way
-            return FunctionType::get(get<Return>(), convert<Args...>(), isVarArg);
+            auto args = new SmallVector<Type*, sizeof...(Args)>(convert<Args...>());
+            return FunctionType::get(get<Return>(), *args, isVarArg);
         }
         
     };
