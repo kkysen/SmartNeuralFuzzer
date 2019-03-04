@@ -21,6 +21,75 @@ namespace debug {
     
     auto out = &std::cerr;
     
+    bool reversed = false;
+    
+    class Indentation {
+    
+    public:
+        
+        static char defaultChar;
+        static size_t defaultIndent;
+    
+    private:
+        
+        size_t _size;
+        std::string string;
+        
+        void syncString() {
+            string.resize(_size, defaultChar);
+        }
+    
+    public:
+        
+        explicit Indentation(size_t size = 0) noexcept
+                : _size(size), string() {}
+        
+        constexpr size_t size() const noexcept {
+            return _size;
+        }
+        
+        constexpr std::string_view get() const noexcept {
+            return string;
+        }
+        
+        void indent(size_t indent = defaultIndent) {
+            _size += indent;
+            syncString();
+        }
+        
+        void unIndent(size_t indent = defaultIndent) {
+            if (_size < indent) {
+                _size = 0;
+            } else {
+                _size -= indent;
+            }
+            syncString();
+        }
+        
+    };
+    
+    char Indentation::defaultChar = ' ';
+    size_t Indentation::defaultIndent = 4;
+    
+    Indentation indentation;
+    
+    class Indented {
+    
+    private:
+        
+        Indentation& indentation;
+    
+    public:
+        
+        explicit Indented(Indentation& indentation = debug::indentation) : indentation(indentation) {
+            indentation.indent();
+        }
+        
+        ~Indented() {
+            indentation.unIndent();
+        }
+        
+    };
     
     struct Info {
         std::string_view funcName;
@@ -152,11 +221,22 @@ namespace debug {
         
         void message2(std::string_view message1, std::string_view message2, bool printError = true) const noexcept {
             auto print = printer();
-            print.idLocation();
-            print << ": " << message1 << message2;
-            if (printError) {
-                print << ": ";
-                print.error();
+            if (!reversed) {
+                print.idLocation();
+                print << ": " << indentation.get() << message1 << message2;
+                if (printError) {
+                    print << ": ";
+                    print.error();
+                }
+            } else {
+                print << indentation.get()
+                      << message1 << message2
+                      << std::string(22, ' ');
+                if (printError) {
+                    print << ": ";
+                    print.error();
+                }
+                print.idLocation();
             }
             print << "\n";
         }
@@ -181,10 +261,19 @@ namespace debug {
                 return expression<std::remove_pointer_t<T>>(Expression(expr.name, *expr.expression));
             }
             auto print = printer();
-            print.idLocation();
-            print << " " << expr.name
-                  << ": " << expr.expression
-                  << "\n";
+            if (!reversed) {
+                print.idLocation();
+                print << indentation.get()
+                      << " " << expr.name
+                      << ": " << expr.expression;
+            } else {
+                print << indentation.get()
+                      << " " << expr.name
+                      << ": " << expr.expression
+                      << std::string(22, ' ');
+                print.idLocation();
+            }
+            print << "\n";
         }
         
         template <typename T>

@@ -28,7 +28,6 @@ namespace {
     
     private:
         
-        // TODO initialize
         FunctionCallee onBranch;
         FunctionCallee onMultiBranch;
         FunctionCallee onInfiniteBranch;
@@ -61,11 +60,9 @@ namespace {
             onBranch = api<bool>(module, "onBranch");
             onMultiBranch = api<u32, u32>(module, "onMultiBranch");
             onInfiniteBranch = api<u64>(module, "onInfiniteBranch");
-            llvm_dbg(onBranch.getFunctionType());
-            llvm_dbg(onMultiBranch.getFunctionType());
-            llvm_dbg(onInfiniteBranch.getFunctionType());
-            
             // TODO figure out where main is and check if blocks are below/after main before tracing them
+            
+            debug::reversed = true;
             return true;
         }
         
@@ -75,8 +72,10 @@ namespace {
         }
         
         bool runOnBasicBlock(BasicBlock& block) override {
+            using debug::Indented;
             const auto terminator = block.getTerminator();
             llvm_dbg(llvm::uuid(block));
+            Indented indented;
             if (!(terminator && terminator->getPrevNode())) {
                 llvm_debug().message("skipping empty block");
                 return false;
