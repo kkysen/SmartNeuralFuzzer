@@ -1,0 +1,90 @@
+valgrind opt -load ./BranchCoveragePass.so -branch-coverage -S < /mnt/c/Users/Khyber/workspace/misc/main.ll > transformed.ll
+==465== Memcheck, a memory error detector
+==465== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==465== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==465== Command: opt -load ./BranchCoveragePass.so -branch-coverage -S
+==465== 
+==465== error calling PR_SET_PTRACER, vgdb might block
+[pid=465][tid=465] (api at BranchCoveragePass.cpp:57) apiName: __BranchCoverage_onBranch
+[pid=465][tid=465] (get at ./Types.h:62) type: i1
+[pid=465][tid=465] (get at ./Types.h:62) type: i16
+[pid=465][tid=465] (get at ./Types.h:62) type: i32
+[pid=465][tid=465] (get at ./Types.h:62) type: i64
+[pid=465][tid=465] (convert at ./Types.h:69) args.size(): 4
+[pid=465][tid=465] (convert at ./Types.h:71) arg->getTypeID(): integer
+[pid=465][tid=465] (convert at ./Types.h:71) arg->getTypeID(): integer
+[pid=465][tid=465] (convert at ./Types.h:71) arg->getTypeID(): integer
+[pid=465][tid=465] (convert at ./Types.h:71) arg->getTypeID(): integer
+==465== Use of uninitialised value of size 8
+==465==    at 0xA7E977C: llvm::Type::getTypeID() const (in /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/BranchCoveragePass.so)
+==465==    by 0xA7E9670: llvm::FunctionType* llvm::Types::function<void, bool, unsigned short, unsigned int, unsigned long>(bool) const (Types.h:81)
+==465==    by 0xA7E65AF: llvm::FunctionCallee (anonymous namespace)::BranchCoveragePass::api<bool, unsigned short, unsigned int, unsigned long>(llvm::Module&, std::basic_string_view<char, std::char_traits<char> >) (BranchCoveragePass.cpp:58)
+==465==    by 0xA7E6189: (anonymous namespace)::BranchCoveragePass::doInitialization(llvm::Module&) (BranchCoveragePass.cpp:73)
+==465==    by 0x34F208F: (anonymous namespace)::BBPassManager::doInitialization(llvm::Module&) (LegacyPassManager.cpp:1444)
+==465==    by 0x34F2EDB: llvm::FPPassManager::doInitialization(llvm::Module&) (LegacyPassManager.cpp:1688)
+==465==    by 0x34F3083: (anonymous namespace)::MPPassManager::runOnModule(llvm::Module&) (LegacyPassManager.cpp:1720)
+==465==    by 0x34F3A78: llvm::legacy::PassManagerImpl::run(llvm::Module&) (LegacyPassManager.cpp:1857)
+==465==    by 0x34F3CA8: llvm::legacy::PassManager::run(llvm::Module&) (LegacyPassManager.cpp:1888)
+==465==    by 0x15BA810: main (opt.cpp:828)
+==465== 
+[pid=465][tid=465] (function at ./Types.h:81) arg->getTypeID(): Invalid TypeID (84)
+UNREACHABLE executed at ./debug.h:243!
+Stack dump:
+0.	Program arguments: opt -load ./BranchCoveragePass.so -branch-coverage -S 
+ #0 0x0000000003de37a3 (opt+0x3de37a3)
+ #1 0x0000000003de3836 (opt+0x3de3836)
+ #2 0x0000000003de141a (opt+0x3de141a)
+ #3 0x0000000003de31c5 (opt+0x3de31c5)
+ #4 0x000000000911f390 __restore_rt (/lib/x86_64-linux-gnu/libpthread.so.0+0x11390)
+ #5 0x000000000a03a428 gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x35428)
+ #6 0x000000000a03c02a abort (/lib/x86_64-linux-gnu/libc.so.6+0x3702a)
+ #7 0x0000000003d43bb1 (opt+0x3d43bb1)
+ #8 0x000000000a7e5d29 llvm::to_string_view(llvm::Type::TypeID) /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/./debug.h:244:5
+ #9 0x000000000a7e5d61 llvm::operator<<(llvm::raw_ostream&, llvm::Type::TypeID) /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/./debug.h:247:23
+#10 0x000000000a7eb58e debug::Debug<llvm::raw_ostream>::Printer& debug::Debug<llvm::raw_ostream>::Printer::operator<<<llvm::Type::TypeID>(llvm::Type::TypeID const&) /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/./debug.h:136:17
+#11 0x000000000a7eb545 void debug::Debug<llvm::raw_ostream>::expression<llvm::Type::TypeID>(debug::Expression<llvm::Type::TypeID>) const /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/./debug.h:179:27
+#12 0x000000000a7e975d void debug::Debug<llvm::raw_ostream>::operator()<llvm::Type::TypeID>(debug::Expression<llvm::Type::TypeID>) const /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/./debug.h:186:9
+#13 0x000000000a7e96b1 llvm::FunctionType* llvm::Types::function<void, bool, unsigned short, unsigned int, unsigned long>(bool) const /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/./Types.h:80:28
+#14 0x000000000a7e65b0 llvm::FunctionCallee (anonymous namespace)::BranchCoveragePass::api<bool, unsigned short, unsigned int, unsigned long>(llvm::Module&, std::basic_string_view<char, std::char_traits<char> >) /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/BranchCoveragePass.cpp:58:18
+#15 0x000000000a7e618a (anonymous namespace)::BranchCoveragePass::doInitialization(llvm::Module&) /mnt/c/Users/Khyber/workspace/C++/DifferentiableFuzzer/BranchCoverage/BranchCoveragePass.cpp:73:24
+#16 0x00000000034f2090 (opt+0x34f2090)
+#17 0x00000000034f2edc (opt+0x34f2edc)
+#18 0x00000000034f3084 (opt+0x34f3084)
+#19 0x00000000034f3a79 (opt+0x34f3a79)
+#20 0x00000000034f3ca9 (opt+0x34f3ca9)
+#21 0x00000000015ba811 (opt+0x15ba811)
+#22 0x000000000a025830 __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x20830)
+#23 0x00000000015776b9 (opt+0x15776b9)
+==465== 
+==465== Process terminating with default action of signal 6 (SIGABRT)
+==465==    at 0xA03A428: raise (raise.c:54)
+==465==    by 0xA03C186: abort (abort.c:118)
+==465==    by 0x3D43BB0: llvm::llvm_unreachable_internal(char const*, char const*, unsigned int) (ErrorHandling.cpp:222)
+==465==    by 0xA7E5D28: llvm::to_string_view(llvm::Type::TypeID) (debug.h:243)
+==465==    by 0xA7E5D60: llvm::operator<<(llvm::raw_ostream&, llvm::Type::TypeID) (debug.h:247)
+==465==    by 0xA7EB58D: debug::Debug<llvm::raw_ostream>::Printer& debug::Debug<llvm::raw_ostream>::Printer::operator<< <llvm::Type::TypeID>(llvm::Type::TypeID const&) (debug.h:135)
+==465==    by 0xA7EB544: void debug::Debug<llvm::raw_ostream>::expression<llvm::Type::TypeID>(debug::Expression<llvm::Type::TypeID>) const (debug.h:179)
+==465==    by 0xA7E975C: void debug::Debug<llvm::raw_ostream>::operator()<llvm::Type::TypeID>(debug::Expression<llvm::Type::TypeID>) const (debug.h:185)
+==465==    by 0xA7E96B0: llvm::FunctionType* llvm::Types::function<void, bool, unsigned short, unsigned int, unsigned long>(bool) const (Types.h:81)
+==465==    by 0xA7E65AF: llvm::FunctionCallee (anonymous namespace)::BranchCoveragePass::api<bool, unsigned short, unsigned int, unsigned long>(llvm::Module&, std::basic_string_view<char, std::char_traits<char> >) (BranchCoveragePass.cpp:58)
+==465==    by 0xA7E6189: (anonymous namespace)::BranchCoveragePass::doInitialization(llvm::Module&) (BranchCoveragePass.cpp:73)
+==465==    by 0x34F208F: (anonymous namespace)::BBPassManager::doInitialization(llvm::Module&) (LegacyPassManager.cpp:1444)
+==465== 
+==465== HEAP SUMMARY:
+==465==     in use at exit: 612,260 bytes in 3,880 blocks
+==465==   total heap usage: 7,045 allocs, 3,165 frees, 1,382,630 bytes allocated
+==465== 
+==465== LEAK SUMMARY:
+==465==    definitely lost: 0 bytes in 0 blocks
+==465==    indirectly lost: 0 bytes in 0 blocks
+==465==      possibly lost: 16,472 bytes in 193 blocks
+==465==    still reachable: 595,788 bytes in 3,687 blocks
+==465==         suppressed: 0 bytes in 0 blocks
+==465== Rerun with --leak-check=full to see details of leaked memory
+==465== 
+==465== For counts of detected and suppressed errors, rerun with: -v
+==465== Use --track-origins=yes to see where uninitialised values come from
+==465== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+Aborted (core dumped)
+Makefile:14: recipe for target 'valgrind' failed
+make: *** [valgrind] Error 134

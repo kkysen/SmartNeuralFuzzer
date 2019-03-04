@@ -54,42 +54,16 @@ namespace {
             std::string apiName = "__BranchCoverage_";
             apiName += name;
             const Types types(module.getContext());
-            auto functionType = types.function<void, Args...>();
-            llvm_dbg(functionType);
-            auto callee = module.getOrInsertFunction(apiName, functionType);
-            
-            /**
-             * TODO FIXME
-             * This is causing an error because I thought I was using the newer git version of llvm
-             * in which module.getOrInsertFunction returns a FunctionCallee,
-             * but I'm actually using the older svn version,
-             * in which module.getOrInsertFunction returns a Constant*.
-             *
-             * Now I have to actually compile the newer version.
-             */
-            
-            llvm_dbg(!!callee);
-            llvm_dbg(callee.getFunctionType() == nullptr);
-            llvm_dbg(callee.getCallee() == nullptr);
-            llvm_dbg(functionType == callee.getFunctionType());
-            llvm_dbg(reinterpret_cast<uintptr_t>(functionType));
-            llvm_dbg(reinterpret_cast<uintptr_t>(callee.getFunctionType()));
-            llvm_dbg(callee.getFunctionType());
-            llvm_dbg(callee.getFunctionType()->getNumParams());
-            for (auto& param : callee.getFunctionType()->params()) {
-                llvm_dbg(param);
-            }
-            return callee;
+            return module.getOrInsertFunction(apiName, types.function<void, Args...>());
         }
         
         bool doInitialization(Module& module) override {
-            const Types types(module.getContext());
-//            onBranch = module.getOrInsertFunction("__BranchCoveragePass_onBranch", types.get<void>(), types.get<bool>());
             onBranch = api<bool>(module, "onBranch");
             onMultiBranch = api<u32, u32>(module, "onMultiBranch");
             onInfiniteBranch = api<u64>(module, "onInfiniteBranch");
-            
             llvm_dbg(onBranch.getFunctionType());
+            llvm_dbg(onMultiBranch.getFunctionType());
+            llvm_dbg(onInfiniteBranch.getFunctionType());
             
             // TODO figure out where main is and check if blocks are below/after main before tracing them
             return true;
