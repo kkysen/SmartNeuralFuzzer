@@ -39,6 +39,7 @@ input:
 .PHONY: input
 
 output:
+	clang++ test/transformed.ll -S -o test/main.s
 	clang++ test/transformed.ll -o test/main
 .PHONY: output
 

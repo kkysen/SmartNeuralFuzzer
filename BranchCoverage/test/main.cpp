@@ -432,11 +432,29 @@ void __BranchCoverage_onBranch(bool value) {
 }
 
 extern "C"
-void __BranchCoverage_onMultiBranch(u32 branchNum, u32 numBranches) {
+void __BranchCoverage_onMultiBranch(uint32_t branchNum, uint32_t numBranches) {
 	printf("onMultiBranch: %d/%d\n", branchNum, numBranches);
 }
 
+extern "C"
+int testSwitch(int argc) {
+	switch (argc) {
+		case 0:
+			return 1;
+		case 1:
+			return 2;
+		case 2:
+			return 3;
+		case 5:
+			return 100;
+		default:
+			return 0;
+	}
+}
+
 int main(int argc, char** argv) {
+	printf("%d\n", testSwitch(argc));
+	
 	if (argc == 1) {
 		return 0;
 	} else if (argc == 2) {

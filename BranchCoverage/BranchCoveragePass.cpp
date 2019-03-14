@@ -37,7 +37,7 @@ namespace {
             bool virtualMethods;
         } flags {
                 .branches = true,
-                .switches = false,
+                .switches = true,
                 .virtualMethods = false,
         };
     
@@ -74,10 +74,10 @@ namespace {
         bool runOnBasicBlock(BasicBlock& block) override {
             using debug::Indented;
             const auto terminator = block.getTerminator();
-            llvm_dbg(llvm::uuid(block));
+//            llvm_dbg(llvm::uuid(block));
             Indented indented;
             if (!terminator) {
-                llvm_debug().message("skipping empty block");
+//                llvm_debug().message("skipping empty block");
                 return false;
             }
             bool traced = false;
@@ -120,7 +120,7 @@ namespace {
             IRBuilder<> builder(&caseHandle.getCaseSuccessor()->front());
             IRBuilderExt ext(builder);
             const auto constants = ext.constants();
-            ext.call(onMultiBranch, {constants.getInt(caseNum), constants.getInt(caseNum)});
+            ext.call(onMultiBranch, {constants.getInt(caseNum), constants.getInt(numCases)});
         }
         
         /**
