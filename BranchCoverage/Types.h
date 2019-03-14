@@ -91,7 +91,6 @@ namespace llvm {
     
     template <>
     IntegerType* Types::integral<32>() const noexcept {
-        std::cout << "32" << std::endl;
         return Type::getInt32Ty(context);
     }
     

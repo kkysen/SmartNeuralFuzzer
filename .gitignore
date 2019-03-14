@@ -33,8 +33,7 @@
 
 .idea/
 
-# LLVM IR and bitcode
-*.ll
+# LLVM bitcode
 *.bc
 
 cmake-build-debug/

@@ -10,7 +10,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "numbers.h"
 #include "LLVMArray.h"
-#include "debug.h"
 
 void __BranchCoverage_onBranch(bool value);
 
@@ -37,13 +36,13 @@ namespace {
             bool switches;
             bool virtualMethods;
         } flags {
-            .branches = true,
-            .switches = false,
-            .virtualMethods = false,
+                .branches = true,
+                .switches = false,
+                .virtualMethods = false,
         };
-        
-    public:
     
+    public:
+        
         static char ID;
         
         BranchCoveragePass() : BasicBlockPass(ID) {}
@@ -62,6 +61,7 @@ namespace {
             onInfiniteBranch = api<u64>(module, "onInfiniteBranch");
             // TODO figure out where main is and check if blocks are below/after main before tracing them
             
+            debug::mode = true;
             debug::reversed = true;
             return true;
         }
@@ -76,21 +76,24 @@ namespace {
             const auto terminator = block.getTerminator();
             llvm_dbg(llvm::uuid(block));
             Indented indented;
-            if (!(terminator && terminator->getPrevNode())) {
+            if (!terminator) {
                 llvm_debug().message("skipping empty block");
                 return false;
             }
-            IRBuilder<> builder(terminator->getPrevNode());
-            IRBuilderExt ext(builder);
             bool traced = false;
             if (const auto branchInst = dyn_cast<BranchInst>(terminator)) {
                 llvm_debug().message("tracing branch");
-                traced |= flags.branches && traceBranch(*branchInst, ext);
+                traced |= flags.branches && traceBranch(*branchInst);
             } else if (const auto switchInst = dyn_cast<SwitchInst>(terminator)) {
                 llvm_debug().message("tracing switch");
                 traced |= flags.switches && traceSwitch(*switchInst);
             }
 //            traced |= flags.virtualMethods && traceDynamicDispatches(block);
+            
+            if (traced) {
+                block.dump();
+            }
+            
             return traced;
         }
     
@@ -100,11 +103,13 @@ namespace {
          * Trace a br (branch) instruction
          * by calling onBranch(booleanValue) immediately before the branch.
          */
-        /*constexpr*/ bool traceBranch(BranchInst& branchInst, IRBuilderExt& ext) {
+        /*constexpr*/ bool traceBranch(BranchInst& branchInst) {
             llvm_dbg(branchInst);
             if (!branchInst.isConditional()) {
                 return false;
             }
+            IRBuilder<> builder(&branchInst);
+            IRBuilderExt ext(builder);
             llvm_debug().message("conditional");
             llvm_dbg(onBranch.getFunctionType());
             ext.call(onBranch, {branchInst.getCondition()});

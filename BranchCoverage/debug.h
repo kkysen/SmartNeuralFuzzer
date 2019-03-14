@@ -15,12 +15,14 @@
 #include "llvm/IR/BasicBlock.h"
 #include "numbers.h"
 
+#include <fstream>
+
 namespace debug {
     
     bool mode = true;
     
     auto out = &std::cerr;
-    
+
     bool reversed = false;
     
     class Indentation {
@@ -163,12 +165,22 @@ namespace debug {
                 return debug.out;
             }
             
+            void space() {
+                if (debug.mode) {
+                    out() << " ";
+                }
+            }
+            
             void processId() {
-                out() << "[pid=" << debug.processId << "]";
+                if (debug.mode) {
+                    out() << "[pid=" << debug.processId << "]";
+                }
             }
             
             void threadId() {
-                out() << "[tid=" << debug.threadId << "]";
+                if (debug.mode) {
+                    out() << "[tid=" << debug.threadId << "]";
+                }
             }
             
             void id() {
@@ -177,35 +189,43 @@ namespace debug {
             }
             
             void location() {
-                const auto& info = debug.info;
-                out() << "(" << info.funcName << " at " << info.fileName << ":" << info.lineNum << ")";
+                if (debug.mode) {
+                    const auto& info = debug.info;
+                    out() << "(" << info.funcName << " at " << info.fileName << ":" << info.lineNum << ")";
+                }
             }
             
             void errorNum() {
-                const auto& info = debug.info;
-                out() << "[errno=" << info.errorNum << "]";
+                if (debug.mode) {
+                    const auto& info = debug.info;
+                    out() << "[errno=" << info.errorNum << "]";
+                }
             }
             
             void errorMessage() {
-                const auto& info = debug.info;
-                out() << "(" << info.errorNumToString(info.errorNum) << ")";
+                if (debug.mode) {
+                    const auto& info = debug.info;
+                    out() << "(" << info.errorNumToString(info.errorNum) << ")";
+                }
             }
             
             void error() {
                 errorNum();
-                out() << " ";
+                space();
                 errorMessage();
             }
             
             void idLocation() {
                 id();
-                out() << " ";
+                space();
                 location();
             }
             
             template <typename T>
             Printer& operator<<(const T& t) {
-                out() << t;
+                if (debug.mode) {
+                    out() << t;
+                }
                 return *this;
             }
             
@@ -231,7 +251,7 @@ namespace debug {
             } else {
                 print << indentation.get()
                       << message1 << message2
-                      << std::string(22, ' ');
+                      << std::string(sizeof(std::string) - 2, ' ');
                 if (printError) {
                     print << ": ";
                     print.error();

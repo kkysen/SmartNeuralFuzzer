@@ -1,6 +1,7 @@
 MAIN := BranchCoveragePass
 
 all: $(MAIN).so
+.PHONY: all
 
 HEADERS := alignment.h AllocaArgs.h $(MAIN).h Constants.h debug.h IRBuilderExt.h LLVMArray.h LoadStore.h numbers.h Types.h
 
@@ -27,12 +28,28 @@ CMD := opt -load ./$(MAIN).so -branch-coverage -S < test/main.ll > test/transfor
 
 run: all
 	$(CMD)
+.PHONY: run
 
 valgrind: all
 	valgrind --leak-check=full --show-leak-kinds=definite $(CMD)
+.PHONY: valgrind
+
+input:
+	clang++ -S -emit-llvm test/main.cpp -o test/main.ll
+.PHONY: input
+
+output:
+	clang++ test/transformed.ll -o test/main
+.PHONY: output
+
+runOutput:
+	./test/main
+.PHONY: runOutput
 
 clean:
 	rm -f $(MAIN).so
+.PHONY: clean
 
 misc:
 	echo $(FLAGS)
+.PHONY: misc
