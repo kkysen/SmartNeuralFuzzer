@@ -1,1 +1,3 @@
-# DifferentiableFuzzer
+# Smart Neural Fuzzer
+
+

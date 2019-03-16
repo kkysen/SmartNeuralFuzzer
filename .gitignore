@@ -31,10 +31,11 @@
 *.out
 *.app
 
-.idea/
 
 # LLVM bitcode
 *.bc
 
 cmake-build-debug/
 .idea/
+
+build/
