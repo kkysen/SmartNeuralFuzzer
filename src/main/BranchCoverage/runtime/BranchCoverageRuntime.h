@@ -11,7 +11,7 @@
 
 #define API_BranchCoverage(funcName) API(BranchCoverage, funcName)
 
-API_BranchCoverage(onBranch)(bool value);
+API_BranchCoverage(onSingleBranch)(bool value);
 
 API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches);
 

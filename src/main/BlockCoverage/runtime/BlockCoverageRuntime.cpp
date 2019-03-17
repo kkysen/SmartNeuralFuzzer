@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "BlockCoverageRuntime.h"
+#include "src/main/BlockCoverage/runtime/BlockCoverageRuntime.h"
 
 #include <cstdio>
 

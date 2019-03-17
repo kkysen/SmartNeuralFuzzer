@@ -43,7 +43,7 @@ namespace {
         }
         
         bool doInitialization(Module& module) override {
-            onBranch = api<bool>(module, "onBranch");
+            onBranch = api<bool>(module, "onSingleBranch");
             onMultiBranch = api<u32, u32>(module, "onMultiBranch");
             onInfiniteBranch = api<u64>(module, "onInfiniteBranch");
             // TODO figure out where main is and check if blocks are below/after main before tracing them

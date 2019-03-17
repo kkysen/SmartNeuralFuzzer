@@ -33,7 +33,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${llvmFlags}")
 set(CommonShareFiles
         src/share/common/numbers.h
         src/share/common/debug.h
-        )
+        src/share/common/math.h src/share/common/fs.h)
 
 set(LLVMShareFiles
         src/share/llvm/Types.h
