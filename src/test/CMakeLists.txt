@@ -1,0 +1,6 @@
+add_executable(branch ${files.share.common} branch.cpp)
+add_executable(switch ${files.share.common} switch.cpp)
+add_executable(optimizedSwitch ${files.share.common} optimizedSwitch.cpp)
+add_executable(loop ${files.share.common} loop.cpp)
+add_executable(virtualCall ${files.share.common} virtualCall.cpp)
+add_executable(staticConstructors ${files.share.common} staticConstructors.cpp)

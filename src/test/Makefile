@@ -1,15 +1,16 @@
-passes := BranchCoverage
-#BlockCoverage
+coveragePasses := branch
+#block
+passes := $(coveragePasses:%=coverage.%)
 
-tests := branch switch optimizedSwitch loop virtualCall
+tests := branch switch optimizedSwitch loop virtualCall staticConstructors
 
 srcDir := .
 projectDir := ../..
 buildDir := $(projectDir)/build
 binDir := $(buildDir)/test
 
-passLibraries := $(passes:%=$(buildDir)/lib%Pass.so)
-passRuntimes := $(passes:%=$(buildDir)/lib%Runtime.a)
+passLibraries := $(passes:%=$(buildDir)/src/main/passes/libpass.%.so)
+passRuntimes := $(passes:%=$(buildDir)/src/main/runtimes/libruntime.%.a)
 
 passLibraryArgs := $(passLibraries:%=-load=%)
 passArgs := $(passes:%=-%)
@@ -74,4 +75,4 @@ clean:
 .PHONY: clean
 
 misc:
-	@echo $(sources)
+	@echo $(passes)

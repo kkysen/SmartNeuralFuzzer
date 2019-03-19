@@ -203,4 +203,4 @@ namespace {
 
 char BranchCoveragePass::ID = 0;
 
-static RegisterPass<BranchCoveragePass> branchCoveragePass("BranchCoverage", "Branch Coverage Pass");
+static RegisterPass<BranchCoveragePass> branchCoveragePass("coverage.branch", "Branch Coverage Pass");
