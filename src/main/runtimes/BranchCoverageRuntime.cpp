@@ -11,8 +11,8 @@
 #include <fstream>
 #include <algorithm>
 #include <cstring>
-#include <climits>
 #include <numeric>
+#include <src/share/common/debug.h>
 
 namespace {
     
@@ -20,7 +20,7 @@ namespace {
     // so have to define them at the file level
     
     constexpr size_t minBytesForBits(size_t bits) noexcept {
-        return math::divUp(bits, static_cast<size_t>(CHAR_BIT));
+        return math::divUp(bits, numBits<u8>());
     }
     
     /**
@@ -82,6 +82,9 @@ namespace {
             std::array<u64, 3> all;
             
             void write(u8* out) const noexcept {
+                _dbg(singleBranches);
+                _dbg(multiBranches);
+                _dbg(infiniteBranches);
                 std::copy(all.begin(), all.end(), out);
             }
             
@@ -148,6 +151,9 @@ namespace {
         private:
             
             static u8* mmap(int fd, size_t length, size_t offset = 0) {
+                _dbg("mmap");
+                _dbg(length);
+                _dbg(offset);
                 return fse::mmap(fd, PROT_WRITE, MAP_SHARED, length, offset);
             }
             
@@ -201,7 +207,7 @@ namespace {
             template <typename T>
             size_t write(size_t index, T value) {
                 for (size_t i = 0; i < sizeof(T); i++) {
-                    buffer[index + i] = static_cast<u8>(value >> (i * CHAR_BIT));
+                    buffer[index + i] = static_cast<u8>(value >> (i * numBits<u8>()));
                 }
                 return index + sizeof(T);
             }
@@ -213,22 +219,8 @@ namespace {
         explicit BranchCoverageRuntime(int fd) : out(fd) {
             index.byte = count.all.size();
             index.startNextBranchChunk();
+            writeCounts();
         }
-    
-    private:
-        
-        static int createOutput(const fs::path& file) {
-            const int fd = creat(file.c_str(), 0644);
-            if (fd == -1) {
-                throw fs::filesystem_error(file.string(), std::error_code());
-            }
-            return fd;
-        }
-    
-    public:
-        
-        explicit BranchCoverageRuntime(const fs::path& file)
-                : BranchCoverageRuntime(createOutput(file)) {}
     
     private:
         
@@ -290,6 +282,7 @@ namespace {
         void onSingleBranch(bool value) {
             count.singleBranches++;
             index.skipSingleBranchCount();
+            _dbg(reinterpret_cast<uintptr_t>(out.buffer));
             out.buffer[index.byte] |= 1 << index.byteBit;
             index.byteBit = index.byteBit & static_cast<u8>(8 - 1); // index.byteBit++ % 8
             if (index.byteBit == 1) {
@@ -312,6 +305,52 @@ namespace {
             // second bit is isMulti = false
             onNonSingleBranch(0b00 | address << 2);
         }
+    
+    private:
+        
+        static int createOutput(const fs::path& file) {
+            _dbg(file);
+//            const int fd = creat(file.c_str(), 0644);
+            const int fd = open(file.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
+            _dbg(fd);
+            write(fd, "hello\n", 6);
+            if (fd == -1) {
+                throw fs::filesystem_error(file.string(), std::error_code());
+            }
+            return fd;
+        }
+        
+        static fs::path getOutputPathFromEnvironment(const std::string& environmentVariableName) {
+            const char* outputPath = std::getenv(environmentVariableName.c_str());
+            if (outputPath) {
+                return outputPath;
+            } else {
+                return environmentVariableName + ".txt";
+            }
+        }
+    
+    public:
+        
+        explicit BranchCoverageRuntime(const fs::path& file)
+                : BranchCoverageRuntime(createOutput(file)) {}
+        
+        explicit BranchCoverageRuntime(const std::string& environmentVariableName = "coverage.branch.out")
+                : BranchCoverageRuntime(getOutputPathFromEnvironment(environmentVariableName)) {}
+    
+    private:
+        
+        static std::unique_ptr<BranchCoverageRuntime> _instance;
+    
+    public:
+        
+        static BranchCoverageRuntime& instance() {
+            _dbg(_instance == nullptr);
+            if (_instance) {
+                return *_instance;
+            }
+            _instance = std::make_unique<BranchCoverageRuntime>();
+            return *_instance;
+        }
         
     };
     
@@ -320,16 +359,33 @@ namespace {
     // 2 * minBufferSize so that if buffer more than half full, can move to the next page chunk
     const size_t BranchCoverageRuntime::bufferSize = 2 * pageChunkSize;
     
+    std::unique_ptr<BranchCoverageRuntime> BranchCoverageRuntime::_instance = nullptr;
+    
 }
 
 API_BranchCoverage(onSingleBranch)(bool value) {
     printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
+    BranchCoverageRuntime::instance().onSingleBranch(value);
 }
 
 API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) {
     printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
+    BranchCoverageRuntime::instance().onMultiBranch(branchNum, numBranches);
 }
 
 API_BranchCoverage(onInfiniteBranch)(u64 address) {
     printf("BranchCoverage: onInfiniteBranch: %lx\n", address);
+    BranchCoverageRuntime::instance().onInfiniteBranch(address);
 }
+
+//API_BranchCoverage(onSingleBranch)(bool value) {
+//    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
+//}
+//
+//API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) {
+//    printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
+//}
+//
+//API_BranchCoverage(onInfiniteBranch)(u64 address) {
+//    printf("BranchCoverage: onInfiniteBranch: %lx\n", address);
+//}

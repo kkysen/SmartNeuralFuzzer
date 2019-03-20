@@ -15,7 +15,7 @@ build: cmake
 .PHONY: build
 
 tests: build $(testDir)/Makefile
-	cd $(testDir); make
+	cd $(testDir); make -r
 .PHONY: test
 
 cleanCmake:
@@ -23,7 +23,7 @@ cleanCmake:
 .PHONY: cleanCmake
 
 cleanTests:
-	cd $(testDir); make clean
+	cd $(testDir); make -r clean
 .PHONY: cleanTests
 
 clean: cleanCmake cleanTests

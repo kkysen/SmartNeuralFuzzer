@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <array>
 
 #include <fstream>
 #include <unistd.h>
@@ -20,7 +21,7 @@ namespace debug {
     
     bool mode = true;
     
-    auto out = &std::cerr;
+    auto out = &std::cout;
     
     bool reversed = false;
     
@@ -258,6 +259,7 @@ namespace debug {
                 print.idLocation();
             }
             print << "\n";
+            out.flush();
         }
     
     public:
@@ -293,6 +295,7 @@ namespace debug {
                 print.idLocation();
             }
             print << "\n";
+            out.flush();
         }
         
         template <typename T>
@@ -307,6 +310,10 @@ namespace debug {
         
     };
     
+}
+
+std::ostream& operator<<(std::ostream& out, bool boolean) {
+    return out << (boolean ? "true" : "false");
 }
 
 #define debug_info() (debug::Info { \

@@ -16,6 +16,7 @@ passLibraryArgs := $(passLibraries:%=-load=%)
 passArgs := $(passes:%=-%)
 
 flags := -S -emit-llvm -flto -fwhole-program-vtables
+linkLibraries := -lstdc++fs
 
 
 sourcesWithExtensions := $(shell find $(srcDir) -name "*.cpp" -or -name "*.c")
@@ -49,13 +50,13 @@ $(binDir)/%.opt.ll: $(binDir)/%.ll
 .PRECIOUS: $(binDir)/%.opt.ll
 
 # compile optimized LLVM IR to assembly
-$(binDir)/%.s: $(binDir)/%.opt.ll
-	clang++ -S $< $(passRuntimes) -o $@
+$(binDir)/%.s: $(binDir)/%.opt.ll $(passRuntimes)
+	clang++ -S $< $(passRuntimes) -o $@ $(linkLibraries)
 .PRECIOUS: $(binDir)/%.s
 
 # compile to optimized LLVM IR to executable
-$(binDir)/%.out: $(binDir)/%.opt.ll
-	clang++ $< $(passRuntimes) -o $@
+$(binDir)/%.out: $(binDir)/%.opt.ll $(passRuntimes)
+	clang++ $< $(passRuntimes) -o $@ $(linkLibraries)
 .PRECIOUS: $(binDir)/%.out
 
 $(binDir)/%: $(binDir)/%.out

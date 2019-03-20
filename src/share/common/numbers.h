@@ -5,6 +5,9 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
+#include <limits>
+#include <type_traits>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -47,3 +50,9 @@ namespace least {
 using f32 = float;
 using f64 = double;
 using f128 = long double;
+
+
+template <typename T>
+constexpr size_t numBits() noexcept {
+    return static_cast<size_t>(std::numeric_limits<std::make_unsigned_t<T>>::digits);
+}
