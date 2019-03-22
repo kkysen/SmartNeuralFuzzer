@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/share/llvm/Types.h"
+
 #include "llvm/IR/Module.h"
 
 #include <string_view>

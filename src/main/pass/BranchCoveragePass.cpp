@@ -4,7 +4,6 @@
 
 #include "src/share/common/numbers.h"
 #include "src/share/llvm/LLVMArray.h"
-#include "src/share/llvm/debug.h"
 #include "src/share/llvm/api.h"
 
 namespace {
@@ -44,8 +43,6 @@ namespace {
                     .multi = api.func<u32, u32>("onMultiBranch"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
-            debug::mode = true;
-            debug::reversed = true;
             return true;
         }
         
@@ -55,9 +52,7 @@ namespace {
         }
         
         bool runOnBasicBlock(BasicBlock& block) override {
-            using debug::Indented;
             const auto terminator = block.getTerminator();
-            Indented indented;
             if (!terminator) {
                 return false;
             }
