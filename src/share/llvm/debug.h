@@ -5,6 +5,7 @@
 #pragma once
 
 #include "src/share/common/debug.h"
+#include "src/share/llvm/utils.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Type.h"
@@ -65,13 +66,6 @@ namespace llvm {
     
     raw_ostream& operator<<(raw_ostream& out, Type::TypeID typeId) {
         return out << to_string_view(typeId);
-    }
-    
-    std::string uuid(BasicBlock& block) {
-        std::string s;
-        raw_string_ostream out(s);
-        block.printAsOperand(out, false);
-        return out.str();
     }
     
 }

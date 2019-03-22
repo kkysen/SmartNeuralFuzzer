@@ -24,6 +24,7 @@ files(share.llvm
         share/llvm/LLVMArray.h
         share/llvm/debug.h
         share/llvm/api.h
+        share/llvm/utils.h
         )
 
 set(files.share

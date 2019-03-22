@@ -3,7 +3,7 @@
 //
 
 #include "src/share/llvm/api.h"
-#include "src/share/common/numbers.h"
+#include "src/share/llvm/IRBuilderExt.h"
 
 namespace {
     
@@ -14,6 +14,7 @@ namespace {
     private:
         
         FunctionCallee onBlock;
+        u64 blockIndex = 0;
     
     public:
         
@@ -33,7 +34,11 @@ namespace {
         }
         
         bool runOnBasicBlock(BasicBlock& block) override {
-            return false;
+            IRBuilder<> builder(&block.front());
+            IRBuilderExt ext(builder);
+            ext.call(onBlock, {ext.constants().getInt(blockIndex)});
+            blockIndex++;
+            return true;
         }
         
     };

@@ -72,7 +72,7 @@ namespace {
          * Trace a br (branch) instruction
          * by calling onBranch(booleanValue) immediately before the branch.
          */
-        /*constexpr*/ bool traceBranch(BranchInst& branchInst) {
+        bool traceBranch(BranchInst& branchInst) {
             if (!branchInst.isConditional()) {
                 return false;
             }
