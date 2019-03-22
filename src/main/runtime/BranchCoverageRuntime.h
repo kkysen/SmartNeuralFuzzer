@@ -15,4 +15,4 @@ API_BranchCoverage(onSingleBranch)(bool value);
 
 API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches);
 
-API_BranchCoverage(onInfiniteBranch)(u64 address);
+API_BranchCoverage(onInfiniteBranch)(void* address);

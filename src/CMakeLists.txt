@@ -9,7 +9,9 @@ files(share.common
         share/common/debug.h
         share/common/math.h
         share/common/fs.h
-        share/common/fse.h)
+        share/common/fse.h
+        share/common/lazy.h
+        )
 
 files(share.llvm
         share/llvm/Types.h

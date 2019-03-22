@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <limits>
 #include <type_traits>
+#include <climits>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -53,6 +54,11 @@ using f128 = long double;
 
 
 template <typename T>
-constexpr size_t numBits() noexcept {
-    return static_cast<size_t>(std::numeric_limits<std::make_unsigned_t<T>>::digits);
+constexpr u8 numBits() noexcept {
+    return sizeof(T) * CHAR_BIT;
 }
+
+template <>
+constexpr u8 numBits<bool>() noexcept {
+    return 1;
+};

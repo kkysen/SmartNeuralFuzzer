@@ -27,12 +27,6 @@ namespace fse {
         if (memory == MAP_FAILED) {
             throw fs::filesystem_error("mmap failed for fd = " + std::to_string(fd), std::error_code());
         }
-        _dbg("before write");
-        static_cast<char*>(memory)[length - 1] = 'A';
-        msync(memory, length, MS_ASYNC);
-        std::cout << std::string_view(static_cast<char*>(memory), length) << std::endl;
-        _dbg("after write");
-        munmap(memory, length);
         return static_cast<T*>(memory);
     }
     

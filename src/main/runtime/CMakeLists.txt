@@ -1,5 +1,6 @@
 files(runtime.coverage.branch
         BranchCoverageRuntime.h
+        BranchCoverageRuntime.cpp
         BranchCoverageRuntime.cpp)
 
 files(runtime.coverage.block

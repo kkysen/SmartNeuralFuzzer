@@ -1,2 +1,2 @@
-add_subdirectory(passes)
-add_subdirectory(runtimes)
+add_subdirectory(pass)
+add_subdirectory(runtime)

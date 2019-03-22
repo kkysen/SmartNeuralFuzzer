@@ -16,14 +16,29 @@ namespace math {
         return a > b ? a : b;
     }
     
-    template <typename T>
-    constexpr T divUp(T dividend, T divisor) noexcept {
+    template <typename A, typename B>
+    constexpr std::common_type_t<A, B> divUp(A dividend, B divisor) noexcept {
         return (dividend / divisor) + (dividend % divisor == 0);
     }
     
-    template <typename T>
-    constexpr T multipleGreaterThan(T multiple, T greaterThan) noexcept {
+    template <typename A, typename B>
+    constexpr std::common_type_t<A, B> multipleGreaterThan(A multiple, B greaterThan) noexcept {
         return multiple > greaterThan ? multiple : multiple + multipleGreaterThan(multiple, greaterThan - multiple);
+    }
+    
+    template <typename T>
+    constexpr T abs(T t) noexcept {
+        return t < 0 ? -t : t;
+    }
+    
+    template <typename A, typename B>
+    constexpr std::common_type_t<A, B> gcd(A a, B b) noexcept {
+        return a == 0 ? abs(b) : b == 0 ? abs(a) : gcd(b, a % b);
+    }
+    
+    template <typename A, typename B>
+    constexpr std::common_type_t<A, B> lcm(A a, B b) noexcept {
+        return (a == 0 || b == 0) ? 0 : (abs(a) / gcd(a, b)) * abs(b);
     }
     
     

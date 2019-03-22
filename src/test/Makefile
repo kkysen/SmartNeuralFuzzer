@@ -9,8 +9,8 @@ projectDir := ../..
 buildDir := $(projectDir)/build
 binDir := $(buildDir)/test
 
-passLibraries := $(passes:%=$(buildDir)/src/main/passes/libpass.%.so)
-passRuntimes := $(passes:%=$(buildDir)/src/main/runtimes/libruntime.%.a)
+passLibraries := $(passes:%=$(buildDir)/src/main/pass/libpass.%.so)
+passRuntimes := $(passes:%=$(buildDir)/src/main/runtime/libruntime.%.a)
 
 passLibraryArgs := $(passLibraries:%=-load=%)
 passArgs := $(passes:%=-%)

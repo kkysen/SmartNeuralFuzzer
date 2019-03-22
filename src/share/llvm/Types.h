@@ -34,13 +34,13 @@ namespace llvm {
         template <typename T>
         IntegerType* integral() const noexcept {
             static_assert(std::is_integral_v<T>);
-            return integral<std::numeric_limits<T>::digits>();
+            return integral<numBits<T>()>();
         }
         
         template <typename T>
         Type* floating() const noexcept {
             static_assert(std::is_floating_point_v<T>);
-            return floating<std::numeric_limits<T>::digits>();
+            return floating<numBits<T>()>();
         }
         
         template <typename T>
@@ -54,7 +54,7 @@ namespace llvm {
             } else if constexpr (isFloating) {
                 return floating<T>();
             } else if constexpr (isPointer) {
-                return get<std::remove_pointer_t<T>>();
+                return get<std::remove_pointer_t<T>>()->getPointerTo();
             } else {
                 llvm_unreachable("Unsupported type");
             }
@@ -136,5 +136,10 @@ namespace llvm {
     Type* Types::get<void>() const noexcept {
         return Type::getVoidTy(context);
     };
+    
+    template <>
+    Type* Types::get<void*>() const noexcept {
+        return get<u8*>(); // LLVM has no void*, so use u8/i8* instead
+    }
     
 }
