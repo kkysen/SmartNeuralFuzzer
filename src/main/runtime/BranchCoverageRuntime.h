@@ -7,7 +7,7 @@
 
 
 #include "src/share/common/numbers.h"
-#include "src/share/llvm/api.h"
+#include "src/share/common/api.h"
 
 #define API_BranchCoverage(funcName) API(BranchCoverage, funcName)
 

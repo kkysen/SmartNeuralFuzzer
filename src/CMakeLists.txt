@@ -11,6 +11,7 @@ files(share.common
         share/common/fs.h
         share/common/fse.h
         share/common/lazy.h
+        share/common/api.h
         )
 
 files(share.llvm
@@ -21,8 +22,9 @@ files(share.llvm
         share/llvm/AllocaArgs.h
         share/llvm/LoadStore.h
         share/llvm/LLVMArray.h
+        share/llvm/debug.h
         share/llvm/api.h
-        share/llvm/debug.h)
+        )
 
 set(files.share
         ${files.share.common}

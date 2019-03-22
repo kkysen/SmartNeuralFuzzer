@@ -5,6 +5,7 @@
 #include "src/share/common/numbers.h"
 #include "src/share/llvm/LLVMArray.h"
 #include "src/share/llvm/debug.h"
+#include "src/share/llvm/api.h"
 
 namespace {
     
@@ -14,9 +15,11 @@ namespace {
     
     private:
         
-        FunctionCallee onBranch;
-        FunctionCallee onMultiBranch;
-        FunctionCallee onInfiniteBranch;
+        struct {
+            FunctionCallee single;
+            FunctionCallee multi;
+            FunctionCallee infinite;
+        } onBranch = {};
         
         struct Flags {
             bool branches;
@@ -34,20 +37,13 @@ namespace {
         
         BranchCoveragePass() : BasicBlockPass(ID) {}
         
-        template <typename... Args>
-        FunctionCallee api(Module& module, std::string_view name) {
-            std::string apiName = "__BranchCoverage_";
-            apiName += name;
-            const Types types(module.getContext());
-            return module.getOrInsertFunction(apiName, types.function<void, Args...>());
-        }
-        
         bool doInitialization(Module& module) override {
-            onBranch = api<bool>(module, "onSingleBranch");
-            onMultiBranch = api<u32, u32>(module, "onMultiBranch");
-            onInfiniteBranch = api<void*>(module, "onInfiniteBranch");
-            // TODO figure out where main is and check if blocks are below/after main before tracing them
-            
+            Api api("BranchCoverage", module);
+            onBranch = {
+                    .single = api.func<bool>("onSingleBranch"),
+                    .multi = api.func<u32, u32>("onMultiBranch"),
+                    .infinite = api.func<void*>("onInfiniteBranch"),
+            };
             debug::mode = true;
             debug::reversed = true;
             return true;
@@ -61,26 +57,17 @@ namespace {
         bool runOnBasicBlock(BasicBlock& block) override {
             using debug::Indented;
             const auto terminator = block.getTerminator();
-//            llvm_dbg(llvm::uuid(block));
             Indented indented;
             if (!terminator) {
-//                llvm_debug().message("skipping empty block");
                 return false;
             }
             bool traced = false;
             if (const auto branchInst = dyn_cast<BranchInst>(terminator)) {
-                llvm_debug().message("tracing branch");
                 traced |= flags.branches && traceBranch(*branchInst);
             } else if (const auto switchInst = dyn_cast<SwitchInst>(terminator)) {
-                llvm_debug().message("tracing switch");
                 traced |= flags.switches && traceSwitch(*switchInst);
             }
 //            traced |= flags.virtualMethods && traceDynamicDispatches(block);
-            
-            if (traced) {
-                block.dump();
-            }
-            
             return traced;
         }
     
@@ -91,15 +78,12 @@ namespace {
          * by calling onBranch(booleanValue) immediately before the branch.
          */
         /*constexpr*/ bool traceBranch(BranchInst& branchInst) {
-            llvm_dbg(branchInst);
             if (!branchInst.isConditional()) {
                 return false;
             }
             IRBuilder<> builder(&branchInst);
             IRBuilderExt ext(builder);
-            llvm_debug().message("conditional");
-            llvm_dbg(onBranch.getFunctionType());
-            ext.call(onBranch, {branchInst.getCondition()});
+            ext.call(onBranch.single, {branchInst.getCondition()});
             return true;
         }
         
@@ -107,7 +91,7 @@ namespace {
             IRBuilder<> builder(&caseHandle.getCaseSuccessor()->front());
             IRBuilderExt ext(builder);
             const auto constants = ext.constants();
-            ext.call(onMultiBranch, {constants.getInt(caseNum), constants.getInt(numCases)});
+            ext.call(onBranch.multi, {constants.getInt(caseNum), constants.getInt(numCases)});
         }
         
         /**
@@ -188,9 +172,6 @@ namespace {
         }
         
         bool traceDynamicDispatches(BasicBlock& block) {
-            if (block.size()) {
-                return false;
-            }
             return std::any_of(block.begin(), block.end(), [this](auto& instruction) {
                 const auto getElementPtrInst = dyn_cast<GetElementPtrInst>(&instruction);
                 return getElementPtrInst && traceDynamicDispatch(*getElementPtrInst);
