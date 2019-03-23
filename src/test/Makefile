@@ -1,5 +1,4 @@
-coveragePasses := block
-#branch block
+coveragePasses := branch block
 passes := $(coveragePasses:%=coverage.%)
 
 tests := branch switch optimizedSwitch loop virtualCall staticConstructors

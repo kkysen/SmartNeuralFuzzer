@@ -53,6 +53,6 @@ namespace {
 }
 
 API_BlockCoverage(onBlock)(u64 blockNum) {
-    printf("BlockCoverage: onBlock: %ld\n", blockNum);
+//    printf("BlockCoverage: onBlock: %ld\n", blockNum);
     runtime().onBlock(blockNum);
 }

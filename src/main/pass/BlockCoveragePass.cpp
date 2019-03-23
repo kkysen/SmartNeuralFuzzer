@@ -35,9 +35,7 @@ namespace {
         }
         
         bool runOnBasicBlock(BasicBlock& block) override {
-            // TODO some instructions have to be the first in the block
-            // in that case, place this call right after them, i.e. at the earliest place possible
-            IRBuilder<> builder(&block.front());
+            IRBuilder<> builder(&*block.getFirstInsertionPt());
             IRBuilderExt ext(builder);
             ext.call(onBlock, {ext.constants().getInt(blockIndex)});
             blockIndex++;
