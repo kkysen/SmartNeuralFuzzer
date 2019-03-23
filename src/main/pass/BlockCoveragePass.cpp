@@ -4,6 +4,7 @@
 
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"
+#include "src/share/llvm/debug.h"
 
 namespace {
     
@@ -23,8 +24,8 @@ namespace {
         BlockCoveragePass() : BasicBlockPass(ID) {}
         
         bool doInitialization(Module& module) override {
-            Api api("BlockCoverage", module);
-            onBlock = api.func<u32>("onBlock");
+            const Api api("BlockCoverage", module);
+            onBlock = api.func<u64>("onBlock");
             return true;
         }
         
@@ -34,6 +35,8 @@ namespace {
         }
         
         bool runOnBasicBlock(BasicBlock& block) override {
+            // TODO some instructions have to be the first in the block
+            // in that case, place this call right after them, i.e. at the earliest place possible
             IRBuilder<> builder(&block.front());
             IRBuilderExt ext(builder);
             ext.call(onBlock, {ext.constants().getInt(blockIndex)});

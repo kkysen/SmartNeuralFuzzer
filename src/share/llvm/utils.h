@@ -8,11 +8,6 @@
 
 namespace llvm {
     
-    std::string uuid(BasicBlock& block) {
-        std::string s;
-        raw_string_ostream out(s);
-        block.printAsOperand(out, false);
-        return out.str();
-    }
+    std::string uuid(const BasicBlock& block);
     
 }

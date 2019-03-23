@@ -37,7 +37,7 @@ namespace {
         BranchCoveragePass() : BasicBlockPass(ID) {}
         
         bool doInitialization(Module& module) override {
-            Api api("BranchCoverage", module);
+            const Api api("BranchCoverage", module);
             onBranch = {
                     .single = api.func<bool>("onSingleBranch"),
                     .multi = api.func<u32, u32>("onMultiBranch"),

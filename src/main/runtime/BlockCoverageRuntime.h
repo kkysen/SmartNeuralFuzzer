@@ -9,4 +9,4 @@
 
 #define API_BlockCoverage(funcName) API(BlockCoverage, funcName)
 
-API_BlockCoverage(onBlock)(u32 blockNum);
+API_BlockCoverage(onBlock)(u64 blockNum);

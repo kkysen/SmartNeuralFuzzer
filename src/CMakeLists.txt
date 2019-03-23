@@ -7,11 +7,21 @@ include(cmake/files.cmake)
 files(share.common
         share/common/numbers.h
         share/common/debug.h
+        share/common/debug.cpp
         share/common/math.h
-        share/common/fs.h
-        share/common/fse.h
         share/common/lazy.h
         share/common/api.h
+        )
+
+files(share.io
+        share/io/EnvironmentOutputPath.h
+        share/io/EnvironmentOutputPath.cpp
+        share/io/fs.h
+        share/io/fse.h
+        share/io/fse.cpp
+        share/io/Write.h
+        share/io/Write.cpp
+        share/io/Buffer.h
         )
 
 files(share.llvm
@@ -23,13 +33,10 @@ files(share.llvm
         share/llvm/LoadStore.h
         share/llvm/LLVMArray.h
         share/llvm/debug.h
+        share/llvm/debug.cpp
         share/llvm/api.h
         share/llvm/utils.h
-        )
-
-set(files.share
-        ${files.share.common}
-        ${files.share.llvm}
+        share/llvm/utils.cpp
         )
 
 set(CMAKE_CXX_STANDARD 17)

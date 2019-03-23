@@ -19,11 +19,11 @@
 
 namespace debug {
     
-    bool mode = true;
+    extern bool mode;
     
-    auto out = &std::cout;
+    extern std::ostream* out;
     
-    bool reversed = false;
+    extern bool reversed;
     
     class Indentation {
     
@@ -70,10 +70,7 @@ namespace debug {
         
     };
     
-    char Indentation::defaultChar = ' ';
-    size_t Indentation::defaultIndent = 4;
-    
-    Indentation indentation;
+    extern Indentation indentation;
     
     class Indented {
     
@@ -103,9 +100,7 @@ namespace debug {
     
     struct ErrorInfo : public Info {
         
-        static const char* strerror(int errorNum) {
-            return ::strerror(errorNum);
-        }
+        static const char* strerror(int errorNum);
         
         int errorNum;
         ErrorNumToString errorNumToString;
@@ -113,7 +108,7 @@ namespace debug {
         constexpr ErrorInfo(Info info, int errorNum, ErrorNumToString errorNumToString) noexcept
                 : Info(info), errorNum(errorNum), errorNumToString(errorNumToString) {}
         
-        explicit ErrorInfo(Info info) noexcept : ErrorInfo(info, errno, strerror) {}
+        explicit ErrorInfo(Info info) noexcept;
         
     };
     
@@ -312,9 +307,7 @@ namespace debug {
     
 }
 
-std::ostream& operator<<(std::ostream& out, bool boolean) {
-    return out << (boolean ? "true" : "false");
-}
+std::ostream& operator<<(std::ostream& out, bool boolean);
 
 #define debug_info() (debug::Info { \
     .funcName = __func__, \

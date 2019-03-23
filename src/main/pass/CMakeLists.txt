@@ -18,5 +18,7 @@ else ()
 endif ()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${llvmFlags}")
 
+set(files.share ${files.share.common} ${files.share.llvm})
+
 add_library(pass.coverage.branch SHARED ${files.share} BranchCoveragePass.cpp)
 add_library(pass.coverage.block SHARED ${files.share} BlockCoveragePass.cpp)

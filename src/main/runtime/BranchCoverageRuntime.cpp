@@ -2,65 +2,22 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "BranchCoverageRuntime.h"
+#include "src/main/runtime/BranchCoverageRuntime.h"
 
-#include "src/share/common/math.h"
-#include "src/share/common/fs.h"
-#include "src/share/common/fse.h"
+#include "src/share/common/lazy.h"
+#include "src/share/io/Buffer.h"
+#include "src/share/io/EnvironmentOutputPath.h"
 
-#include <algorithm>
 #include <numeric>
-#include <src/share/common/lazy.h>
 #include <sys/stat.h>
 
 namespace {
-    
-    // can't have constexpr statics based on static constexpr functions in same class
-    // so have to define them at the file level
-    
-    constexpr size_t minBytesForBits(size_t bits) noexcept {
-        return math::divUp(bits, numBits<u8>());
-    }
     
     class BranchCoverageRuntime {
     
     private:
         
-        static constexpr size_t pageSize = 4096; // only usually correct, but I need it as a constexpr
-        
-        class Write {
-        
-        public:
-            
-            int fd;
-            
-            constexpr bool isValid() noexcept {
-                return fd >= 0;
-            }
-            
-            explicit constexpr Write(int fd) : fd(fd) {}
-            
-            constexpr Write(Write&& other) noexcept : Write(other.fd) {
-                other.fd = -1; // don't close(fd) early
-            }
-            
-            Write(const Write& other) = delete;
-            
-            ~Write() noexcept {
-                if (isValid()) {
-                    close(fd);
-                }
-            }
-            
-            void operator()(const void* bytes, size_t numBytes) const noexcept {
-                ::write(fd, bytes, numBytes);
-            }
-            
-            void absolute(const void* bytes, size_t numBytes, size_t offset = 0) const noexcept {
-                ::pwrite(fd, bytes, numBytes, offset);
-            }
-            
-        };
+        static constexpr size_t pageSize = fse::page::constSize;
         
         class Counts {
         
@@ -171,7 +128,7 @@ namespace {
             }
             
             void finalFlush() noexcept {
-                writeBuffer(minBytesForBits(bitIndex));
+                writeBuffer(math::minBytesForBits(bitIndex));
                 const u8 bitsInLastBytes = byteBitIndex();
                 write(&bitsInLastBytes, sizeof(bitsInLastBytes));
             }
@@ -205,51 +162,17 @@ namespace {
                 u32 high;
             };
             
-            static constexpr size_t bufferByteSize = math::lcm(pageSize, sizeof(Record));
-            static constexpr size_t bufferSize = bufferByteSize / sizeof(Record);
-            
-            std::array<Record, bufferSize> buffer = {};
-            size_t index = 0;
-            
-            const Write write;
-            
-            void writeBuffer(size_t numBytes = sizeof(buffer)) noexcept {
-                write(buffer.begin(), numBytes);
-            }
-            
-            void flush() noexcept {
-                writeBuffer();
-                index = 0;
-            }
-            
-            constexpr bool shouldFlush() noexcept {
-                return index == buffer.size();
-            }
-            
-            void tryFlush() noexcept {
-                if (shouldFlush()) {
-                    flush();
-                }
-            }
-            
-            void finalFlush() noexcept {
-                writeBuffer(index * sizeof(Record));
-            }
+            Buffer<Record> buffer;
             
             void onRecord(Record record) noexcept {
-                buffer[index++] = record;
-                tryFlush();
+                buffer.on(record);
             }
         
         public:
             
-            explicit constexpr NonSingleBranches(Write&& write) noexcept : write(std::move(write)) {}
+            explicit constexpr NonSingleBranches(Write&& write) noexcept : buffer(std::move(write)) {}
             
             NonSingleBranches(const NonSingleBranches& other) = delete;
-            
-            ~NonSingleBranches() noexcept {
-                finalFlush();
-            }
             
             void onMulti(u32 branchNum, u32 numBranches, u32 bitIndexDiff) noexcept {
                 onRecord({
@@ -282,6 +205,8 @@ namespace {
         } branches;
         
         Counts count;
+    
+    public:
         
         class Output {
         
@@ -290,26 +215,22 @@ namespace {
             const fs::path& dirPath;
             const int dir;
             
-            void error(const std::string& filePath) noexcept(false) {
-                throw fs::filesystem_error(filePath, std::error_code());
-            }
-            
             int createDir() noexcept(false) {
                 if (mkdir(dirPath.c_str(), 0755) == -1 && errno != EEXIST) {
-                    error(dirPath);
+                    throw fse::error("mkdir", dirPath);
                 }
                 const int fd = open(dirPath.c_str(), O_DIRECTORY | O_PATH);
                 if (fd == -1) {
-                    perror("createDir:open");
-                    error(dirPath);
+                    throw fse::error("open(O_DIRECTORY | O_PATH)", dirPath);
                 }
                 return fd;
             }
             
-            int createAtDir(const std::string& fileName) noexcept(false) {
+            int createAtDir(const std::string& fileBaseName) noexcept(false) {
+                const auto fileName = fileBaseName + ".bin";
                 const int fd = openat(dir, fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (fd == -1) {
-                    error(dirPath / fileName);
+                    throw fse::error("openat", dirPath, fileName);
                 }
                 return fd;
             }
@@ -337,8 +258,6 @@ namespace {
         explicit BranchCoverageRuntime(Output&& writes) noexcept
                 : count(Write(writes.count)),
                   branches(Write(writes.branches.single), Write(writes.branches.nonSingle)) {}
-    
-    public:
         
         explicit BranchCoverageRuntime(const fs::path& directoryPath) noexcept(false)
                 : BranchCoverageRuntime(Output(directoryPath)) {}
@@ -362,23 +281,13 @@ namespace {
     
     private:
         
-        static std::string defaultOutputDir(const std::string& environmentVariableName) {
-            return environmentVariableName + "." + std::to_string(getpid()) + "." + "dir";
-        }
-        
-        static fs::path getOutputDirFromEnvironment(const std::string& environmentVariableName) {
-            const char* outputPath = std::getenv(environmentVariableName.c_str());
-            if (outputPath) {
-                return outputPath;
-            } else {
-                return defaultOutputDir(environmentVariableName);
-            }
-        }
+        static constexpr auto getOutputDir = env::path::output::getter(
+                [](const auto& var, auto pid) -> fs::path { return var + "." + std::to_string(pid) + ".dir"; });
     
     public:
         
         explicit BranchCoverageRuntime(const std::string& environmentVariableName = "coverage.branch.out")
-                : BranchCoverageRuntime(getOutputDirFromEnvironment(environmentVariableName)) {}
+                : BranchCoverageRuntime(getOutputDir(environmentVariableName)) {}
         
         static const LazilyConstructed<BranchCoverageRuntime> instance;
         
