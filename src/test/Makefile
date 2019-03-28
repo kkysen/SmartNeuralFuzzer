@@ -14,7 +14,8 @@ passRuntimes := $(passes:%=$(buildDir)/src/main/runtime/libruntime.%.a)
 passLibraryArgs := $(passLibraries:%=-load=%)
 passArgs := $(passes:%=-%)
 
-flags := -S -emit-llvm -flto -fwhole-program-vtables
+optimization := -O3
+flags := $(optimization) -S -emit-llvm -flto -fwhole-program-vtables
 linkLibraries := -lstdc++fs
 
 
@@ -55,7 +56,7 @@ $(binDir)/%.s: $(binDir)/%.opt.ll $(passRuntimes)
 
 # compile to optimized LLVM IR to executable
 $(binDir)/%.out: $(binDir)/%.opt.ll $(passRuntimes)
-	clang++ $< $(passRuntimes) -o $@ $(linkLibraries)
+	clang++ -fuse-ld=lld $< $(passRuntimes) -o $@ $(linkLibraries)
 .PRECIOUS: $(binDir)/%.out
 
 $(binDir)/%: $(binDir)/%.out

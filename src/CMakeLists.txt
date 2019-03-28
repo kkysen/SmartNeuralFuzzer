@@ -44,5 +44,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
+add_link_options("-fuse-ld=lld")
+
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 add_subdirectory(main)
 add_subdirectory(test)

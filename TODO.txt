@@ -1,0 +1,26 @@
+Write parsers for the output.
+I'm not sure if this should be in C++ or Python.
+Maybe a C++ parser with CPython bindings will work.
+
+Test the passes and runtimes on larger programs.
+
+Figure out how to best integrate the runtimes with AFL.
+Since AFL repeatedly runs the programs by forking,
+I might need a way to re-initialize the runtimes on each fork.
+
+Compile what I already have with full optimizations.
+
+Make all the writes in the runtimes async.
+This will dramatically reduce their overhead in the worst case.
+This is trivial for the counts in BranchCoverageRuntime, 
+b/c it doesn't matter if the data is updated before the write actually happens,
+but for the other buffers, they have to keep recording new values
+before the write actually happens, which will erase values in between.
+I could potentially get around this by maintaining a pool of buffers 
+(this requires memory, but still as statically-allocated),
+so I can switch to the next buffer while the last is written to disk.
+If the buffers all become full, though, then I'll have to either block or allocate more.
+Allocating more is not much more efficient than writing I think,
+so it'd be better to just block in that case, which should be very rare.
+How many buffers should I have though?
+When I test, maybe I should see how many buffers are usually used.

@@ -1,13 +1,16 @@
 buildDir := build
 testDir := src/test
 buildSystem := Ninja
+buildType := Release
 
 cmakeFiles := $(shell find src/cmake -name "*.cmake")
 
 all: build
 
 cmake: CMakeLists.txt $(cmakeFiles)
-	cmake -B $(buildDir) -G "$(buildSystem)"
+	cmake -B $(buildDir) -G "$(buildSystem)" \
+	-DCMAKE_BUILD_TYPE=$(buildType)
+#	-DCMAKE_LINKER=ld.lld -DCMAKE_CXX_LINK_EXECUTABLE="<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>"
 .PHONY: cmake
 
 build: cmake
@@ -27,3 +30,7 @@ cleanTests:
 .PHONY: cleanTests
 
 clean: cleanCmake cleanTests
+
+fullClean:
+	rm -rf $(buildDir)
+.PHONY: fullClean

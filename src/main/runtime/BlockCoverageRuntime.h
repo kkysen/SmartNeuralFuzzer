@@ -26,6 +26,8 @@
  * Another option is to use varint delta encoding.
  * If sequential basic blocks tend to be close in number, then this will produce a small delta for each one,
  * and then varint encoding will work much better and more consistently.
+ *
+ * Another option is to just compress the output afterwards, separate from the program.
  */
 
 API_BlockCoverage(onBlock)(u64 blockNum);
