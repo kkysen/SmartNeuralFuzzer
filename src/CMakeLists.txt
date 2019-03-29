@@ -3,6 +3,7 @@ add_compile_options(-fcolor-diagnostics)
 set(CXX_LIBS /mnt/c/Users/Khyber/workspace/C++)
 
 include(cmake/files.cmake)
+include(cmake/Xclang.cmake)
 
 files(share.common
         share/common/numbers.h
@@ -47,6 +48,8 @@ set(CMAKE_CXX_COMPILER clang++)
 add_link_options("-fuse-ld=lld")
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+add_compile_options(-Wall -Werror -Wextra -Wno-error=unused-parameter)
 
 add_subdirectory(main)
 add_subdirectory(test)

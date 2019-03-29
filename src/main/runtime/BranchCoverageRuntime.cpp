@@ -41,7 +41,7 @@ namespace {
         
         public:
             
-            explicit constexpr Counts(Write&& write) noexcept : write(std::move(write)), all({}) {}
+            explicit constexpr Counts(Write&& write) noexcept : all({}), write(std::move(write)) {}
             
             Counts(const Counts& other) = delete;
             
@@ -64,7 +64,7 @@ namespace {
             
             static constexpr Size bufferByteSize = static_cast<Size>(math::lcm(pageSize, sizeof(Chunk)));
             static constexpr Size bufferSize = bufferByteSize / sizeof(Chunk);
-            static constexpr Size bufferBitSize = bufferByteSize * numBits<u8>();
+//            static constexpr Size bufferBitSize = bufferByteSize * numBits<u8>();
             
             std::array<Chunk, bufferSize> buffer = {};
             Size bitIndex = 0;
@@ -193,6 +193,8 @@ namespace {
             }
             
         };
+    
+        Counts count;
         
         struct Branches {
             
@@ -203,8 +205,6 @@ namespace {
                     : single(std::move(singleWrite)), nonSingle(std::move(nonSingleWrite)) {}
             
         } branches;
-        
-        Counts count;
     
     public:
         

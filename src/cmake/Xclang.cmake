@@ -1,0 +1,17 @@
+function(Xclang)
+    foreach (arg ${ARGN})
+        add_compile_options("SHELL:-Xclang ${arg}")
+    endforeach ()
+endfunction()
+
+function(XclangLoad)
+    foreach (arg ${ARGN})
+        add_compile_options("SHELL:-Xclang -load -Xclang ${arg}")
+    endforeach ()
+endfunction()
+
+function(XclangLoadTargets)
+    foreach (arg ${ARGN})
+        XclangLoad("$<TARGET_FILE:${arg}>")
+    endforeach ()
+endfunction()

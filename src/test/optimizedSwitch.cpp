@@ -16,7 +16,7 @@ int optimizedSwitchTest(int argc) {
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, [[maybe_unused]] char** argv) {
 	printf("%d\n", optimizedSwitchTest(argc));
 	return 0;
 }

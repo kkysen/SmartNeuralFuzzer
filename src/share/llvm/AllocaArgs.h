@@ -24,11 +24,11 @@ namespace llvm {
     private:
         
         template <typename T>
-        constexpr AllocaArgs(IRBuilder<>& builder, const Value* size, T t) noexcept
+        constexpr AllocaArgs(IRBuilder<>& builder, const Value* size, T) noexcept
                 : AllocaArgs(builder, types().get<T>(), size) {}
         
         template <typename T>
-        constexpr AllocaArgs(IRBuilder<>& builder, u64 size, T t) noexcept
+        constexpr AllocaArgs(IRBuilder<>& builder, u64 size, T) noexcept
                 : AllocaArgs(builder, types().get<T>(), size) {}
     
     public:

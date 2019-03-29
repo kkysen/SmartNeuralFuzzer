@@ -44,9 +44,14 @@ $(binDir)/%.ll: $(srcDir)/%.cpp
 	clang++ $(flags) $< -o $@
 .PRECIOUS: $(binDir)/%.ll
 
-# optimizize LLVM IR
-$(binDir)/%.opt.ll: $(binDir)/%.ll
+# instrument LLVM IR
+$(binDir)/%.instr.ll: $(binDir)/%.ll
 	opt $(passLibraryArgs) $(passArgs) -S < $< > $@
+.PRECIOUS: $(binDir)/%.instr.ll
+
+# optimizize LLVM IR
+$(binDir)/%.opt.ll: $(binDir)/%.instr.ll
+	opt $(optimization) -S < $< > $@
 .PRECIOUS: $(binDir)/%.opt.ll
 
 # compile optimized LLVM IR to assembly

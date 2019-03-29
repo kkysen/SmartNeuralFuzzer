@@ -118,7 +118,7 @@ namespace llvm {
         }
         
         constexpr CallInst* memset(u8 value = 0) const {
-            return memset(constants().getInt<u8>(0));
+            return memset(constants().getInt<u8>(value));
         }
         
         constexpr CallInst* memClear() const {

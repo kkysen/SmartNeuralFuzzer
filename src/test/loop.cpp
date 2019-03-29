@@ -7,7 +7,7 @@ void loopTest(int argc) {
 	}
 }
 
-int main(int argc, char** argv) {
+int main(int argc, [[maybe_unused]] char** argv) {
 	loopTest(argc);
 	return 0;
 }

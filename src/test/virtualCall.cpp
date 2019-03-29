@@ -60,7 +60,7 @@ void testVirtualCall(int argc) {
     a.doVirtualCall();
 }
 
-int main(int argc, char** argv) {
+int main(int argc, [[maybe_unused]] char** argv) {
 	testVirtualCall(argc);
 	return 0;
 }

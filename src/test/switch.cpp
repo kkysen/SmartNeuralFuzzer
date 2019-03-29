@@ -21,7 +21,7 @@ int switchTest(int argc) {
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, [[maybe_unused]] char** argv) {
 	printf("%d\n", switchTest(argc));
 	return 0;
 }

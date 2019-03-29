@@ -29,7 +29,7 @@ namespace {
             return true;
         }
         
-        bool doInitialization(Function& function) override {
+        bool doInitialization(Function&) override {
             // do nothing, but declaration needed for overload resolution?
             return false;
         }

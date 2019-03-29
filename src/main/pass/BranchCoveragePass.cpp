@@ -46,7 +46,7 @@ namespace {
             return true;
         }
         
-        bool doInitialization(Function& function) override {
+        bool doInitialization(Function&) override {
             // do nothing, but declaration needed for overload resolution?
             return false;
         }
@@ -110,67 +110,8 @@ namespace {
             return true;
         }
         
-        /**
-         * Traces a getelementptr on the class pointer,
-         * recording which (sub)class is resolved (and then a method on it dispatched).
-         */
-        bool traceDynamicClassDispatch(const GetElementPtrInst& getElementPtrInst) {
-            // TODO
-            return false;
-        }
-        
-        /**
-         * Traces a getelementptr on a raw function pointer.
-         */
-        bool traceDynamicFunctionDispatch(const GetElementPtrInst& getElementPtrInst) {
-            // TODO
-            return false;
-        }
-        
-        /*
-         * TODO class method and free function dynamic dispatch are actually totally different
-         *
-         * for class methods, I just need to record what class the object is
-         * Ideally, this should be done as few times as possible when the object isn't changing
-         * Hopefully, I can just emit the tracing call once and the rest is optimized out
-         *      (Note: In general, this is an issue.
-         *      Should I run my pass later so more optimizations have applied?
-         *      Adding call instructions might disable many of those optimizations.
-         *      The best case I think would to run all passes, then mine, then all of them again,
-         *      but this will take twice as long. Maybe I can just run the major (inlining) ones  again.)
-         *
-         * for free functions, this will be done with getelementptr
-         * I record the index and size of the array.
-         * This doesn't work for class methods b/c the method is known (constant index), just not the class.
-         */
-        
-        /**
-         * Trace a dynamic dispatch, i.e. a function pointer call
-         * computed from a getelementptr instruction.
-         *
-         * This calls onMultiBranch(index, size),
-         * where index is the index of function pointer in the getelementptr instruction,
-         * and size is the size of the array being indexed into.
-         *
-         * This takes the form of either a class or function dispatch (see above).
-         */
-        bool traceDynamicDispatch(const GetElementPtrInst& getElementPtrInst) {
-            const auto& elementType = *getElementPtrInst.getResultElementType();
-            // TODO the type should actually be a * or **
-            if (elementType.isFunctionTy()) {
-                return traceDynamicFunctionDispatch(getElementPtrInst);
-            } else if (elementType.isFirstClassType()) {
-                return traceDynamicClassDispatch(getElementPtrInst);
-            } else {
-                return false;
-            }
-        }
-        
-        bool traceDynamicDispatches(BasicBlock& block) {
-            return std::any_of(block.begin(), block.end(), [this](auto& instruction) {
-                const auto getElementPtrInst = dyn_cast<GetElementPtrInst>(&instruction);
-                return getElementPtrInst && traceDynamicDispatch(*getElementPtrInst);
-            });
+        bool traceDynamicDispatches([[maybe_unused]] BasicBlock& block) {
+            return true;
         }
         
     };
