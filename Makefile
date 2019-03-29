@@ -1,7 +1,11 @@
 buildDir := build
 testDir := src/test
 buildSystem := ninja
+ifeq ($(buildSystem),ninja)
 buildSystemGenerated := Ninja
+else
+buildSystemGenerated := Unix Makefiles
+endif
 buildType := Release
 
 cmakeFiles := $(shell find src/cmake -name "*.cmake")
@@ -15,19 +19,23 @@ cmake: CMakeLists.txt $(cmakeFiles)
 .PHONY: cmake
 
 build: cmake
-	cd $(buildDir); $(buildSystem)
+ifeq ($(buildSystem),ninja)
+	cd $(buildDir) && $(buildSystem) pass.coverage.branch pass.coverage.block && $(buildSystem)
+else
+    cd $(buildDir) && $(buildSystem)
+endif
 .PHONY: build
 
 tests: build $(testDir)/Makefile
-	cd $(testDir); make -r
+	cd $(testDir) && make -r
 .PHONY: test
 
 cleanCmake:
-	cd $(buildDir); ninja clean
+	cd $(buildDir) && $(buildSystem) clean
 .PHONY: cleanCmake
 
 cleanTests:
-	cd $(testDir); make -r clean
+	cd $(testDir) && make -r clean
 .PHONY: cleanTests
 
 clean: cleanCmake cleanTests
