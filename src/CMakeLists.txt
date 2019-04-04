@@ -4,6 +4,8 @@ set(CXX_LIBS /mnt/c/Users/Khyber/workspace/C++)
 
 include(cmake/files.cmake)
 include(cmake/Xclang.cmake)
+include(cmake/llvmVersion.cmake)
+include(cmake/llvmImport.cmake)
 
 files(share.common
         share/common/numbers.h
@@ -23,6 +25,13 @@ files(share.io
         share/io/Write.h
         share/io/Write.cpp
         share/io/Buffer.h
+        )
+
+files(share.aio
+        share/aio/ControlBlock.h
+        share/aio/ControlBlock.cpp
+        share/aio/WriteBufferPool.h
+        share/aio/WriteBufferPool.cpp
         )
 
 files(share.llvm

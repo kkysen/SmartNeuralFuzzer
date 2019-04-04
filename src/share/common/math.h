@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include "src/share/common/numbers.h"
+
+#include <type_traits>
+
 namespace math {
     
     template <typename T>
@@ -29,6 +33,11 @@ namespace math {
     template <typename A, typename B>
     constexpr std::common_type_t<A, B> lcm(A a, B b) noexcept {
         return (a == 0 || b == 0) ? 0 : (abs(a) / gcd(a, b)) * abs(b);
+    }
+    
+    template <typename T1, typename... T2>
+    constexpr size_t lcmSizeOf() noexcept {
+        return lcm(sizeof(T1), lcmSizeOf<T2...>());
     }
     
     template <typename A, typename B>

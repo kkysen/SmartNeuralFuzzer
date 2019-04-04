@@ -5,8 +5,8 @@
 #pragma once
 
 #include "src/share/common/math.h"
-#include "fse.h"
-#include "Write.h"
+#include "src/share/io/fse.h"
+#include "src/share/io/Write.h"
 
 template <typename T>
 class Buffer {

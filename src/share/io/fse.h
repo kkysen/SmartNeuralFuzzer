@@ -6,6 +6,7 @@
 
 #include "src/share/io/fs.h"
 #include "src/share/common/numbers.h"
+#include "src/share/common/math.h"
 
 #include <cstddef>
 #include <cstring>
@@ -21,6 +22,15 @@ namespace fse {
         constexpr size_t constSize = 4096; // only usually correct, but sometimes I need it as a constexpr
         const size_t dynamicSize = static_cast<const size_t>(sysconf(_SC_PAGESIZE));
         
+    }
+    
+    constexpr size_t bufferSize(size_t elementSize) noexcept {
+        return math::lcm(page::constSize, elementSize) / elementSize;
+    }
+    
+    template <typename T>
+    constexpr size_t bufferSize() noexcept {
+        return bufferSize(sizeof(T));
     }
     
     fs::filesystem_error error(const std::string& what);
