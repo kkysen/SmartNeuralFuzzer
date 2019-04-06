@@ -24,7 +24,7 @@ files(share.io
         share/io/fse.cpp
         share/io/Write.h
         share/io/Write.cpp
-        share/io/Buffer.h
+        share/io/WriteBuffer.h
         )
 
 files(share.aio

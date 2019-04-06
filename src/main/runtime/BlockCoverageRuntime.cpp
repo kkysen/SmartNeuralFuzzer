@@ -5,7 +5,7 @@
 #include "src/main/runtime/BlockCoverageRuntime.h"
 
 #include "src/share/common/lazy.h"
-#include "src/share/io/Buffer.h"
+#include "src/share/io/WriteBuffer.h"
 #include "src/share/io/EnvironmentOutputPath.h"
 
 namespace {
@@ -14,11 +14,11 @@ namespace {
     
     private:
         
-        Buffer<u64> buffer;
+        io::WriteBuffer<u64> buffer;
     
     public:
         
-        explicit constexpr BlockCoverageRuntime(Write&& write) noexcept : buffer(std::move(write)) {}
+        explicit constexpr BlockCoverageRuntime(io::Write&& write) noexcept : buffer(std::move(write)) {}
         
         void onBlock(u64 blockNum) noexcept {
             buffer.on(blockNum);
@@ -40,7 +40,7 @@ namespace {
     public:
         
         explicit BlockCoverageRuntime(const std::string& environmentVariableName = "coverage.block.out")
-                : BlockCoverageRuntime(Write(createOutput(getOutputPath(environmentVariableName)))) {}
+                : BlockCoverageRuntime(io::Write(createOutput(getOutputPath(environmentVariableName)))) {}
         
         static const LazilyConstructed<BlockCoverageRuntime> instance;
         

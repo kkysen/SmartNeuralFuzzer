@@ -6,28 +6,32 @@
 
 #include <unistd.h>
 
-class Write {
-
-public:
+namespace io {
     
-    int fd;
+    class Write {
     
-    constexpr bool isValid() noexcept {
-        return fd >= 0;
-    }
+    public:
+        
+        int fd;
+        
+        constexpr bool isValid() noexcept {
+            return fd >= 0;
+        }
+        
+        explicit constexpr Write(int fd) : fd(fd) {}
+        
+        constexpr Write(Write&& other) noexcept : Write(other.fd) {
+            other.fd = -1; // don't close(fd) early
+        }
+        
+        Write(const Write& other) = delete;
+        
+        ~Write() noexcept;
+        
+        void operator()(const void* bytes, size_t numBytes) const noexcept;
+        
+        void absolute(const void* bytes, size_t numBytes, size_t offset = 0) const noexcept;
+        
+    };
     
-    explicit constexpr Write(int fd) : fd(fd) {}
-    
-    constexpr Write(Write&& other) noexcept : Write(other.fd) {
-        other.fd = -1; // don't close(fd) early
-    }
-    
-    Write(const Write& other) = delete;
-    
-    ~Write() noexcept;
-    
-    void operator()(const void* bytes, size_t numBytes) const noexcept;
-    
-    void absolute(const void* bytes, size_t numBytes, size_t offset = 0) const noexcept;
-    
-};
+}

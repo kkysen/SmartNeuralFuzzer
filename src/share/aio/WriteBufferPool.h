@@ -57,14 +57,17 @@ namespace aio {
         llvm::SmallVector<Buffer, N> buffers; // buffer pool, buffers never moved
         llvm::SmallVector<Buffer*, N> pointers; // pointer to buffers pool, pointers moved
         
+        // non-blocking, rarely will allocate
+		// faster to allocate instead of blocking on aio_suspend()
         Buffer& request() {
             // place all finished buffer pointers at end
             const auto next = std::partition(pointers.begin(), pointers.end(),
                                              [](const auto& buffer) { return !buffer->cb.finished(); });
             if (next != pointers.end()) {
+				// result all finished buffers
+				std::for_each(next, pointers.end(), Buffer::resetAIO); // TODO check if this works
                 std::for_each(next, pointers.end(), [](const auto& buffer) { buffer->resetAIO(); });
                 auto& buffer = **next;
-                buffer.resetIndex();
                 return buffer;
             } else {
                 const auto nextIndex = buffers.size();
@@ -89,8 +92,7 @@ namespace aio {
         using Pool = WriteBufferPool<N, PoolTs...>;
         using Buffer = typename Pool::Buffer;
     
-        // compatible type size
-        static_assert(Pool::commonElementSize % sizeof(T) == 0);
+        static_assert(Pool::commonElementSize % sizeof(T) == 0, "sizeof(T) incompatible with Pools types");
         
         static constexpr size_t bufferSize = Pool::bufferSize / sizeof(T);
         
@@ -120,7 +122,8 @@ namespace aio {
             return reinterpret_cast<T*>(buffer->get());
         }
     
-        void write(size_t n = bufferSize) noexcept {
+        // non-blocking
+        void write(size_t n = bufferSize, bool finalWrite = false) noexcept {
             if (n == 0) {
                 return;
             }
@@ -133,7 +136,7 @@ namespace aio {
             cb.signalMethod() = SIGEV_NONE;
             assert(cb.write() != -1);
             offset += n;
-            buffer = pool.request();
+            buffer = finalWrite ? nullptr : pool.request();
         }
         
     };
@@ -149,19 +152,23 @@ namespace aio {
         
         Buffer buffer;
         size_t index = 0;
+	
+		void write(bool finalWrite = false) noexcept {
+            buffer.write(index, finalWrite);
+        }
 
     public:
         
         StandardWriteBuffer(typename Buffer::Pool& pool, int fd) : buffer(pool, fd) {}
         
-        void write(size_t n = Buffer::bufferSize) noexcept {
-            buffer.write(n);
-        }
-        
+        ~StandardWriteBuffer() {
+			write(true);
+		}
+		
         void on(const T& t) noexcept {
             buffer.raw()[index++] = t;
             if (index == buffer.size()) {
-                buffer.write();
+                write();
                 index = 0;
             }
         }

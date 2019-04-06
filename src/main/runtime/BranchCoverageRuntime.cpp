@@ -5,7 +5,7 @@
 #include "src/main/runtime/BranchCoverageRuntime.h"
 
 #include "src/share/common/lazy.h"
-#include "src/share/io/Buffer.h"
+#include "src/share/io/WriteBuffer.h"
 #include "src/share/io/EnvironmentOutputPath.h"
 
 #include <numeric>
@@ -37,11 +37,11 @@ namespace {
         
         private:
             
-            const Write write;
+            const io::Write write;
         
         public:
             
-            explicit constexpr Counts(Write&& write) noexcept : all({}), write(std::move(write)) {}
+            explicit constexpr Counts(io::Write&& write) noexcept : all({}), write(std::move(write)) {}
             
             Counts(const Counts& other) = delete;
             
@@ -106,7 +106,7 @@ namespace {
         
         private:
             
-            const Write write;
+            const io::Write write;
             
             void writeBuffer(size_t numBytes = sizeof(buffer)) noexcept {
                 write(buffer.begin(), numBytes);
@@ -135,7 +135,7 @@ namespace {
         
         public:
             
-            explicit constexpr SingleBranches(Write&& write) noexcept : write(std::move(write)) {}
+            explicit constexpr SingleBranches(io::Write&& write) noexcept : write(std::move(write)) {}
             
             SingleBranches(const SingleBranches& other) = delete;
             
@@ -162,7 +162,7 @@ namespace {
                 u32 high;
             };
             
-            Buffer<Record> buffer;
+            io::WriteBuffer<Record> buffer;
             
             void onRecord(Record record) noexcept {
                 buffer.on(record);
@@ -201,7 +201,7 @@ namespace {
             SingleBranches single;
             NonSingleBranches nonSingle;
             
-            constexpr Branches(Write&& singleWrite, Write&& nonSingleWrite) noexcept
+            constexpr Branches(io::Write&& singleWrite, io::Write&& nonSingleWrite) noexcept
                     : single(std::move(singleWrite)), nonSingle(std::move(nonSingleWrite)) {}
             
         } branches;
@@ -256,8 +256,8 @@ namespace {
         };
         
         explicit BranchCoverageRuntime(Output&& writes) noexcept
-                : count(Write(writes.count)),
-                  branches(Write(writes.branches.single), Write(writes.branches.nonSingle)) {}
+                : count(io::Write(writes.count)),
+                  branches(io::Write(writes.branches.single), io::Write(writes.branches.nonSingle)) {}
         
         explicit BranchCoverageRuntime(const fs::path& directoryPath) noexcept(false)
                 : BranchCoverageRuntime(Output(directoryPath)) {}
