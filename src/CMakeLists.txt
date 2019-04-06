@@ -22,8 +22,8 @@ files(share.io
         share/io/fs.h
         share/io/fse.h
         share/io/fse.cpp
-        share/io/Write.h
-        share/io/Write.cpp
+        share/io/Writer.h
+        share/io/Writer.cpp
         share/io/WriteBuffer.h
         )
 
@@ -32,6 +32,8 @@ files(share.aio
         share/aio/ControlBlock.cpp
         share/aio/WriteBufferPool.h
         share/aio/WriteBufferPool.cpp
+        share/aio/IdempotentWriter.h
+        share/aio/IdempotentWriter.cpp
         )
 
 files(share.llvm

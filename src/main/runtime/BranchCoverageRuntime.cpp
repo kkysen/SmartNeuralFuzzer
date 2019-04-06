@@ -37,11 +37,11 @@ namespace {
         
         private:
             
-            const io::Write write;
+            const io::Writer write;
         
         public:
             
-            explicit constexpr Counts(io::Write&& write) noexcept : all({}), write(std::move(write)) {}
+            explicit constexpr Counts(io::Writer&& write) noexcept : all({}), write(std::move(write)) {}
             
             Counts(const Counts& other) = delete;
             
@@ -106,7 +106,7 @@ namespace {
         
         private:
             
-            const io::Write write;
+            const io::Writer write;
             
             void writeBuffer(size_t numBytes = sizeof(buffer)) noexcept {
                 write(buffer.begin(), numBytes);
@@ -135,7 +135,7 @@ namespace {
         
         public:
             
-            explicit constexpr SingleBranches(io::Write&& write) noexcept : write(std::move(write)) {}
+            explicit constexpr SingleBranches(io::Writer&& write) noexcept : write(std::move(write)) {}
             
             SingleBranches(const SingleBranches& other) = delete;
             
@@ -201,7 +201,7 @@ namespace {
             SingleBranches single;
             NonSingleBranches nonSingle;
             
-            constexpr Branches(io::Write&& singleWrite, io::Write&& nonSingleWrite) noexcept
+            constexpr Branches(io::Writer&& singleWrite, io::Writer&& nonSingleWrite) noexcept
                     : single(std::move(singleWrite)), nonSingle(std::move(nonSingleWrite)) {}
             
         } branches;
@@ -256,8 +256,8 @@ namespace {
         };
         
         explicit BranchCoverageRuntime(Output&& writes) noexcept
-                : count(io::Write(writes.count)),
-                  branches(io::Write(writes.branches.single), io::Write(writes.branches.nonSingle)) {}
+                : count(io::Writer(writes.count)),
+                  branches(io::Writer(writes.branches.single), io::Writer(writes.branches.nonSingle)) {}
         
         explicit BranchCoverageRuntime(const fs::path& directoryPath) noexcept(false)
                 : BranchCoverageRuntime(Output(directoryPath)) {}

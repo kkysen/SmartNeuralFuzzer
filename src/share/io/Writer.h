@@ -8,7 +8,7 @@
 
 namespace io {
     
-    class Write {
+    class Writer {
     
     public:
         
@@ -18,15 +18,15 @@ namespace io {
             return fd >= 0;
         }
         
-        explicit constexpr Write(int fd) : fd(fd) {}
+        explicit constexpr Writer(int fd) : fd(fd) {}
         
-        constexpr Write(Write&& other) noexcept : Write(other.fd) {
+        constexpr Writer(Writer&& other) noexcept : Writer(other.fd) {
             other.fd = -1; // don't close(fd) early
         }
         
-        Write(const Write& other) = delete;
+        Writer(const Writer& other) = delete;
         
-        ~Write() noexcept;
+        ~Writer() noexcept;
         
         void operator()(const void* bytes, size_t numBytes) const noexcept;
         

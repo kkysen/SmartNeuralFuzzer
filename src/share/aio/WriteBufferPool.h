@@ -82,6 +82,8 @@ namespace aio {
         
         WriteBufferPool() noexcept = default;
         
+        WriteBufferPool(const WriteBufferPool& other) = delete;
+        
     };
     
     template <typename T, size_t N, typename... PoolTs>
@@ -113,6 +115,8 @@ namespace aio {
         ~WriteBufferBase() {
             close(fd);
         }
+        
+        WriteBufferBase(const WriteBufferBase& other) = delete;
         
         constexpr size_t size() const noexcept {
             return buffer->size();

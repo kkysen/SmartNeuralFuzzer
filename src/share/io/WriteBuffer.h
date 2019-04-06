@@ -6,7 +6,7 @@
 
 #include "src/share/common/math.h"
 #include "src/share/io/fse.h"
-#include "src/share/io/Write.h"
+#include "src/share/io/Writer.h"
 
 namespace io {
     
@@ -23,7 +23,7 @@ namespace io {
         std::array<T, bufferSize> buffer = {};
         size_t index = 0;
         
-        const Write write;
+        const Writer write;
         
         void writeBuffer(size_t numBytes = sizeof(buffer)) noexcept {
             write(buffer.begin(), numBytes);
@@ -50,11 +50,13 @@ namespace io {
     
     public:
         
-        explicit constexpr WriteBuffer(Write&& write) noexcept : write(std::move(write)) {}
+        explicit constexpr WriteBuffer(Writer&& write) noexcept : write(std::move(write)) {}
         
         ~WriteBuffer() {
             finalFlush();
         }
+        
+        WriteBuffer(const WriteBuffer& other) = delete;
         
         void on(T t) noexcept {
             buffer[index++] = t;

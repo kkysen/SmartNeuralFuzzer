@@ -18,7 +18,7 @@ namespace {
     
     public:
         
-        explicit constexpr BlockCoverageRuntime(io::Write&& write) noexcept : buffer(std::move(write)) {}
+        explicit constexpr BlockCoverageRuntime(io::Writer&& write) noexcept : buffer(std::move(write)) {}
         
         void onBlock(u64 blockNum) noexcept {
             buffer.on(blockNum);
@@ -40,7 +40,7 @@ namespace {
     public:
         
         explicit BlockCoverageRuntime(const std::string& environmentVariableName = "coverage.block.out")
-                : BlockCoverageRuntime(io::Write(createOutput(getOutputPath(environmentVariableName)))) {}
+                : BlockCoverageRuntime(io::Writer(createOutput(getOutputPath(environmentVariableName)))) {}
         
         static const LazilyConstructed<BlockCoverageRuntime> instance;
         
