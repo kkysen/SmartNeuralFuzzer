@@ -21,20 +21,21 @@ namespace aio {
     
     private:
         
-        aio::ControlBlock cb;
+        const aio::ControlBlock cb;
     
     public:
         
         // non-blocking
         void write() const noexcept;
         
-        constexpr IdempotentWriter(int fd, const void* buffer, size_t size) noexcept : cb({}) {
-            cb.fd() = fd;
-            cb.offset() = 0;
-            cb.buffer() = const_cast<volatile void*>(buffer);
-            cb.size() = size;
-            cb.signalMethod() = SIGEV_NONE;
-        }
+        constexpr IdempotentWriter(int fd, const void* buffer, size_t size) noexcept
+                : cb({
+                             .fd = fd,
+                             .offset = 0,
+                             .buffer = const_cast<volatile void*>(buffer),
+                             .size = size,
+                             .signalMethod = SIGEV_NONE,
+                     }) {}
         
         template <typename T>
         constexpr IdempotentWriter(int fd, const T& t) noexcept : IdempotentWriter(fd, &t, sizeof(t)) {}
