@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/BranchCoverageRuntime.h"
+#include "BranchCoverageRuntime.h"
 
 #include "src/share/common/lazy.h"
 #include "src/share/io/WriteBuffer.h"
@@ -11,7 +11,7 @@
 #include <numeric>
 #include <sys/stat.h>
 
-namespace {
+namespace runtime::coverage::branch {
     
     class BranchCoverageRuntime {
     

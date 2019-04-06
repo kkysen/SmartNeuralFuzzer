@@ -2,13 +2,13 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/BlockCoverageRuntime.h"
+#include "BlockCoverageRuntime.h"
 
 #include "src/share/common/lazy.h"
 #include "src/share/io/WriteBuffer.h"
 #include "src/share/io/EnvironmentOutputPath.h"
 
-namespace {
+namespace runtime::coverage::block {
     
     class BlockCoverageRuntime {
     

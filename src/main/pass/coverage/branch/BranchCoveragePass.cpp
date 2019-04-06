@@ -6,7 +6,7 @@
 #include "src/share/llvm/LLVMArray.h"
 #include "src/share/llvm/api.h"
 
-namespace {
+namespace pass::coverage::branch {
     
     using namespace llvm;
     
@@ -116,8 +116,10 @@ namespace {
         
     };
     
+    char BranchCoveragePass::ID = 0;
+    
 }
 
-char BranchCoveragePass::ID = 0;
+static RegisterPass<BranchCoveragePass> pass("coverage.branch", "Branch Coverage Pass");
 
-static RegisterPass<BranchCoveragePass> branchCoveragePass("coverage.branch", "Branch Coverage Pass");
+//bool registered = pass::registerStandardAlwaysLast<BranchCoveragePass>();

@@ -4,9 +4,8 @@
 
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"
-#include "src/share/llvm/debug.h"
 
-namespace {
+namespace pass::coverage::block {
     
     using namespace llvm;
     
