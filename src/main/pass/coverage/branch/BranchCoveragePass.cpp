@@ -2,9 +2,11 @@
 // Created by Khyber on 2/14/2019.
 //
 
+#include "src/share/llvm/debug.h"
 #include "src/share/common/numbers.h"
 #include "src/share/llvm/LLVMArray.h"
 #include "src/share/llvm/api.h"
+#include "src/share/llvm/registerStandardPass.h"
 
 namespace pass::coverage::branch {
     
@@ -120,6 +122,8 @@ namespace pass::coverage::branch {
     
 }
 
-static RegisterPass<BranchCoveragePass> pass("coverage.branch", "Branch Coverage Pass");
+using pass::coverage::branch::BranchCoveragePass;
 
-//bool registered = pass::registerStandardAlwaysLast<BranchCoveragePass>();
+static llvm::RegisterPass<BranchCoveragePass> branchCoveragePass("coverage.branch", "Branch Coverage Pass");
+
+bool registered = llvm::pass::registerStandardAlwaysLast<BranchCoveragePass>();

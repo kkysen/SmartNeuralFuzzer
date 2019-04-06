@@ -2,6 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
+#include "src/share/llvm/registerStandardPass.h"
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"
 
@@ -43,8 +44,12 @@ namespace pass::coverage::block {
         
     };
     
+    char BlockCoveragePass::ID = 0;
+    
 }
 
-char BlockCoveragePass::ID = 0;
+using pass::coverage::block::BlockCoveragePass;
 
-static RegisterPass<BlockCoveragePass> branchCoveragePass("coverage.block", "Block Coverage Pass");
+static llvm::RegisterPass<BlockCoveragePass> blockCoveragePass("coverage.block", "Block Coverage Pass");
+
+bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();

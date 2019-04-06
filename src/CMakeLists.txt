@@ -49,6 +49,7 @@ files(share.llvm
         share/llvm/api.h
         share/llvm/utils.h
         share/llvm/utils.cpp
+        share/llvm/registerStandardPass.h
         )
 
 set(CMAKE_CXX_STANDARD 17)
