@@ -1,18 +1,17 @@
-coveragePasses := branch block
-passes := $(coveragePasses:%=coverage.%)
+passes := branch block
 
-tests := branch switch optimizedSwitch loop virtualCall staticConstructors
+tests := branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstructors
 
 srcDir := .
 projectDir := ../..
 buildDir := $(projectDir)/build
 binDir := $(buildDir)/test
 
-passLibraries := $(passes:%=$(buildDir)/src/main/pass/libpass.%.so)
-passRuntimes := $(passes:%=$(buildDir)/src/main/runtime/libruntime.%.a)
+passLibraries := $(shell ./find.sh pass.so $(buildDir) $(passes))
+passRuntimes := $(shell ./find.sh runtime.a $(buildDir) $(passes))
 
 passLibraryArgs := $(passLibraries:%=-load=%)
-passArgs := $(passes:%=-%)
+passArgs := $(passes:%=-coverage.%)
 
 optimization := -O3
 flags := $(optimization) -S -emit-llvm -flto -fwhole-program-vtables
@@ -22,12 +21,17 @@ linkLibraries := -lstdc++fs
 sourcesWithExtensions := $(shell find $(srcDir) -name "*.cpp" -or -name "*.c")
 sourcesNoCppExtensions := $(sourcesWithExtensions:%.cpp=%)
 sourcesNoCExtensions := $(sourcesNoCppExtensions:%.c=%)
+
 sources := $(sourcesNoCExtensions)
+
 LLVM_IRs := $(sources:%=$(binDir)/%.ll)
+instrumentedLLVM_IRs := $(sources:%=$(binDir)/%.instr.ll)
 optimizedLLVM_IRs := $(sources:%=$(binDir)/%.opt.ll)
 assemblies := $(sources:%=$(binDir)/%.s)
 executablesOut := $(tests:%=$(binDir)/%.out)
 executables :=$(tests:%=$(binDir)/%)
+
+outputs := $(LLVM_IRs) $(instrumentedLLVM_IRs) $(optimizedLLVM_IRs) $(assemblies) $(executablesOut) $(executables)
 
 all: $(tests:%=%.out)
 	
@@ -77,8 +81,11 @@ $(binDir)/%: $(binDir)/%.out
 .PHONY: %.run
 
 clean:
-	rm -f $(LLVM_IRs) $(optimizedLLVM_IRs) $(assemblies) $(executablesOut) $(executables)
+	rm -f $(outputs)
 .PHONY: clean
 
 misc:
 	@echo $(passes)
+	@echo $(passRuntimes)
+	@echo $(passLibraryArgs)
+	@echo $(binDir)

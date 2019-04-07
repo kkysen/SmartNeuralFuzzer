@@ -170,7 +170,7 @@ namespace runtime::coverage::branch {
         
         public:
             
-            explicit constexpr NonSingleBranches(Write&& write) noexcept : buffer(std::move(write)) {}
+            explicit constexpr NonSingleBranches(io::Writer&& write) noexcept : buffer(std::move(write)) {}
             
             NonSingleBranches(const NonSingleBranches& other) = delete;
             
@@ -295,21 +295,23 @@ namespace runtime::coverage::branch {
     
     const LazilyConstructed<BranchCoverageRuntime> BranchCoverageRuntime::instance;
     
-    auto& runtime = BranchCoverageRuntime::instance;
+    auto& rt = BranchCoverageRuntime::instance;
     
 }
 
+using runtime::coverage::branch::rt;
+
 API_BranchCoverage(onSingleBranch)(bool value) {
 //    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
-    runtime().onSingleBranch(value);
+    rt().onSingleBranch(value);
 }
 
 API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) {
 //    printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
-    runtime().onMultiBranch(branchNum, numBranches);
+    rt().onMultiBranch(branchNum, numBranches);
 }
 
 API_BranchCoverage(onInfiniteBranch)(void* address) {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
-    runtime().onInfiniteBranch(address);
+    rt().onInfiniteBranch(address);
 }

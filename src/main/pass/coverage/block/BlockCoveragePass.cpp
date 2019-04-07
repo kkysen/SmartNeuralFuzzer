@@ -52,4 +52,4 @@ using pass::coverage::block::BlockCoveragePass;
 
 static llvm::RegisterPass<BlockCoveragePass> blockCoveragePass("coverage.block", "Block Coverage Pass");
 
-bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();
+//bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();

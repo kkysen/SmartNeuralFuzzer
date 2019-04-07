@@ -34,7 +34,7 @@ namespace aio {
                              .offset = 0,
                              .buffer = const_cast<volatile void*>(buffer),
                              .size = size,
-                             .signalMethod = SIGEV_NONE,
+                             .signalMethod = {.sigev_notify = SIGEV_NONE},
                      }) {}
         
         template <typename T>

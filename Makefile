@@ -17,23 +17,27 @@ cmake: CMakeLists.txt $(cmakeFiles)
 	-DCMAKE_BUILD_TYPE=$(buildType)
 .PHONY: cmake
 
-passes: cmake
-	cd $(buildDir) && $(buildSystem) pass.coverage.branch pass.coverage.block
-.PHONY: passes
+pass: cmake
+	cd $(buildDir) && $(buildSystem) pass
+.PHONY: pass
 
-runtimes: cmake
-	cd $(buildDir) && $(buildSystem) runtime.coverage.branch runtime.coverage.block
-.PHONY: runtimes
+runtime: cmake
+	cd $(buildDir) && $(buildSystem) runtime
+.PHONY: runtime
 
-passes.runtimes: cmake
-	cd $(buildDir) && $(buildSystem) pass.coverage.branch pass.coverage.block runtime.coverage.branch runtime.coverage.block
-.PHONY: passes.runtimes
+main: cmake
+	cd $(buildDir) && $(buildSystem) main
+.PHONY: main
 
-build: passes
-	cd $(buildDir) && $(buildSystem)
+test: main
+	cd $(buildDir) && $(buildSystem) test
+.PHONY: test
+
+build: test
+
 .PHONY: build
 
-tests: passes.runtimes $(testDir)/Makefile
+tests: main $(testDir)/Makefile
 	cd $(testDir) && make -r
 .PHONY: tests
 

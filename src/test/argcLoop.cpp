@@ -1,8 +1,8 @@
 #include <cstdio>
 
 extern "C"
-void loopTest(int argc) {
-	for (int i = 0; i < argc; i++) {
+void loopTest(int n) {
+	for (int i = 0; i < n; i++) {
 		printf("%d\n", i);
 	}
 }

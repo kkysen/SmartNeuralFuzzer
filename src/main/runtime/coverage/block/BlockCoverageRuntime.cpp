@@ -48,11 +48,13 @@ namespace runtime::coverage::block {
     
     const LazilyConstructed<BlockCoverageRuntime> BlockCoverageRuntime::instance;
     
-    auto& runtime = BlockCoverageRuntime::instance;
+    auto& rt = BlockCoverageRuntime::instance;
     
 }
 
+using runtime::coverage::block::rt;
+
 API_BlockCoverage(onBlock)(u64 blockNum) {
 //    printf("BlockCoverage: onBlock: %ld\n", blockNum);
-    runtime().onBlock(blockNum);
+    rt().onBlock(blockNum);
 }

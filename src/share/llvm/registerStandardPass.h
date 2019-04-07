@@ -10,10 +10,10 @@
 
 namespace llvm::pass {
     
-    using ExtensionPoint = PassManagerBuilder::ExtensionPointTy;
+    using ExtPt = PassManagerBuilder::ExtensionPointTy;
     
     template <class Pass>
-    bool registerStandard(ArrayRef<ExtensionPoint> extensionPoints) {
+    bool registerStandard(ArrayRef<ExtPt> extensionPoints) {
         for (auto&& extensionPoint : extensionPoints) {
             RegisterStandardPasses(extensionPoint, [](auto&, auto& pm) { pm.add(new Pass()); });
         }
@@ -22,7 +22,7 @@ namespace llvm::pass {
     
     template <class Pass>
     bool registerStandardAlwaysLast() {
-        return registerStandard<Pass>({ExtensionPoint::EP_OptimizerLast, ExtensionPoint::EP_EnabledOnOptLevel0});
+        return registerStandard<Pass>({ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0});
     }
     
 }

@@ -137,7 +137,7 @@ namespace aio {
             cb.offset() = offset * sizeof(T);
             buffer.setBuffer();
             cb.size() = n * sizeof(T);
-            cb.signalMethod() = SIGEV_NONE;
+            cb.signalMethod() = {.sigev_notify = SIGEV_NONE};
             assert(cb.write() != -1);
             offset += n;
             buffer = finalWrite ? nullptr : pool.request();

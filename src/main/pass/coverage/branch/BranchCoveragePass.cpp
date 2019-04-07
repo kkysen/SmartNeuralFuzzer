@@ -126,4 +126,4 @@ using pass::coverage::branch::BranchCoveragePass;
 
 static llvm::RegisterPass<BranchCoveragePass> branchCoveragePass("coverage.branch", "Branch Coverage Pass");
 
-bool registered = llvm::pass::registerStandardAlwaysLast<BranchCoveragePass>();
+//bool registered = llvm::pass::registerStandardAlwaysLast<BranchCoveragePass>();

@@ -22,13 +22,15 @@ function(llvmImport asLibrary)
     endif ()
     
     #add_compile_options(${llvmFlags})  # doesn't keep -fno-rtti so typeinfo methods are created
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${llvmFlags}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${llvmFlags}" PARENT_SCOPE)
 endfunction()
 
 function(llvmImportAsLibrary)
     llvmImport(TRUE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
 endfunction()
 
 function(llvmImportAsRuntime)
     llvmImport(FALSE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
 endfunction()
