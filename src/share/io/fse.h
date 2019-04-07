@@ -14,6 +14,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 namespace fse {
     
@@ -45,5 +46,8 @@ namespace fse {
     T* mmap(int fd, int protection, int flags, size_t length, size_t offset = 0) {
         return static_cast<T*>(mmapRaw(fd, protection, flags, length, offset));
     }
+    
+    // return if created
+    bool ensureDir(const fs::path& path);
     
 }

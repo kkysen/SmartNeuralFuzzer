@@ -22,6 +22,8 @@ files(share.io
         share/io/fs.h
         share/io/fse.h
         share/io/fse.cpp
+        share/io/Dir.h
+        share/io/Dir.cpp
         share/io/Writer.h
         share/io/Writer.cpp
         share/io/WriteBuffer.h

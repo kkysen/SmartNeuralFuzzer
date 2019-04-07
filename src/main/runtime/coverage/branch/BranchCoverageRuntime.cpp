@@ -7,9 +7,9 @@
 #include "src/share/common/lazy.h"
 #include "src/share/io/WriteBuffer.h"
 #include "src/share/io/EnvironmentOutputPath.h"
+#include "src/main/runtime/coverage/CoverageOutput.h"
 
 #include <numeric>
-#include <sys/stat.h>
 
 namespace runtime::coverage::branch {
     
@@ -193,7 +193,7 @@ namespace runtime::coverage::branch {
             }
             
         };
-    
+        
         Counts count;
         
         struct Branches {
@@ -205,62 +205,8 @@ namespace runtime::coverage::branch {
                     : single(std::move(singleWrite)), nonSingle(std::move(nonSingleWrite)) {}
             
         } branches;
-    
+
     public:
-        
-        class Output {
-        
-        private:
-            
-            const fs::path& dirPath;
-            const int dir;
-            
-            int createDir() noexcept(false) {
-                if (mkdir(dirPath.c_str(), 0755) == -1 && errno != EEXIST) {
-                    throw fse::error("mkdir", dirPath);
-                }
-                const int fd = open(dirPath.c_str(), O_DIRECTORY | O_PATH);
-                if (fd == -1) {
-                    throw fse::error("open(O_DIRECTORY | O_PATH)", dirPath);
-                }
-                return fd;
-            }
-            
-            int createAtDir(const std::string& fileBaseName) noexcept(false) {
-                const auto fileName = fileBaseName + ".bin";
-                const int fd = openat(dir, fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                if (fd == -1) {
-                    throw fse::error("openat", dirPath, fileName);
-                }
-                return fd;
-            }
-        
-        public:
-            
-            const int count;
-            const struct {
-                const int single;
-                const int nonSingle;
-            } branches;
-            
-            explicit Output(const fs::path& dirPath) noexcept(false)
-                    : dirPath(dirPath),
-                      dir(createDir()),
-                      count(createAtDir("counts")),
-                      branches({.single = createAtDir("single"), .nonSingle = createAtDir("nonSingle")}) {}
-            
-            ~Output() {
-                close(dir);
-            }
-            
-        };
-        
-        explicit BranchCoverageRuntime(Output&& writes) noexcept
-                : count(io::Writer(writes.count)),
-                  branches(io::Writer(writes.branches.single), io::Writer(writes.branches.nonSingle)) {}
-        
-        explicit BranchCoverageRuntime(const fs::path& directoryPath) noexcept(false)
-                : BranchCoverageRuntime(Output(directoryPath)) {}
         
         void onSingleBranch(bool value) noexcept {
             count.branches.single++;
@@ -278,16 +224,17 @@ namespace runtime::coverage::branch {
             branches.nonSingle.onInfinite(reinterpret_cast<u64>(address), branches.single.resetBitIndexDiff());
             count.flush();
         }
-    
+
     private:
-        
-        static constexpr auto getOutputDir = env::path::output::getter(
-                [](const auto& var, auto pid) -> fs::path { return var + "." + std::to_string(pid) + ".dir"; });
     
+        explicit BranchCoverageRuntime(fse::Dir&& dir) noexcept(false)
+                : count(writer(dir, "counts")),
+                  branches(writer(dir, "single"), writer(dir, "nonSingle")) {}
+
     public:
-        
-        explicit BranchCoverageRuntime(const std::string& environmentVariableName = "coverage.branch.out")
-                : BranchCoverageRuntime(getOutputDir(environmentVariableName)) {}
+    
+        explicit BranchCoverageRuntime() noexcept(false)
+                : BranchCoverageRuntime(output().dir.dir("branch")) {}
         
         static const LazilyConstructed<BranchCoverageRuntime> instance;
         
@@ -301,17 +248,17 @@ namespace runtime::coverage::branch {
 
 using runtime::coverage::branch::rt;
 
-API_BranchCoverage(onSingleBranch)(bool value) {
+API_BranchCoverage(onSingleBranch)(bool value) noexcept {
 //    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
     rt().onSingleBranch(value);
 }
 
-API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) {
+API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept {
 //    printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
     rt().onMultiBranch(branchNum, numBranches);
 }
 
-API_BranchCoverage(onInfiniteBranch)(void* address) {
+API_BranchCoverage(onInfiniteBranch)(void* address) noexcept {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
     rt().onInfiniteBranch(address);
 }

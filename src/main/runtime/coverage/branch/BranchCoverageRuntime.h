@@ -11,8 +11,8 @@
 
 #define API_BranchCoverage(funcName) API(BranchCoverage, funcName)
 
-API_BranchCoverage(onSingleBranch)(bool value);
+API_BranchCoverage(onSingleBranch)(bool value) noexcept;
 
-API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches);
+API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept;
 
-API_BranchCoverage(onInfiniteBranch)(void* address);
+API_BranchCoverage(onInfiniteBranch)(void* address) noexcept;

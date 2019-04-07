@@ -30,4 +30,4 @@
  * Another option is to just compress the output afterwards, separate from the program.
  */
 
-API_BlockCoverage(onBlock)(u64 blockNum);
+API_BlockCoverage(onBlock)(u64 blockNum) noexcept;

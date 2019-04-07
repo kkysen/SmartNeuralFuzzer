@@ -1,6 +1,12 @@
 llvmImportAsLibrary()
 
-set(files.share ${files.share.common} ${files.share.io} ${files.share.aio})
+files(runtime.coverage
+        CoverageOutput.h
+        CoverageOutput.cpp
+        )
+
+set(files.share ${files.share.common} ${files.share.io} ${files.share.aio}
+        ${files.runtime} ${files.runtime.coverage})
 
 add_subdirectory(branch)
 add_subdirectory(block)
