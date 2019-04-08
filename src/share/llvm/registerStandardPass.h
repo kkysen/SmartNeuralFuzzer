@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/share/llvm/debug.h"
+
 #include "llvm/PassRegistry.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
