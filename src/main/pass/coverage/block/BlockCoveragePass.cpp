@@ -2,6 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
+#include <src/share/llvm/debug.h>
 #include "src/share/llvm/registerStandardPass.h"
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"
@@ -21,7 +22,9 @@ namespace pass::coverage::block {
         
         static char ID;
         
-        BlockCoveragePass() : BasicBlockPass(ID) {}
+        BlockCoveragePass() : BasicBlockPass(ID) {
+            llvm_dbg("");
+        }
         
         bool doInitialization(Module& module) override {
             const Api api("BlockCoverage", module);
@@ -52,4 +55,4 @@ using pass::coverage::block::BlockCoveragePass;
 
 static llvm::RegisterPass<BlockCoveragePass> blockCoveragePass("coverage.block", "Block Coverage Pass");
 
-//bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();
+bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();

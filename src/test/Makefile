@@ -1,4 +1,5 @@
-passes := branch block
+passes := block
+#branch block
 
 tests := branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstructors
 
@@ -11,7 +12,7 @@ passLibraries := $(shell ./find.sh pass.so $(buildDir) $(passes))
 passRuntimes := $(shell ./find.sh runtime.a $(buildDir) $(passes))
 
 passLibraryArgs := $(passLibraries:%=-load=%)
-passArgs := $(passes:%=-coverage.%)
+#passArgs := $(passes:%=-coverage.%)
 
 optimization := -O3
 flags := $(optimization) -S -emit-llvm -flto -fwhole-program-vtables

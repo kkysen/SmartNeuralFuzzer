@@ -14,15 +14,22 @@ namespace llvm::pass {
     
     template <class Pass>
     bool registerStandard(ArrayRef<ExtPt> extensionPoints) {
+        llvm_dbg("start");
         for (auto&& extensionPoint : extensionPoints) {
-            RegisterStandardPasses(extensionPoint, [](auto&, auto& pm) { pm.add(new Pass()); });
+            llvm_dbg(extensionPoint);
+            RegisterStandardPasses(extensionPoint, [](const auto&, auto& pm) {
+                llvm_dbg("callback");
+                pm.add(new Pass());
+            });
         }
+        llvm_dbg("end");
         return true;
     }
     
     template <class Pass>
     bool registerStandardAlwaysLast() {
-        return registerStandard<Pass>({ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0});
+//        return registerStandard<Pass>({ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0});
+        return registerStandard<Pass>({}); // any EPs I've tried have caused segfaults
     }
     
 }

@@ -3,8 +3,9 @@
 extern "C"
 void loopTest(int n) {
 	for (int i = 0; i < n; i++) {
-		printf("%d\n", i);
+		printf("%d, ", i);
 	}
+	printf("\n");
 }
 
 int main([[maybe_unused]] int argc, char** argv) {

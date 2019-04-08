@@ -33,9 +33,7 @@ namespace fse {
     }
     
     int Dir::file(const std::string& fileName, int flags, mode_t mode) const {
-        _dbg(fd);
         const int fileFd = openat(fd, fileName.c_str(), flags, mode);
-        perror("openat");
         if (fileFd == -1) {
             throw fse::error("openat", fileName);
         }

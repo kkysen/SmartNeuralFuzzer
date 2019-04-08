@@ -17,11 +17,35 @@ public:
     
     constexpr LazilyConstructed() noexcept = default;
     
-    T& operator()() const {
+    void reconstruct() const {
+        instance = std::make_unique<T>();
+    }
+    
+    void construct() const {
         if (!instance) {
-            instance = std::make_unique<T>();
+            reconstruct();
         }
+    }
+    
+    void destruct() const {
+        instance.release();
+    }
+    
+    T& get() const {
+        construct();
         return *instance;
+    }
+    
+    T& operator()() const {
+        return get();
+    }
+    
+    T& operator*() const {
+        return get();
+    }
+    
+    T* operator->() const {
+        return &get();
     }
     
 };
