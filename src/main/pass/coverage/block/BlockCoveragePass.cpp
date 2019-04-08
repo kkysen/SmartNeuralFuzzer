@@ -47,21 +47,28 @@ namespace pass::coverage::block {
     
     char BlockCoveragePass::ID = 0;
     
-    void registerPass(const PassManagerBuilder&, legacy::PassManagerBase& pm) {
-        pm.add(new BlockCoveragePass());
-    }
-    
 }
 
 using pass::coverage::block::BlockCoveragePass;
-using pass::coverage::block::registerPass;
+//using pass::coverage::block::registerPass;
 using llvm::RegisterStandardPasses;
 using llvm::PassManagerBuilder;
 
+extern "C"
+void registerPass(const PassManagerBuilder&, llvm::legacy::PassManagerBase& pm) {
+    pm.add(new BlockCoveragePass());
+}
+
+PassManagerBuilder::ExtensionFn fnRegisterPass = registerPass;
+
+void f() {
+
+}
+
 //static llvm::RegisterPass<BlockCoveragePass> blockCoveragePass("coverage.block", "Block Coverage Pass");
 
-static RegisterStandardPasses registerBlockCoveragePass(PassManagerBuilder::EP_OptimizerLast, registerPass);
+static RegisterStandardPasses registerBlockCoveragePass(PassManagerBuilder::EP_OptimizerLast, fnRegisterPass);
 
-static RegisterStandardPasses registerBlockCoveragePass0(PassManagerBuilder::EP_EnabledOnOptLevel0, registerPass);
+static RegisterStandardPasses registerBlockCoveragePass0(PassManagerBuilder::EP_EnabledOnOptLevel0, fnRegisterPass);
 
 //bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();
