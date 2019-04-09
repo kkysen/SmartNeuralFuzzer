@@ -35,7 +35,6 @@ namespace pass::coverage::block {
         }
         
         bool runOnBasicBlock(BasicBlock& block) override {
-            llvm_dbg(blockIndex);
             IRBuilder<> builder(&*block.getFirstInsertionPt());
             IRBuilderExt ext(builder);
             ext.call(onBlock, {ext.constants().getInt(blockIndex)});
@@ -47,28 +46,8 @@ namespace pass::coverage::block {
     
     char BlockCoveragePass::ID = 0;
     
+//    RegisterPass<BlockCoveragePass> pass("coverage.block", "Block Coverage Pass");
+    
+    bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();
+    
 }
-
-using pass::coverage::block::BlockCoveragePass;
-//using pass::coverage::block::registerPass;
-using llvm::RegisterStandardPasses;
-using llvm::PassManagerBuilder;
-
-extern "C"
-void registerPass(const PassManagerBuilder&, llvm::legacy::PassManagerBase& pm) {
-    pm.add(new BlockCoveragePass());
-}
-
-PassManagerBuilder::ExtensionFn fnRegisterPass = registerPass;
-
-void f() {
-
-}
-
-//static llvm::RegisterPass<BlockCoveragePass> blockCoveragePass("coverage.block", "Block Coverage Pass");
-
-static RegisterStandardPasses registerBlockCoveragePass(PassManagerBuilder::EP_OptimizerLast, fnRegisterPass);
-
-static RegisterStandardPasses registerBlockCoveragePass0(PassManagerBuilder::EP_EnabledOnOptLevel0, fnRegisterPass);
-
-//bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();

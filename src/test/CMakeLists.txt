@@ -6,7 +6,7 @@ set(tests branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstru
 foreach (test ${tests})
     add_executable(${test} ${files.share} "${test}.cpp")
     target_link_libraries(${test} runtime.coverage.branch runtime.coverage.block)
-    add_dependencies(${test} pass.coverage.branch pass.coverage.block)
+    add_dependencies(${test} pass)
 endforeach ()
 
 add_custom_target(test)

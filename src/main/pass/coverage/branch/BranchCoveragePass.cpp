@@ -120,10 +120,8 @@ namespace pass::coverage::branch {
     
     char BranchCoveragePass::ID = 0;
     
+//    RegisterPass<BranchCoveragePass> pass("coverage.branch", "Branch Coverage Pass");
+    
+    bool registered = llvm::pass::registerStandardAlwaysLast<BranchCoveragePass>();
+    
 }
-
-using pass::coverage::branch::BranchCoveragePass;
-
-static llvm::RegisterPass<BranchCoveragePass> branchCoveragePass("coverage.branch", "Branch Coverage Pass");
-
-//bool registered = llvm::pass::registerStandardAlwaysLast<BranchCoveragePass>();

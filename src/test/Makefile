@@ -1,5 +1,4 @@
-passes := block
-#branch block
+passes := block branch
 
 tests := branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstructors
 
@@ -7,6 +6,8 @@ srcDir := .
 projectDir := ../..
 buildDir := $(projectDir)/build
 binDir := $(buildDir)/test
+
+ldPreloadLibraries := $(buildDir)/src/main/pass/register/libpass.register.so
 
 passLibraries := $(shell ./find.sh pass.so $(buildDir) $(passes))
 passRuntimes := $(shell ./find.sh runtime.a $(buildDir) $(passes))
@@ -50,8 +51,8 @@ $(binDir)/%.ll: $(srcDir)/%.cpp
 .PRECIOUS: $(binDir)/%.ll
 
 # instrument LLVM IR
-$(binDir)/%.instr.ll: $(binDir)/%.ll
-	opt $(passLibraryArgs) $(passArgs) -S < $< > $@
+$(binDir)/%.instr.ll: $(binDir)/%.ll $(passLibraries) $(ldPreloadLibraries)
+	LD_PRELOAD=$(ldPreloadLibraries) opt -O0 $(passLibraryArgs) $(passArgs) -S < $< > $@
 .PRECIOUS: $(binDir)/%.instr.ll
 
 # optimizize LLVM IR

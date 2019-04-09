@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "src/share/llvm/debug.h"
+#include "src/main/pass/register/register.h"
 
 #include "llvm/PassRegistry.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -16,22 +16,15 @@ namespace llvm::pass {
     
     template <class Pass>
     bool registerStandard(ArrayRef<ExtPt> extensionPoints) {
-        llvm_dbg("start");
         for (auto&& extensionPoint : extensionPoints) {
-            llvm_dbg(extensionPoint);
-            RegisterStandardPasses(extensionPoint, [](const auto&, auto& pm) {
-                llvm_dbg("callback");
-                pm.add(new Pass());
-            });
+            addGlobalExtension(extensionPoint, [](const auto&, auto& pm) { pm.add(new Pass()); });
         }
-        llvm_dbg("end");
         return true;
     }
     
     template <class Pass>
     bool registerStandardAlwaysLast() {
-//        return registerStandard<Pass>({ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0});
-        return registerStandard<Pass>({}); // any EPs I've tried have caused segfaults
+        return registerStandard<Pass>({ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0});
     }
     
 }
