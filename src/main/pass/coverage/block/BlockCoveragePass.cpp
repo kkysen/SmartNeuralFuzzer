@@ -23,6 +23,10 @@ namespace pass::coverage::block {
         
         BlockCoveragePass() : BasicBlockPass(ID) {}
         
+        StringRef getPassName() const override {
+            return "Block Coverage Pass";
+        }
+        
         bool doInitialization(Module& module) override {
             const Api api("BlockCoverage", module);
             onBlock = api.func<u64>("onBlock");

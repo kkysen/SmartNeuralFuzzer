@@ -37,6 +37,10 @@ namespace pass::coverage::branch {
         static char ID;
         
         BranchCoveragePass() : BasicBlockPass(ID) {}
+    
+        StringRef getPassName() const override {
+            return "Branch Coverage Pass";
+        }
         
         bool doInitialization(Module& module) override {
             const Api api("BranchCoverage", module);
