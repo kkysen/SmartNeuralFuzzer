@@ -34,7 +34,15 @@ namespace llvm {
             fullName += name;
             fullName += "_";
             fullName += funcName;
-            return module.getOrInsertFunction(fullName, types.function<void, Args...>());
+            auto x = types.function<void, Args...>();
+            llvm_dbg(x->getReturnType());
+            Function *f = Function::Create(x, GlobalVariable::ExternalLinkage,
+                                           module.getDataLayout().getProgramAddressSpace(), fullName, &module);
+            module.getFunctionList().push_back(f);
+//            auto y = module.getOrInsertFunction(fullName, x);
+            FunctionCallee y = {x, f};
+            llvm_dbg(y.getFunctionType()->getReturnType());
+            return y;
         }
         
     };

@@ -7,7 +7,7 @@
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/registerStandardPass.h"
 
-namespace pass::coverage::branch {
+namespace llvm::pass::coverage::branch {
     
     using namespace llvm;
     
@@ -139,6 +139,6 @@ namespace pass::coverage::branch {
 
 //    RegisterPass<BranchCoveragePass> pass("coverage.branch", "Branch Coverage Pass");
     
-    bool registered = llvm::pass::registerStandardAlwaysLast<BranchCoveragePass>();
+    bool registered = registerStandardAlwaysLast<BranchCoveragePass>();
     
 }

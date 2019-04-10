@@ -2,11 +2,12 @@
 // Created by Khyber on 3/14/2019.
 //
 
+#include <src/share/llvm/debug.h>
 #include "src/share/llvm/registerStandardPass.h"
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"
 
-namespace pass::coverage::block {
+namespace llvm::pass::coverage::block {
     
     using namespace llvm;
     
@@ -24,7 +25,9 @@ namespace pass::coverage::block {
         
         bool runOnModule(Module& module) override {
             const Api api("BlockCoverage", module);
-            const FunctionCallee onBlock = api.func<u64>("onBlock");
+            FunctionCallee onBlock = api.func<u64>("onBlock");
+            llvm_dbg(onBlock.getFunctionType());
+            llvm_dbg(onBlock.getFunctionType()->getReturnType());
             u64 blockIndex = 0;
             for (auto& function : module) {
                 for (auto& block : function) {
@@ -43,6 +46,6 @@ namespace pass::coverage::block {
     
 //    RegisterPass<BlockCoveragePass> pass("coverage.block", "Block Coverage Pass");
     
-    bool registered = llvm::pass::registerStandardAlwaysLast<BlockCoveragePass>();
+    bool registered = registerStandardAlwaysLast<BlockCoveragePass>();
     
 }
