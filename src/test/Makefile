@@ -15,8 +15,12 @@ passRuntimes := $(shell ./find.sh runtime.a $(buildDir) $(passes))
 passLibraryArgs := $(passLibraries:%=-load=%)
 #passArgs := $(passes:%=-coverage.%)
 
-optimization := -O3
-flags := $(optimization) -S -emit-llvm -flto -fwhole-program-vtables
+preOptimization := -O0
+concurrentOptimization := -O3
+postOptimization := -O0
+
+
+flags := $(preOptimization) -S -emit-llvm -flto -fwhole-program-vtables
 linkLibraries := -lstdc++fs
 
 
@@ -52,12 +56,12 @@ $(binDir)/%.ll: $(srcDir)/%.cpp
 
 # instrument LLVM IR
 $(binDir)/%.instr.ll: $(binDir)/%.ll $(passLibraries) $(ldPreloadLibraries)
-	LD_PRELOAD=$(ldPreloadLibraries) opt -O0 $(passLibraryArgs) $(passArgs) -S < $< > $@
+	LD_PRELOAD=$(ldPreloadLibraries) opt $(concurrentOptimization) $(passLibraryArgs) $(passArgs) -S < $< > $@
 .PRECIOUS: $(binDir)/%.instr.ll
 
 # optimizize LLVM IR
 $(binDir)/%.opt.ll: $(binDir)/%.instr.ll
-	opt $(optimization) -S < $< > $@
+	opt $(postOptimization) -S < $< > $@
 .PRECIOUS: $(binDir)/%.opt.ll
 
 # compile optimized LLVM IR to assembly

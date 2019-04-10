@@ -2,6 +2,7 @@ set(files.share ${files.share.common})
 
 llvmPreloadPassRegister()
 
+# TODO switch order?
 XclangLoadTargets(pass.coverage.branch pass.coverage.block)
 
 set(tests branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstructors)

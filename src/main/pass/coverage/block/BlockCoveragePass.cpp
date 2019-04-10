@@ -10,39 +10,30 @@ namespace pass::coverage::block {
     
     using namespace llvm;
     
-    class BlockCoveragePass : public BasicBlockPass {
-    
-    private:
-        
-        FunctionCallee onBlock;
-        u64 blockIndex = 0;
+    class BlockCoveragePass : public ModulePass {
     
     public:
         
         static char ID;
         
-        BlockCoveragePass() : BasicBlockPass(ID) {}
+        BlockCoveragePass() : ModulePass(ID) {}
         
         StringRef getPassName() const override {
             return "Block Coverage Pass";
         }
         
-        bool doInitialization(Module& module) override {
+        bool runOnModule(Module& module) override {
             const Api api("BlockCoverage", module);
-            onBlock = api.func<u64>("onBlock");
-            return true;
-        }
-        
-        bool doInitialization(Function&) override {
-            // do nothing, but declaration needed for overload resolution?
-            return false;
-        }
-        
-        bool runOnBasicBlock(BasicBlock& block) override {
-            IRBuilder<> builder(&*block.getFirstInsertionPt());
-            IRBuilderExt ext(builder);
-            ext.call(onBlock, {ext.constants().getInt(blockIndex)});
-            blockIndex++;
+            const FunctionCallee onBlock = api.func<u64>("onBlock");
+            u64 blockIndex = 0;
+            for (auto& function : module) {
+                for (auto& block : function) {
+                    IRBuilder<> builder(&*block.getFirstInsertionPt());
+                    IRBuilderExt ext(builder);
+                    ext.call(onBlock, {ext.constants().getInt(blockIndex)});
+                    blockIndex++;
+                }
+            }
             return true;
         }
         
