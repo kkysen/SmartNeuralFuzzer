@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <bits/unique_ptr.h>
+#include <memory>
 
 template <typename T>
 class LazilyConstructed {

@@ -26,8 +26,6 @@ namespace llvm::pass::coverage::block {
         bool runOnModule(Module& module) override {
             const Api api("BlockCoverage", module);
             FunctionCallee onBlock = api.func<u64>("onBlock");
-            llvm_dbg(onBlock.getFunctionType());
-            llvm_dbg(onBlock.getFunctionType()->getReturnType());
             u64 blockIndex = 0;
             for (auto& function : module) {
                 for (auto& block : function) {
@@ -43,8 +41,6 @@ namespace llvm::pass::coverage::block {
     };
     
     char BlockCoveragePass::ID = 0;
-    
-//    RegisterPass<BlockCoveragePass> pass("coverage.block", "Block Coverage Pass");
     
     bool registered = registerStandardAlwaysLast<BlockCoveragePass>();
     

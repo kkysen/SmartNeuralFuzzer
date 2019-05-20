@@ -37,14 +37,11 @@ namespace debug {
         size_t _size;
         std::string string;
         
-        void syncString() {
-            string.resize(_size, defaultChar);
-        }
+        void syncString();
     
     public:
         
-        explicit Indentation(size_t size = 0) noexcept
-                : _size(size), string() {}
+        explicit Indentation(size_t size = 0) noexcept;
         
         constexpr size_t size() const noexcept {
             return _size;
@@ -54,19 +51,9 @@ namespace debug {
             return string;
         }
         
-        void indent(size_t indent = defaultIndent) {
-            _size += indent;
-            syncString();
-        }
+        void indent(size_t indent = defaultIndent);
         
-        void unIndent(size_t indent = defaultIndent) {
-            if (_size < indent) {
-                _size = 0;
-            } else {
-                _size -= indent;
-            }
-            syncString();
-        }
+        void unIndent(size_t indent = defaultIndent);
         
     };
     
@@ -80,13 +67,9 @@ namespace debug {
     
     public:
         
-        explicit Indented(Indentation& indentation = debug::indentation) : indentation(indentation) {
-            indentation.indent();
-        }
+        explicit Indented(Indentation& indentation = debug::indentation);
         
-        ~Indented() {
-            indentation.unIndent();
-        }
+        ~Indented();
         
     };
     
@@ -183,6 +166,8 @@ namespace debug {
                 threadId();
             }
             
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow"
             void location() {
                 if (debug.mode) {
                     const auto& info = debug.info;
@@ -203,6 +188,7 @@ namespace debug {
                     out() << "(" << info.errorNumToString(info.errorNum) << ")";
                 }
             }
+#pragma clang diagnostic pop
             
             void error() {
                 errorNum();

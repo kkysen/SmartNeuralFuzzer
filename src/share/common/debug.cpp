@@ -15,6 +15,27 @@ namespace debug {
     char Indentation::defaultChar = ' ';
     size_t Indentation::defaultIndent = 4;
     
+    void Indentation::syncString() {
+        string.resize(_size, defaultChar);
+    }
+    
+    Indentation::Indentation(size_t size) noexcept
+            : _size(size), string() {}
+    
+    void Indentation::indent(size_t indent) {
+        _size += indent;
+        syncString();
+    }
+    
+    void Indentation::unIndent(size_t indent) {
+        if (_size < indent) {
+            _size = 0;
+        } else {
+            _size -= indent;
+        }
+        syncString();
+    }
+    
     Indentation indentation;
     
     const char* ErrorInfo::strerror(int errorNum) {
@@ -23,6 +44,13 @@ namespace debug {
     
     ErrorInfo::ErrorInfo(Info info) noexcept : ErrorInfo(info, errno, strerror) {}
     
+    Indented::Indented(Indentation& indentation) : indentation(indentation) {
+        indentation.indent();
+    }
+    
+    Indented::~Indented() {
+        indentation.unIndent();
+    }
 }
 
 std::ostream& operator<<(std::ostream& out, bool boolean) {

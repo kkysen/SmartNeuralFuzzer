@@ -136,8 +136,6 @@ namespace llvm::pass::coverage::branch {
     };
     
     char BranchCoveragePass::ID = 0;
-
-//    RegisterPass<BranchCoveragePass> pass("coverage.branch", "Branch Coverage Pass");
     
     bool registered = registerStandardAlwaysLast<BranchCoveragePass>();
     

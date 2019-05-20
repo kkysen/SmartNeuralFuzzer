@@ -14,4 +14,3 @@ namespace runtime::coverage {
     io::Writer writer(const fse::Dir& dir, const std::string& name);
     
 }
-

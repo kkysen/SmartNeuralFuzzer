@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "src/share/common/numbers.h"
-#include "src/share/common/debug.h"
 
 #include "llvm/IR/IRBuilder.h"
 
@@ -51,13 +50,14 @@ namespace llvm {
             static_assert(isIntegral || isFloating || isPointer, "Unsupported type");
             if constexpr (isIntegral) {
                 return integral<T>();
-            } else if constexpr (isFloating) {
-                return floating<T>();
-            } else if constexpr (isPointer) {
-                return get<std::remove_pointer_t<T>>()->getPointerTo();
-            } else {
-                llvm_unreachable("Unsupported type");
             }
+            if constexpr (isFloating) {
+                return floating<T>();
+            }
+            if constexpr (isPointer) {
+                return get<std::remove_pointer_t<T>>()->getPointerTo();
+            }
+            llvm_unreachable("Unsupported type");
         }
         
         template <typename... Types>
@@ -69,10 +69,7 @@ namespace llvm {
         FunctionType* function(bool isVarArg = false) const noexcept {
             // FunctionType doesn't need to hold memory for args/params; it copies them in some way
             auto args = new SmallVector<Type*, sizeof...(Args)>(convert<Args...>());
-            auto x = FunctionType::get(get<Return>(), *args, isVarArg);
-            llvm_dbg(x);
-            llvm_dbg(x->getReturnType());
-            return x;
+            return FunctionType::get(get<Return>(), *args, isVarArg);
         }
         
     };

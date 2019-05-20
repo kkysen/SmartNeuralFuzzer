@@ -21,7 +21,7 @@ postOptimization := -O0
 
 
 flags := $(preOptimization) -S -emit-llvm -flto -fwhole-program-vtables
-linkLibraries := -lstdc++fs
+linkLibraries := -lstdc++fs -lstdc++ # latter needed for clang-9 only for some reason
 
 
 sourcesWithExtensions := $(shell find $(srcDir) -name "*.cpp" -or -name "*.c")
@@ -45,33 +45,33 @@ all: $(tests:%=%.out)
 # compile C to LLVM IR
 $(binDir)/%.ll: $(srcDir)/%.c
 	mkdir -p $(dir $@)
-	clang $(flags) $< -o $@
+	clang-9 $(flags) $< -o $@
 .PRECIOUS: $(binDir)/%.ll
 
 # compile C++ to LLVM IR
 $(binDir)/%.ll: $(srcDir)/%.cpp
 	mkdir -p $(dir $@)
-	clang++ $(flags) $< -o $@
+	clang-9 $(flags) $< -o $@
 .PRECIOUS: $(binDir)/%.ll
 
 # instrument LLVM IR
 $(binDir)/%.instr.ll: $(binDir)/%.ll $(passLibraries) $(ldPreloadLibraries)
-	LD_PRELOAD=$(ldPreloadLibraries) opt $(concurrentOptimization) $(passLibraryArgs) $(passArgs) -S < $< > $@
+	LD_PRELOAD=$(ldPreloadLibraries) opt-9 $(concurrentOptimization) $(passLibraryArgs) $(passArgs) -S < $< > $@
 .PRECIOUS: $(binDir)/%.instr.ll
 
 # optimizize LLVM IR
 $(binDir)/%.opt.ll: $(binDir)/%.instr.ll
-	opt $(postOptimization) -S < $< > $@
+	opt-9 $(postOptimization) -S < $< > $@
 .PRECIOUS: $(binDir)/%.opt.ll
 
 # compile optimized LLVM IR to assembly
 $(binDir)/%.s: $(binDir)/%.opt.ll $(passRuntimes)
-	clang++ -S $< $(passRuntimes) -o $@ $(linkLibraries)
+	clang-9 -S $< $(passRuntimes) -o $@ $(linkLibraries)
 .PRECIOUS: $(binDir)/%.s
 
 # compile to optimized LLVM IR to executable
 $(binDir)/%.out: $(binDir)/%.opt.ll $(passRuntimes)
-	clang++ -fuse-ld=lld $< $(passRuntimes) -o $@ $(linkLibraries)
+	clang-9 -fuse-ld=lld $< $(passRuntimes) -o $@ $(linkLibraries)
 .PRECIOUS: $(binDir)/%.out
 
 $(binDir)/%: $(binDir)/%.out

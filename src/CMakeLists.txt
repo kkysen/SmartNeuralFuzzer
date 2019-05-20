@@ -7,13 +7,25 @@ include(cmake/Xclang.cmake)
 include(cmake/llvmVersion.cmake)
 include(cmake/llvmImport.cmake)
 
-files(share.common
-        share/common/numbers.h
+files(share.common.debug
         share/common/debug.h
         share/common/debug.cpp
+        )
+
+files(share.common
+        share/common/numbers.h
+#        share/common/debug.h
+#        share/common/debug.cpp
         share/common/math.h
         share/common/lazy.h
         share/common/api.h
+        )
+
+files(share.stde
+        share/stde/contains.h
+        share/stde/contains.cpp
+        share/stde/c_str.h
+        share/stde/c_str.cpp
         )
 
 files(share.io

@@ -4,8 +4,6 @@
 
 #include "src/share/io/Dir.h"
 
-#include "src/share/common/debug.h"
-
 namespace fse {
     
     Dir::Dir(const fs::path& path) : fd(ensureDir(path)) {}

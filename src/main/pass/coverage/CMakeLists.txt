@@ -1,4 +1,4 @@
-set(files.share ${files.share.common} ${files.share.llvm})
+set(files.share ${files.share.common} ${files.share.common.debug} ${files.share.llvm})
 
 add_subdirectory(block)
 add_subdirectory(branch)

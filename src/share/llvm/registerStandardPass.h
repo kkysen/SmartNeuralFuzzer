@@ -15,16 +15,23 @@ namespace llvm::pass {
     using ExtPt = PassManagerBuilder::ExtensionPointTy;
     
     template <class Pass>
-    bool registerStandard(ArrayRef<ExtPt> extensionPoints) {
+    void registerStandard(const PassManagerBuilder&, legacy::PassManagerBase& pm) {
+        pm.add(new Pass());
+    }
+    
+    template <class Pass>
+    bool registerStandard(ArrayRef<ExtPt> extensionPoints, ExtensionFunc func = registerStandard<Pass>) {
         for (auto&& extensionPoint : extensionPoints) {
-            addGlobalExtension(extensionPoint, [](const auto&, auto& pm) { pm.add(new Pass()); });
+            addGlobalExtension(extensionPoint, func);
         }
         return true;
     }
     
+    std::array<ExtPt, 2> alwaysLast = {ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0};
+    
     template <class Pass>
     bool registerStandardAlwaysLast() {
-        return registerStandard<Pass>({ExtPt::EP_OptimizerLast, ExtPt::EP_EnabledOnOptLevel0});
+        return registerStandard<Pass>(alwaysLast);
     }
     
 }

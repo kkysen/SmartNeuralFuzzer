@@ -1,15 +1,27 @@
 set(files.share ${files.share.common})
 
-llvmPreloadPassRegister()
+if (${llvmVersionMajorIsNewest})
+    
+    set(newestClang clang-${llvmVersionMajorNewest})
+    set(CMAKE_C_COMPILER ${newestClang})
+    set(CMAKE_CXX_COMPILER ${newestClang})
+    set(newestClang)
+    
+    llvmPreloadPassRegister()
+    
+    XclangLoadTargets(pass.coverage.block pass.coverage.branch)
 
-# TODO switch order?
-XclangLoadTargets(pass.coverage.block)
+endif ()
+
+# not sure why these are needed, they weren't before
+add_link_options(-lstdc++)
+add_link_options(-lstdc++fs)
 
 set(tests branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstructors)
 foreach (test ${tests})
     add_executable(${test} ${files.share} "${test}.cpp")
     target_link_libraries(${test} runtime.coverage.branch runtime.coverage.block)
-    add_dependencies(${test} pass)
+#    add_dependencies(${test} pass)
 endforeach ()
 
 add_custom_target(test)

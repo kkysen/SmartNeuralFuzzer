@@ -18,7 +18,7 @@ namespace runtime {
     
     private:
         
-        std::string getDirName(std::string_view name);
+        static std::string getDirName(std::string_view name);
     
     public:
         

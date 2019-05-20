@@ -1,20 +1,22 @@
 function(llvmImport asLibrary)
-    if (${llvmVersionMajorIsNewest})
-        llvmConfig(includedir llvmIncludes)
-        include_directories(SYSTEM "${llvmIncludes}")
-        llvmConfig(prefix llvmPrefix)
-        include_directories(SYSTEM "${llvmPrefix}/include")
-        
-        llvmConfig(cxxflags llvmFlags)
-        string(REGEX REPLACE "-std=[^ ]*" "" llvmFlags "${llvmFlags}")
-    else ()
-        include_directories(SYSTEM "${CXX_LIBS}/llvm-project/llvm/include/")
-        include_directories(SYSTEM "${CXX_LIBS}/llvm-project/build/clang/fewTargets/Release/include/")
-        
-        set(llvmMacros "-D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
-        set(llvmExceptions "-fno-exceptions -fno-rtti")
-        set(llvmFlags "${llvmExceptions} ${llvmMacros}")
-    endif ()
+    llvmConfig(includedir llvmIncludes)
+    include_directories(SYSTEM "${llvmIncludes}")
+    llvmConfig(prefix llvmPrefix)
+    include_directories(SYSTEM "${llvmPrefix}/include")
+    
+    llvmConfig(cxxflags llvmFlags)
+    string(REGEX REPLACE "-std=[^ ]*" "" llvmFlags "${llvmFlags}")
+    
+#    if (${llvmVersionMajorIsNewest})
+#
+#    else ()
+#        include_directories(SYSTEM "${CXX_LIBS}/llvm-project/llvm/include/")
+#        include_directories(SYSTEM "${CXX_LIBS}/llvm-project/build/clang/fewTargets/Release/include/")
+#
+#        set(llvmMacros "-D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
+#        set(llvmExceptions "-fno-exceptions -fno-rtti")
+#        set(llvmFlags "${llvmExceptions} ${llvmMacros}")
+#    endif ()
     
     if (${asLibrary})
         string(REPLACE "-fno-exceptions" "" llvmFlags "${llvmFlags}")
@@ -37,5 +39,4 @@ endfunction()
 
 function(llvmPreloadPassRegister)
     set(ENV{LD_PRELOAD} "$ENV{LD_PRELOAD} ${CMAKE_CURRENT_BINARY_DIR}/src/main/pass/register/libpass.register.so")
-    message($ENV{LD_PRELOAD})
 endfunction()
