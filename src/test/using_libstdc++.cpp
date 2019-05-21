@@ -4,12 +4,9 @@
 
 #include <string>
 #include <iostream>
+#include <iterator>
 
 int main(int argc, const char* const* argv) {
-    std::string s;
-    for (auto i = 0; i < argc; i++) {
-        s += argv[i];
-    }
-    std::cout << s;
-    std::cout << std::endl;
+    std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, "\n"));
 }
+

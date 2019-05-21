@@ -4,14 +4,11 @@
 
 #pragma once
 
-#include <src/share/io/Stat.h>
-#include "src/share/io/fs.h"
+#include "src/share/io/ReadOnlyMappedMemory.h"
 
 #include "llvm/IR/Function.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
-
-#include <unordered_set>
 
 namespace llvm::pass {
     
@@ -22,17 +19,10 @@ namespace llvm::pass {
      * because I can't instrument any function that is part of the runtime.
      */
     class BinaryFunctionFilter {
-
-    public:
-        
-        using StringRef = std::string_view;
-        
-        template <class T = StringRef>
-        using StringSet = std::unordered_set<T>;
-
+    
     private:
         
-        SmallVector<StringRef, 1> mappedCacheFiles;
+        SmallVector<io::ReadOnlyMappedMemory, 1> mappedCacheFiles;
         
         StringSet<> functionNames;
     
@@ -42,21 +32,27 @@ namespace llvm::pass {
         
         bool operator()(StringRef functionName) const noexcept;
         
-//        bool contains(Function& function) const noexcept;
-        
-//        bool operator()(Function& function) const noexcept;
-        
+        bool contains(Function& function) const noexcept;
+    
+        bool operator()(Function& function) const noexcept;
+    
         void add(StringRef functionName);
+        
+        
+    
+        bool contains(std::string_view functionName) const noexcept;
+        
+        bool operator()(std::string_view functionName) const noexcept;
+        
+        void add(std::string_view functionName);
     
     private:
         
-        void addMappedCacheFile(StringRef mappedCacheFile);
+        void addMappedCacheFile(io::ReadOnlyMappedMemory&& mappedCacheFile);
     
     public:
         
         void add(const fs::path& objectFilePath);
-        
-        ~BinaryFunctionFilter();
         
     };
     

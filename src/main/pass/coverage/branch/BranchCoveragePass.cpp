@@ -2,15 +2,9 @@
 // Created by Khyber on 2/14/2019.
 //
 
-#include <src/main/pass/BinaryFunctionFilter.h>
-#include "src/share/llvm/debug.h"
-#include "src/share/llvm/LLVMArray.h"
-#include "src/share/llvm/api.h"
-#include "src/share/llvm/registerStandardPass.h"
+#include "src/main/pass/coverage/includes.h"
 
 namespace llvm::pass::coverage::branch {
-    
-    using namespace llvm;
     
     class BranchCoveragePass : public ModulePass {
     
@@ -127,12 +121,10 @@ namespace llvm::pass::coverage::branch {
                     .multi = api.func<u32, u32>("onMultiBranch"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
-//            BinaryFunctionFilter skipRuntimeFunctions;
-//            skipRuntimeFunctions.add(fs::path("src/main/runtime/coverage/branch/libruntime.coverage.branch.a")); // TODO
-            const auto f = [this, &onBranch](auto& function) {
-//                if (false && skipRuntimeFunctions(function)) {
-//                    return false;
-//                }
+            const auto f = [this, &onBranch, &skipRuntimeFunctions = runtimeFunctionFilter()](auto& function) {
+                if (skipRuntimeFunctions(function)) {
+                    return false;
+                }
                 return std::any_of(function.begin(), function.end(), [this, &onBranch](auto& block) {
                     return BlockPass(flags, onBranch, block).trace();
                 });

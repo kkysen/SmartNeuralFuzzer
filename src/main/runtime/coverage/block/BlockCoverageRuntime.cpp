@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "BlockCoverageRuntime.h"
+#include "src/main/runtime/coverage/block/BlockCoverageRuntime.h"
 
 #include "src/share/common/lazy.h"
 #include "src/share/io/WriteBuffer.h"

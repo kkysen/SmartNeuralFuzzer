@@ -45,6 +45,10 @@ files(share.io
         share/io/Writer.h
         share/io/Writer.cpp
         share/io/WriteBuffer.h
+        share/io/ReadOnlyMappedMemory.h
+        share/io/ReadOnlyMappedMemory.cpp
+        share/io/Popen.h
+        share/io/Popen.cpp
         )
 
 files(share.aio
@@ -70,6 +74,9 @@ files(share.llvm
         share/llvm/utils.h
         share/llvm/utils.cpp
         share/llvm/registerStandardPass.h
+        share/llvm/conversions.h
+        share/llvm/BinaryFunctionFilter.h
+        share/llvm/BinaryFunctionFilter.cpp
         )
 
 set(CMAKE_CXX_STANDARD 17)

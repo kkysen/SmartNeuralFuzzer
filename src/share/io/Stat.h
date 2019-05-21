@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include "TimeSpec.h"
-#include "fs.h"
-#include "fse.h"
+#include "src/share/io/TimeSpec.h"
+#include "src/share/io/fs.h"
+#include "src/share/io/fse.h"
+#include "src/share/common/numbers.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <src/share/common/numbers.h>
 #include <experimental/bits/fs_fwd.h>
 
 namespace io {
@@ -201,42 +201,43 @@ namespace io {
         };
         
         struct Args {
+            int error = 0;
             Ids id;
             ino_t inode;
             FileType type;
             FilePermissions permissions;
             nlink_t numHardLinks;
-            off_t size;
+            off_t signedSize;
             blksize_t blockSize;
             blkcnt_t numBlocks;
             LastTimes lastTime;
-            int error = 0;
         };
         
+        int error;
         Ids id;
         ino_t inode;
         FileType type;
         FilePermissions permissions;
         nlink_t numHardLinks;
-        off_t size;
+        off_t signedSize;
         blksize_t blockSize;
         blkcnt_t numBlocks;
         LastTimes lastTime;
-        int error;
         
         /*implicit*/ constexpr Stat(Args args) noexcept
-                : id(args.id),
+                : error(args.error),
+                  id(args.id),
                   inode(args.inode),
                   type(args.type),
                   permissions(args.permissions),
                   numHardLinks(args.numHardLinks),
-                  size(args.size),
+                  signedSize(args.signedSize),
                   blockSize(args.blockSize),
                   numBlocks(args.numBlocks),
-                  lastTime(args.lastTime),
-                  error(args.error) {}
+                  lastTime(args.lastTime) {}
         
         /*implicit*/ constexpr Stat(struct stat stat, int error = 0) noexcept : Stat(Args {
+                .error = error,
                 .id = {
                         .containingDevice = stat.st_dev,
                         .device = stat.st_rdev,
@@ -247,7 +248,7 @@ namespace io {
                 .type = FileType::fromMode(stat.st_mode),
                 .permissions = FilePermissions::fromMode(stat.st_mode),
                 .numHardLinks = stat.st_nlink,
-                .size = stat.st_size,
+                .signedSize = stat.st_size,
                 .blockSize = stat.st_blksize,
                 .numBlocks = stat.st_blocks,
                 .lastTime = {
@@ -255,8 +256,11 @@ namespace io {
                         .modification = stat.st_mtim,
                         .statusChange = stat.st_ctim,
                 },
-                .error = error,
         }) {}
+        
+        constexpr size_t size() const noexcept {
+            return static_cast<size_t>(signedSize);
+        }
         
         void check() const {
             if (error != 0) {
@@ -299,12 +303,12 @@ namespace io {
         static Stat file(const String& string) {
             return file(string.c_str());
         }
-
+        
         template <class String>
         static Stat link(const String& string) {
             return link(string.c_str());
         }
-
+        
         template <class String>
         static Stat at(int dirFd, const String& string, int flags) {
             return at(dirFd, string.c_str(), flags);
