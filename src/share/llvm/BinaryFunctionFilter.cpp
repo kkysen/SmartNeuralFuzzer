@@ -59,6 +59,8 @@ namespace {
         }
     }
     
+    // TODO maybe cache files once joined, since there's a lot of repetition b/w, but it might not matter at all
+    
     size_t symbolsToFunctionNames(const fs::path& objectFilePath, const fs::path& cacheFilePath) {
         using namespace llvm::convert;
         bool lastLineEmpty = false;
@@ -122,11 +124,11 @@ namespace llvm::pass {
         // cache files are just function name on each line
         size_t i = 0;
         for (size_t j; (j = view.find('\n', i)) != StringRef::npos; i = j + 1) {
-            add(view.substr(i, j));
+            add(view.substr(i, j - i));
         }
         if (i != view.size()) {
             // don't include empty last line if it's been added for some reason
-            add(view.substr(i, view.size()));
+            add(view.substr(i, view.size() - i));
         }
     }
     

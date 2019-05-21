@@ -1,5 +1,7 @@
 llvmImportAsRuntime()
 
+add_link_options(-lstdc++fs)
+
 files(pass.coverage
         includes.h
         runtimeFunctionFilter.h

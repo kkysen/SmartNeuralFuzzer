@@ -121,7 +121,8 @@ namespace llvm::pass::coverage::branch {
                     .multi = api.func<u32, u32>("onMultiBranch"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
-            const auto f = [this, &onBranch, &skipRuntimeFunctions = runtimeFunctionFilter()](auto& function) {
+            const auto f = [this, &onBranch, &skipRuntimeFunctions = runtimeFunctionFilter()]
+                    (Function& function) {
                 if (skipRuntimeFunctions(function)) {
                     return false;
                 }

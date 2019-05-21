@@ -22,7 +22,8 @@ namespace llvm::pass {
     
     private:
         
-        SmallVector<io::ReadOnlyMappedMemory, 1> mappedCacheFiles;
+        // will be used by 2 runtime files
+        SmallVector<io::ReadOnlyMappedMemory, 2> mappedCacheFiles;
         
         StringSet<> functionNames;
     
@@ -39,7 +40,7 @@ namespace llvm::pass {
         void add(StringRef functionName);
         
         
-    
+        
         bool contains(std::string_view functionName) const noexcept;
         
         bool operator()(std::string_view functionName) const noexcept;

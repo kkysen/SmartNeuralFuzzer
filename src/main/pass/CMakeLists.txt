@@ -1,7 +1,5 @@
 llvmImportAsRuntime()
 
-add_link_options(-lstdc++fs)
-
 add_subdirectory(register)
 add_subdirectory(coverage)
 
