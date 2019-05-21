@@ -7,7 +7,8 @@
 #include "src/share/llvm/debug.h"
 
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/Support/raw_os_ostream.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <numeric>
 #include <fstream>
@@ -96,7 +97,7 @@ namespace llvm::pass::coverage::block {
             }
             
         };
-        
+    
         raw_ostream& operator<<(raw_ostream& out, const FunctionBlocksIndex& rhs) {
             rhs.print(out);
             return out;
@@ -121,9 +122,10 @@ namespace llvm::pass::coverage::block {
             FunctionCallee onBlock = api.func<u64>("onBlock");
             u64 blockIndex = 0;
 
-//            std::ofstream sourceMapFile;
-//            raw_os_ostream sourceMapStream = sourceMapFile;
-            raw_ostream& sourceMapStream = errs();
+            // TODO I realize I could've used LLVM's fs code, but I like my own better.
+            std::error_code ec;
+            std::string fileName = module.getSourceFileName() + ".blocks.map";
+            raw_fd_ostream sourceMapStream(fileName, ec, sys::fs::FA_Write);
             
             sourceMap::FunctionBlocksIndex sourceMap;
             
@@ -148,6 +150,7 @@ namespace llvm::pass::coverage::block {
                 sourceMap.fixFunctionNames();
                 sourceMapStream << sourceMap << "\n";
             }
+            sourceMapStream.flush();
             return true;
         }
         

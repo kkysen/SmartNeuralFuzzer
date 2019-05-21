@@ -26,4 +26,3 @@ int main(int argc, char** argv) {
 //    std::copy(argv, argv + argc, std::ostream_iterator<const char*>(std::cout, "\n"));
 }
 
-//
