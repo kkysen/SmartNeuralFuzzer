@@ -75,6 +75,7 @@ files(share.llvm
         share/llvm/utils.cpp
         share/llvm/registerStandardPass.h
         share/llvm/conversions.h
+        share/llvm/conversions.cpp
         share/llvm/BinaryFunctionFilter.h
         share/llvm/BinaryFunctionFilter.cpp
         )

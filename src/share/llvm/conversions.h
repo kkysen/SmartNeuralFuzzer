@@ -16,8 +16,6 @@ namespace llvm::convert {
     
     // TODO this should be constexpr since StringRef::data() should be constexpr
     // this is why std::string_view is preferred over StringRef
-    /*constexpr*/ std::string_view view(StringRef ref) noexcept {
-        return std::string_view(ref.data(), ref.size());
-    }
+    /*constexpr*/ std::string_view view(StringRef ref) noexcept;
     
 }

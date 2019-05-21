@@ -126,6 +126,7 @@ namespace llvm::pass::coverage::branch {
                 if (skipRuntimeFunctions(function)) {
                     return false;
                 }
+                errs() << "Branch: " << function.getName() << "\n";
                 return std::any_of(function.begin(), function.end(), [this, &onBranch](auto& block) {
                     return BlockPass(flags, onBranch, block).trace();
                 });

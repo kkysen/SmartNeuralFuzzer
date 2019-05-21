@@ -9,9 +9,13 @@ if (${llvmVersionMajorIsNewest})
     
     llvmPreloadPassRegister()
     
+#    add_compile_options(-ftime-report)
+    
     XclangLoadTargets(pass.coverage.block pass.coverage.branch)
 
 endif ()
+
+add_compile_options(-g)
 
 # not sure why these are needed, they weren't before
 add_link_options(-lstdc++)
