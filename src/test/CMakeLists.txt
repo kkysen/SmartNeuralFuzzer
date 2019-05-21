@@ -1,4 +1,4 @@
-set(files.share ${files.share.common})
+set(files.share)
 
 if (${llvmVersionMajorIsNewest})
     
@@ -17,11 +17,20 @@ endif ()
 add_link_options(-lstdc++)
 add_link_options(-lstdc++fs)
 
-set(tests branch switch optimizedSwitch argcLoop nLoop virtualCall staticConstructors)
+set(tests
+        branch
+        switch
+        optimizedSwitch
+        argcLoop
+        nLoop
+        virtualCall
+        staticConstructors
+        using_libstdc++
+        )
 foreach (test ${tests})
     add_executable(${test} ${files.share} "${test}.cpp")
     target_link_libraries(${test} runtime.coverage.branch runtime.coverage.block)
-#    add_dependencies(${test} pass)
+    add_dependencies(${test} pass)
 endforeach ()
 
 add_custom_target(test)

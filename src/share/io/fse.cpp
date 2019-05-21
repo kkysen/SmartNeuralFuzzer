@@ -4,6 +4,10 @@
 
 #include "src/share/io/fse.h"
 
+#ifndef __EXCEPTIONS
+#include "llvm/Support/ErrorHandling.h"
+#endif
+
 namespace fse {
     
     fs::filesystem_error error(const std::string& what) {
@@ -24,19 +28,28 @@ namespace fse {
         }
         void* memory = ::mmap(nullptr, length, protection, flags, fd, offset);
         if (memory == MAP_FAILED) {
-            throw error("mmap failed for fd = " + std::to_string(fd));
+            _throw(error("mmap failed for fd = " + std::to_string(fd)));
         }
         return memory;
     }
     
     bool ensureDir(const fs::path& path) {
+        // TODO replace this with a fs:: impl?
         const bool failed = mkdir(path.c_str(), 0755) == -1;
         const bool existed = errno == EEXIST;
         if (failed && !existed) {
-            throw error("mkdir", path);
+            _throw(error("mkdir", path));
         }
         errno = 0;
         return !existed;
+    }
+    
+    void _throw(const std::exception& exception) {
+        #ifdef __EXCEPTIONS
+        throw exception;
+        #else
+        llvm_unreachable(exception.what());
+        #endif
     }
     
 }

@@ -2,6 +2,7 @@
 // Created by Khyber on 2/14/2019.
 //
 
+#include <src/main/pass/BinaryFunctionFilter.h>
 #include "src/share/llvm/debug.h"
 #include "src/share/llvm/LLVMArray.h"
 #include "src/share/llvm/api.h"
@@ -12,9 +13,9 @@ namespace llvm::pass::coverage::branch {
     using namespace llvm;
     
     class BranchCoveragePass : public ModulePass {
-
-    private:
     
+    private:
+        
         struct Flags {
             bool branches;
             bool switches;
@@ -24,26 +25,26 @@ namespace llvm::pass::coverage::branch {
                 .switches = true,
                 .virtualMethods = false,
         };
-    
+        
         struct OnBranch {
             const FunctionCallee single;
             const FunctionCallee multi;
             const FunctionCallee infinite;
         };
-    
-        class BlockPass {
-    
-        private:
         
+        class BlockPass {
+        
+        private:
+            
             const Flags& flags;
             const OnBranch& onBranch;
             BasicBlock& block;
-    
-        public:
         
+        public:
+            
             constexpr BlockPass(const Flags& flags, const OnBranch& onBranch, BasicBlock& block) noexcept
                     : flags(flags), onBranch(onBranch), block(block) {}
-        
+            
             bool trace() {
                 const auto terminator = block.getTerminator();
                 if (!terminator) {
@@ -58,9 +59,9 @@ namespace llvm::pass::coverage::branch {
 //            traced |= flags.virtualMethods && traceDynamicDispatches(block);
                 return traced;
             }
-    
-        private:
         
+        private:
+            
             /**
              * Trace a br (branch) instruction
              * by calling onBranch(booleanValue) immediately before the branch.
@@ -74,14 +75,14 @@ namespace llvm::pass::coverage::branch {
                 ext.call(onBranch.single, {branchInst.getCondition()});
                 return true;
             }
-        
+            
             void traceSwitchCase(const SwitchInst::CaseHandle& caseHandle, u32 caseNum, u32 numCases) {
                 IRBuilder<> builder(&caseHandle.getCaseSuccessor()->front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 ext.call(onBranch.multi, {constants.getInt(caseNum), constants.getInt(numCases)});
             }
-        
+            
             /**
              * Trace a switch instruction
              * by calling onMultiBranch(caseNum, numCases)
@@ -93,7 +94,7 @@ namespace llvm::pass::coverage::branch {
                     // unconditionally jump to default case
                     return false;
                 }
-            
+                
                 // insert tracing code into each BasicBlock for each case
                 auto i = 0u;
                 traceSwitchCase(*switchInst.case_default(), i++, numCases);
@@ -102,23 +103,23 @@ namespace llvm::pass::coverage::branch {
                 }
                 return true;
             }
-        
+            
             bool traceDynamicDispatches([[maybe_unused]] BasicBlock& block) {
                 return true;
             }
-        
+            
         };
-
+    
     public:
-    
+        
         static char ID;
-    
+        
         BranchCoveragePass() : ModulePass(ID) {}
-    
+        
         StringRef getPassName() const override {
             return "Branch Coverage Pass";
         }
-    
+        
         bool runOnModule(Module& module) override {
             const Api api("BranchCoverage", module);
             const OnBranch onBranch = {
@@ -126,13 +127,19 @@ namespace llvm::pass::coverage::branch {
                     .multi = api.func<u32, u32>("onMultiBranch"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
-            return std::any_of(module.begin(), module.end(), [this, &onBranch](auto& function) {
+//            BinaryFunctionFilter skipRuntimeFunctions;
+//            skipRuntimeFunctions.add(fs::path("src/main/runtime/coverage/branch/libruntime.coverage.branch.a")); // TODO
+            const auto f = [this, &onBranch](auto& function) {
+//                if (false && skipRuntimeFunctions(function)) {
+//                    return false;
+//                }
                 return std::any_of(function.begin(), function.end(), [this, &onBranch](auto& block) {
                     return BlockPass(flags, onBranch, block).trace();
                 });
-            });
+            };
+            return std::any_of(module.begin(), module.end(), f);
         }
-    
+        
     };
     
     char BranchCoveragePass::ID = 0;

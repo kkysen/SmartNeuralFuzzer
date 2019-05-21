@@ -7,6 +7,7 @@
 #include "src/share/llvm/Types.h"
 
 #include "llvm/IR/Module.h"
+#include "llvm/IR/DerivedTypes.h"
 
 #include <string_view>
 

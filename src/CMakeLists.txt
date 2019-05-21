@@ -7,15 +7,15 @@ include(cmake/Xclang.cmake)
 include(cmake/llvmVersion.cmake)
 include(cmake/llvmImport.cmake)
 
-files(share.common.debug
-        share/common/debug.h
-        share/common/debug.cpp
-        )
+#files(share.common.debug
+#        share/common/debug.h
+#        share/common/debug.cpp
+#        )
 
 files(share.common
         share/common/numbers.h
-#        share/common/debug.h
-#        share/common/debug.cpp
+        share/common/debug.h
+        share/common/debug.cpp
         share/common/math.h
         share/common/lazy.h
         share/common/api.h
@@ -26,6 +26,8 @@ files(share.stde
         share/stde/contains.cpp
         share/stde/c_str.h
         share/stde/c_str.cpp
+        share/stde/getline.h
+        share/stde/getline.cpp
         )
 
 files(share.io
@@ -34,6 +36,10 @@ files(share.io
         share/io/fs.h
         share/io/fse.h
         share/io/fse.cpp
+        share/io/Stat.h
+        share/io/Stat.cpp
+        share/io/TimeSpec.h
+        share/io/TimeSpec.cpp
         share/io/Dir.h
         share/io/Dir.cpp
         share/io/Writer.h

@@ -165,9 +165,10 @@ namespace debug {
                 processId();
                 threadId();
             }
-            
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wshadow"
+            
             void location() {
                 if (debug.mode) {
                     const auto& info = debug.info;
@@ -188,6 +189,7 @@ namespace debug {
                     out() << "(" << info.errorNumToString(info.errorNum) << ")";
                 }
             }
+
 #pragma clang diagnostic pop
             
             void error() {
@@ -259,7 +261,7 @@ namespace debug {
         
         template <typename T>
         void expression(Expression<T> expr) const noexcept {
-            if constexpr (std::is_pointer_v<T>) {
+            if constexpr (std::is_pointer_v<T> && !std::is_same_v<T, const char*>) {
                 return expression<std::remove_pointer_t<T>>(Expression(expr.name, *expr.expression));
             }
             auto print = printer();

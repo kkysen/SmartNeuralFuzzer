@@ -3,6 +3,7 @@
 //
 
 #include <src/share/llvm/debug.h>
+#include <src/main/pass/BinaryFunctionFilter.h>
 #include "src/share/llvm/registerStandardPass.h"
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"
@@ -27,15 +28,25 @@ namespace llvm::pass::coverage::block {
             const Api api("BlockCoverage", module);
             FunctionCallee onBlock = api.func<u64>("onBlock");
             u64 blockIndex = 0;
-            for (auto& function : module) {
+            BinaryFunctionFilter skipRuntimeFunctions;
+            skipRuntimeFunctions.add(fs::path("src/main/runtime/coverage/block/libruntime.coverage.block.a")); // TODO
+            const auto f = [&onBlock, &blockIndex](auto& function) {
+                if (function.size() == 0) {
+                    return false;
+                }
+//                if (skipRuntimeFunctions(function)) {
+//                    return false;
+//                }
+                errs() << function.getName() << "\n";
                 for (auto& block : function) {
                     IRBuilder<> builder(&*block.getFirstInsertionPt());
                     IRBuilderExt ext(builder);
                     ext.call(onBlock, {ext.constants().getInt(blockIndex)});
                     blockIndex++;
                 }
-            }
-            return true;
+                return true;
+            };
+            return std::any_of(module.begin(), module.end(), f);
         }
         
     };

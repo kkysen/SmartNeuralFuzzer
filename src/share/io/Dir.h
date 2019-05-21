@@ -35,6 +35,8 @@ namespace fse {
         
         Dir dir(const std::string& dirName, mode_t mode = 0755) const;
         
+        int fileUnchecked(const std::string& fileName, int flags, mode_t mode = 0644) const;
+        
         int file(const std::string& fileName, int flags, mode_t mode = 0644) const;
         
     };

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace stde {
     
     constexpr const char* c_str(const std::string& s) noexcept {

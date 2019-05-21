@@ -1,4 +1,13 @@
-set(files.share ${files.share.common} ${files.share.common.debug} ${files.share.llvm})
+llvmImportAsRuntime()
+
+set(files.share
+        ${files.share.common}
+        ${files.share.common.debug}
+        ${files.share.stde}
+        ${files.share.io}
+        ${files.share.llvm}
+        ${files.pass}
+        )
 
 add_subdirectory(block)
 add_subdirectory(branch)
