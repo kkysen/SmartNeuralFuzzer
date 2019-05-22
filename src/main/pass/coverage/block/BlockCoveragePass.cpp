@@ -15,95 +15,62 @@
 
 namespace llvm::pass::coverage::block {
     
-    namespace sourceMap {
-        
-        struct BlockIndex {
-            
-            u64 blockIndex;
-            const DILocation* location;
-            StringRef functionName;
-            // functionName doesn't always exist,
-            // but it usually does in another block in the same function
-            
-            constexpr BlockIndex(u64 blockIndex, const DILocation* location) noexcept
-                    : blockIndex(blockIndex), location(location),
-                      functionName(!location ? "" : location->getScope()->getName()) {}
-            
-            std::string path() const noexcept {
-                using convert::view;
-                // TODO fs::path::lexically_normal() should be used
-                // since fs::canonical requires the path to exist and makes a bunch of syscalls
-                // but it appears lexically_normal() isn't implemented in libstdc++ yet.
-                return fs::canonical(fs::path()
-                                     / view(location->getDirectory())
-                                     / view(location->getFilename()))
-                        .string();
-            }
-            
-            constexpr u32 lineNumber() const noexcept {
-                return location->getLine();
-            }
-            
-            constexpr u32 columnNumber() const noexcept {
-                return location->getColumn();
-            }
-            
-            void print(raw_ostream& out) const {
-                out << blockIndex << ": ";
-                if (!location) {
-                    out << "???";
-                } else {
-                    out << functionName << " at " << path()
-                        << ":" << lineNumber() << ":" << columnNumber();
-                }
-            }
-            
-        };
-        
-        raw_ostream& operator<<(raw_ostream& out, const BlockIndex& rhs) {
-            rhs.print(out);
-            return out;
-        }
-        
-        class FunctionBlocksIndex {
-            
-            SmallVector<BlockIndex, 0> blocks;
-        
-        public:
-            
-            void add(u64 blockIndex, const Instruction& instruction) {
-                blocks.emplace_back(blockIndex, &*instruction.getDebugLoc());
-            }
-            
-            void clearAndReserve(size_t size) {
-                blocks.clear();
-                blocks.reserve(size);
-            }
-            
-            void fixFunctionNames() {
-                const StringRef candidateFunctionName = blocks.back().functionName;
-                const StringRef functionName = candidateFunctionName.empty() ? "???" : candidateFunctionName;
-                for (auto& block : blocks) {
-                    if (block.functionName.empty()) {
-                        block.functionName = functionName;
-                    }
-                }
-            }
-            
-            void print(raw_ostream& out) const {
-                for (const auto& block : blocks) {
-                    out << block << "\n";
-                }
-            }
-            
-        };
+    /**
+      * Block Indices Source Map Format
+      *
+      * For every function, it is formatted as (using JS-style `` strings)
+      * `\nfunction ${function}\n${blocks.map(block => `${block}`).join("\n")}`,
+      * where `${function}` = !function ? "???" : `${functionName} at ${fileName}:${lineNumber}`,
+      * and where `${block}` = `\t${index}: ${!block ? "???" : `${lineNumber}:${columnNumber}`}`,
+      * where !function and !block are true if there's no debug info for them,
+      * and where `${index}` is the global index of the block.
+      */
+    class BlockIndicesSourceMap {
     
-        raw_ostream& operator<<(raw_ostream& out, const FunctionBlocksIndex& rhs) {
-            rhs.print(out);
-            return out;
+    private:
+        
+        static std::string getDIPath(const DIScope& di) {
+            using convert::view;
+            // TODO fs::path::lexically_normal() should be used
+            // since fs::canonical requires the path to exist and makes a bunch of syscalls
+            // but it appears lexically_normal() isn't implemented in libstdc++ yet.
+            return fs::canonical(fs::path()
+                                 / view(di.getDirectory())
+                                 / view(di.getFilename()))
+                    .string();
         }
         
-    }
+        bool hasDI = true;
+        raw_ostream& out;
+    
+    public:
+        
+        explicit constexpr BlockIndicesSourceMap(raw_ostream& out) noexcept : out(out) {}
+        
+        void function(const Function& function) {
+            hasDI = function.getSubprogram();
+            out << "\n" << "function ";
+            if (!hasDI) {
+                out << "???";
+            } else {
+                const auto& di = *function.getSubprogram();
+                out << di.getName() << " at " << getDIPath(di) << ":" << di.getLine();
+            }
+            out << "\n";
+        }
+        
+        void block(u64 index, const Instruction& instruction) {
+            out << "\t" << index << ": ";
+            if (!hasDI || !instruction.getDebugLoc()) {
+                out << "???";
+            } else {
+                const auto& di = *instruction.getDebugLoc();
+                out << di.getLine() << ":" << di.getColumn();
+            }
+            out << "\n";
+        }
+        
+    };
     
     class BlockCoveragePass : public ModulePass {
     
@@ -121,13 +88,13 @@ namespace llvm::pass::coverage::block {
             const Api api("BlockCoverage", module);
             FunctionCallee onBlock = api.func<u64>("onBlock");
             u64 blockIndex = 0;
-
+            
             // TODO I realize I could've used LLVM's fs code, but I like my own better.
             std::error_code ec;
             std::string fileName = module.getSourceFileName() + ".blocks.map";
             raw_fd_ostream sourceMapStream(fileName, ec, sys::fs::FA_Write);
             
-            sourceMap::FunctionBlocksIndex sourceMap;
+            BlockIndicesSourceMap sourceMap(sourceMapStream);
             
             const auto& skipRuntimeFunctions = runtimeFunctionFilter();
             
@@ -139,18 +106,16 @@ namespace llvm::pass::coverage::block {
                     continue;
                 }
                 errs() << "Block: " << function.getName() << "\n";
-                sourceMap.clearAndReserve(function.size());
+                sourceMap.function(function);
                 for (auto& block : function) {
                     IRBuilder<> builder(&*block.getFirstInsertionPt());
                     IRBuilderExt ext(builder);
                     const auto& callInst = *ext.call(onBlock, {ext.constants().getInt(blockIndex)});
-                    sourceMap.add(blockIndex, callInst);
+                    sourceMap.block(blockIndex, callInst);
                     blockIndex++;
                 }
-                sourceMap.fixFunctionNames();
-                sourceMapStream << sourceMap << "\n";
             }
-            sourceMapStream.flush();
+            
             return true;
         }
         
