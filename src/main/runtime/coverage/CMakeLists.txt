@@ -16,5 +16,4 @@ set(files.share
 add_subdirectory(branch)
 add_subdirectory(block)
 
-add_custom_target(runtime.coverage)
-add_dependencies(runtime.coverage runtime.coverage.branch runtime.coverage.block)
+add_custom_target(runtime.coverage DEPENDS runtime.coverage.branch runtime.coverage.block)

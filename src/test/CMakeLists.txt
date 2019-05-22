@@ -31,11 +31,15 @@ set(tests
         staticConstructors
         using_libstdc++
         )
+set(tests.touch)
 foreach (test ${tests})
     add_executable(${test} ${files.share} "${test}.cpp")
     target_link_libraries(${test} runtime.coverage.branch runtime.coverage.block)
     add_dependencies(${test} pass)
+    
+    add_custom_target(${test}.touch touch ${CMAKE_CURRENT_SOURCE_DIR}/${test}.cpp)
+    list(APPEND tests.touch ${test}.touch)
 endforeach ()
 
-add_custom_target(test)
-add_dependencies(test ${tests})
+add_custom_target(test DEPENDS ${tests})
+add_custom_target(test.touch DEPENDS ${tests.touch})

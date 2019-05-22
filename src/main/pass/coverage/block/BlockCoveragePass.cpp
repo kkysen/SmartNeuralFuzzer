@@ -20,9 +20,10 @@ namespace llvm::pass::coverage::block {
       * Block Indices Source Map Format
       *
       * For every function, it is formatted as (using JS-style `` strings)
-      * `\nfunction ${function}\n${blocks.map(block => `${block}`).join("\n")}`,
-      * where `${function}` = !function ? "???" : `${functionName} at ${fileName}:${lineNumber}`,
-      * and where `${block}` = `\t${index}: ${!block ? "???" : `${lineNumber}:${columnNumber}`}`,
+      * `\nfunction ${function}\n${function.blocks.map(block => `${block}`).join("\n")}`,
+      * where `${function}` = !function ? "???" : `${function.name} at ${fileName}:${lineNumber}`,
+      * where `${block}` = `\t${index}: ${block?.lineNumber}:${block?.columnNumber}}`,
+      * where `${number}` = !number ? "?" : `${number}`,
       * where !function and !block are true if there's no debug info for them,
       * and where `${index}` is the global index of the block.
       */
@@ -30,18 +31,6 @@ namespace llvm::pass::coverage::block {
     
     private:
         
-        static std::string getDIPath(const DIScope& di) {
-            using convert::view;
-            // TODO fs::path::lexically_normal() should be used
-            // since fs::canonical requires the path to exist and makes a bunch of syscalls
-            // but it appears lexically_normal() isn't implemented in libstdc++ yet.
-            return fs::canonical(fs::path()
-                                 / view(di.getDirectory())
-                                 / view(di.getFilename()))
-                    .string();
-        }
-        
-        bool hasDI = true;
         raw_fd_ostream _out;
         
         constexpr raw_ostream& out() noexcept {
@@ -83,6 +72,24 @@ namespace llvm::pass::coverage::block {
     public:
         
         explicit BlockIndicesSourceMap(const Module& module) : BlockIndicesSourceMap(Output(module)) {}
+
+    private:
+    
+        static std::string getDIPath(const DIScope& di) {
+            using convert::view;
+            // TODO fs::path::lexically_normal() should be used
+            // since fs::canonical requires the path to exist and makes a bunch of syscalls
+            // but it appears lexically_normal() isn't implemented in libstdc++ yet.
+            return fs::canonical(fs::path()
+                                 / view(di.getDirectory())
+                                 / view(di.getFilename()))
+                    .string();
+        }
+    
+        bool hasDI = true;
+        const DISubprogram* currentFunction = nullptr;
+
+    public:
         
         void function(const Function& function) {
             hasDI = function.getSubprogram();
@@ -91,18 +98,25 @@ namespace llvm::pass::coverage::block {
                 out() << "???";
             } else {
                 const auto& di = *function.getSubprogram();
+                currentFunction = &di;
                 out() << di.getName() << " at " << getDIPath(di) << ":" << di.getLine();
             }
             out() << "\n";
         }
         
-        void block(u64 index, const Instruction& instruction) {
+        void block(u64 index, const Instruction& instruction, bool entryBlock) {
             out() << "\t" << index << ": ";
-            if (!hasDI || !instruction.getDebugLoc()) {
-                out() << "???";
+            const bool instHasDI = instruction.getDebugLoc();
+            if (!hasDI || (!instHasDI && !entryBlock)) {
+                out() << "?:?";
             } else {
-                const auto& di = *instruction.getDebugLoc();
-                out() << di.getLine() << ":" << di.getColumn();
+                if (entryBlock) {
+                    const auto& di = *currentFunction;
+                    out() << di.getLine() << ":" << "?";
+                } else {
+                    const auto& di = *instruction.getDebugLoc();
+                    out() << di.getLine() << ":" << di.getColumn();
+                }
             }
             out() << "\n";
         }
@@ -138,11 +152,17 @@ namespace llvm::pass::coverage::block {
                 }
                 errs() << "Block: " << function.getName() << "\n";
                 sourceMap.function(function);
+                
+                const auto& entry = function.getEntryBlock();
+                const auto debug = entry.front().getDebugLoc();
+                errs() << (debug ? "true" : "false") << ", ";
+                errs() << entry.getName() << "\n";
+                
                 for (auto& block : function) {
                     IRBuilder<> builder(&*block.getFirstInsertionPt());
                     IRBuilderExt ext(builder);
                     const auto& callInst = *ext.call(onBlock, {ext.constants().getInt(blockIndex)});
-                    sourceMap.block(blockIndex, callInst);
+                    sourceMap.block(blockIndex, callInst, &block == &function.front());
                     blockIndex++;
                 }
             }

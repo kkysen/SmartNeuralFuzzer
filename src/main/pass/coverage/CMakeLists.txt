@@ -23,5 +23,4 @@ add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE_BRANCH=\"$<TARGET_FILE:runtime
 add_subdirectory(block)
 add_subdirectory(branch)
 
-add_custom_target(pass.coverage)
-add_dependencies(pass.coverage pass.coverage.block pass.coverage.branch)
+add_custom_target(pass.coverage DEPENDS pass.coverage.block pass.coverage.branch)
