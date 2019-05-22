@@ -12,6 +12,7 @@
 
 #include <numeric>
 #include <fstream>
+#include <src/share/io/fse.h>
 
 namespace llvm::pass::coverage::block {
     
@@ -41,33 +42,69 @@ namespace llvm::pass::coverage::block {
         }
         
         bool hasDI = true;
-        raw_ostream& out;
+        raw_fd_ostream _out;
+        
+        constexpr raw_ostream& out() noexcept {
+            return _out;
+        }
+        
+        class Output {
+
+        private:
+            
+            std::error_code ec;
+            
+        public:
+    
+            fs::path path;
+            
+            explicit Output(const Module& module) {
+                path = module.getSourceFileName();
+                path += ".blocks.map";
+            }
+            
+            raw_fd_ostream open() {
+                // TODO I realize I could've used LLVM's fs code, but I like my own better.
+                return raw_fd_ostream(path.string(), ec);
+            }
+            
+            void check() const {
+                if (ec) {
+                    fse::_throw(fs::filesystem_error("cannot open source map output", path, ec));
+                }
+            }
+            
+        };
+        
+        explicit BlockIndicesSourceMap(Output output) : _out(output.open()) {
+            output.check();
+        }
     
     public:
         
-        explicit constexpr BlockIndicesSourceMap(raw_ostream& out) noexcept : out(out) {}
+        explicit BlockIndicesSourceMap(const Module& module) : BlockIndicesSourceMap(Output(module)) {}
         
         void function(const Function& function) {
             hasDI = function.getSubprogram();
-            out << "\n" << "function ";
+            out() << "\n" << "function ";
             if (!hasDI) {
-                out << "???";
+                out() << "???";
             } else {
                 const auto& di = *function.getSubprogram();
-                out << di.getName() << " at " << getDIPath(di) << ":" << di.getLine();
+                out() << di.getName() << " at " << getDIPath(di) << ":" << di.getLine();
             }
-            out << "\n";
+            out() << "\n";
         }
         
         void block(u64 index, const Instruction& instruction) {
-            out << "\t" << index << ": ";
+            out() << "\t" << index << ": ";
             if (!hasDI || !instruction.getDebugLoc()) {
-                out << "???";
+                out() << "???";
             } else {
                 const auto& di = *instruction.getDebugLoc();
-                out << di.getLine() << ":" << di.getColumn();
+                out() << di.getLine() << ":" << di.getColumn();
             }
-            out << "\n";
+            out() << "\n";
         }
         
     };
@@ -89,13 +126,7 @@ namespace llvm::pass::coverage::block {
             FunctionCallee onBlock = api.func<u64>("onBlock");
             u64 blockIndex = 0;
             
-            // TODO I realize I could've used LLVM's fs code, but I like my own better.
-            std::error_code ec;
-            std::string fileName = module.getSourceFileName() + ".blocks.map";
-            raw_fd_ostream sourceMapStream(fileName, ec, sys::fs::FA_Write);
-            
-            BlockIndicesSourceMap sourceMap(sourceMapStream);
-            
+            BlockIndicesSourceMap sourceMap(module);
             const auto& skipRuntimeFunctions = runtimeFunctionFilter();
             
             for (auto& function : module) {
