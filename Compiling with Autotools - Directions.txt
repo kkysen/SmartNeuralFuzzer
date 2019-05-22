@@ -1,0 +1,10 @@
+export CC=clang
+export CXX=clang++
+export RANLIB=llvm-ranlib
+export CFLAGS+=" -flto=thin "
+export LDFLAGS+=" -flto=thin -fuse-ld=lld -Wl,-plugin-opt=save-temps "
+make
+opt-9 -O3 -load=libpass.coverage.block.so -load=libpass.coverage.branch.so ${TARGET}.0.5.precodegen.bc > ${TARGET}.0.6.coverage.bc
+clang ${TARGET}.0.6.coverage.bc -c -o ${TARGET}.coverage.o
+clang -flto=thin -fuse-ld=lld ${TARGET}.coverage.o libruntime.coverage.block.a libruntime.coverage.block.a -lstdc++ -lstdc++fs ${ORIGINAL_LD_FLAGS} -o ${TARGET}.coverage
+./${TARGET}.coverage
