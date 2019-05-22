@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <src/share/common/lazy.h>
 #include "src/share/io/ReadOnlyMappedMemory.h"
 
 #include "llvm/IR/Function.h"
@@ -54,6 +55,12 @@ namespace llvm::pass {
     public:
         
         void add(const fs::path& objectFilePath);
+
+    private:
+        
+        // purge cache every time binary is loaded, so once every compilation
+        // each compilation doesn't take long, and the expiration time is 24h
+        static RunOnce<> purgeCache;
         
     };
     

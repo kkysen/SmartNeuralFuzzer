@@ -8,9 +8,56 @@
 #include "src/share/io/Stat.h"
 #include "src/share/llvm/conversions.h"
 
+#include "llvm/Support/FileSystem.h"
+
 #include <fstream>
 
 namespace {
+    
+    fs::path getCacheDir() {
+        const auto dir = fs::temp_directory_path() / "BinaryFunctionFilter";
+        fs::create_directories(dir);
+        return dir;
+    }
+    
+    void purgeCacheDir() {
+        using namespace llvm::sys;
+        using namespace llvm::sys::fs;
+        
+        const auto cacheDir = getCacheDir();
+        bool empty = true;
+        const auto now = TimePoint<>::clock::now();
+        std::error_code ec;
+        for (auto it = directory_iterator(cacheDir.string(), ec);
+             it != directory_iterator();
+             it.increment(ec)) {
+            if (ec) {
+                fse::_throw(::fs::filesystem_error("directory_iterator failed", cacheDir, ec));
+            }
+            const auto& entry = *it;
+            const auto statusOrErr = entry.status();
+            if (!statusOrErr) {
+                fse::_throw(::fs::filesystem_error("status failed", entry.path(), statusOrErr.getError()));
+            }
+            const auto status = *statusOrErr;
+            if (status.type() != file_type::regular_file) {
+                empty = false;
+                continue;
+            }
+            using namespace std::literals;
+            const auto cacheAge = now - status.getLastModificationTime();
+            constexpr auto maxAge = 24h;
+            if (cacheAge > maxAge) {
+                llvm::errs() << "purging old cache file: " << entry.path() << "\n";
+                remove(entry.path());
+            } else {
+                empty = false;
+            }
+        }
+        if (empty) {
+            remove(cacheDir);
+        }
+    }
     
     std::string getCacheFileName(const fs::path& objectFilePath) {
         auto cacheFileName = fs::absolute(objectFilePath).string();
@@ -20,9 +67,7 @@ namespace {
     }
     
     fs::path getCacheFilePath(const fs::path& objectFilePath) {
-        fs::path cacheDir = fs::temp_directory_path() / "BinaryFunctionFilter";
-        fs::create_directories(cacheDir);
-        return cacheDir / getCacheFileName(objectFilePath);
+        return getCacheDir() / getCacheFileName(objectFilePath);
     }
     
     std::string getCommand(const fs::path& objectFilePath) {
@@ -137,10 +182,13 @@ namespace llvm::pass {
         stat.check();
         const auto cacheFilePath = getCacheFilePath(objectFilePath);
         const auto cacheStat = io::Stat::file(cacheFilePath);
-        const size_t cacheFileLength = cacheMiss(stat, cacheStat)
-                                       ? symbolsToFunctionNames(objectFilePath, cacheFilePath)
-                                       : cacheStat.size();
+        const bool cacheHit = !cacheMiss(stat, cacheStat);
+        const size_t cacheFileLength = cacheHit
+                                       ? cacheStat.size()
+                                       : symbolsToFunctionNames(objectFilePath, cacheFilePath);
         addMappedCacheFile(io::ReadOnlyMappedMemory(cacheFilePath, cacheFileLength));
     }
+    
+    RunOnce<> BinaryFunctionFilter::purgeCache = ::purgeCacheDir;
     
 }

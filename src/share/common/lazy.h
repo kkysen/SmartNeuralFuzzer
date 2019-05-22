@@ -49,3 +49,22 @@ public:
     }
     
 };
+
+template <class F = void(*)()>
+class RunOnce {
+
+private:
+    
+    F f;
+    bool ran = false;
+
+public:
+    
+    /*implicit*/ constexpr RunOnce(F f) noexcept : f(f) {
+        if (!ran) {
+            ran = true;
+            f();
+        }
+    }
+    
+};

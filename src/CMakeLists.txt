@@ -40,6 +40,8 @@ files(share.io
         share/io/Stat.cpp
         share/io/TimeSpec.h
         share/io/TimeSpec.cpp
+        share/io/Clock.h
+        share/io/Clock.cpp
         share/io/Dir.h
         share/io/Dir.cpp
         share/io/Writer.h

@@ -152,12 +152,6 @@ namespace llvm::pass::coverage::block {
                 }
                 errs() << "Block: " << function.getName() << "\n";
                 sourceMap.function(function);
-                
-                const auto& entry = function.getEntryBlock();
-                const auto debug = entry.front().getDebugLoc();
-                errs() << (debug ? "true" : "false") << ", ";
-                errs() << entry.getName() << "\n";
-                
                 for (auto& block : function) {
                     IRBuilder<> builder(&*block.getFirstInsertionPt());
                     IRBuilderExt ext(builder);

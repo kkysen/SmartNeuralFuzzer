@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/share/io/fs.h"
+
 #include <time.h>
 
 // TODO this shouldn't really go in io, right?
@@ -26,6 +28,13 @@ namespace io {
         
         /*implicit*/ constexpr TimeSpec(timespec timespec) noexcept
                 : TimeSpec(Args {.seconds = timespec.tv_sec, .nanoseconds = timespec.tv_nsec}) {}
+                
+        /*implicit*/ constexpr operator timespec() const noexcept {
+            return {
+                .tv_sec = seconds,
+                .tv_nsec = nanoseconds,
+            };
+        }
         
         // TODO other related functions
         
@@ -53,6 +62,20 @@ namespace io {
     
     constexpr bool operator>=(const TimeSpec& a, const TimeSpec& b) noexcept {
         return !(a < b);
+    }
+    
+    constexpr TimeSpec operator+(const TimeSpec& a, const TimeSpec& b) noexcept {
+        return TimeSpec::Args {
+                .seconds = a.seconds + b.seconds,
+                .nanoseconds = a.nanoseconds + b.nanoseconds,
+        };
+    }
+    
+    constexpr TimeSpec operator-(const TimeSpec& a, const TimeSpec& b) noexcept {
+        return TimeSpec::Args {
+                .seconds = a.seconds - b.seconds,
+                .nanoseconds = a.nanoseconds - b.nanoseconds,
+        };
     }
     
 }
