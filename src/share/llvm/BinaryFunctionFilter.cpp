@@ -21,6 +21,8 @@ namespace {
     }
     
     void purgeCacheDir() {
+        // I need to use llvm's fs API here instead of std::filesystem b/c std::filesystem isn't complete
+        
         using namespace llvm::sys;
         using namespace llvm::sys::fs;
         

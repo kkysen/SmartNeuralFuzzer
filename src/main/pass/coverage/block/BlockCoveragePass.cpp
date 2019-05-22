@@ -21,7 +21,8 @@ namespace llvm::pass::coverage::block {
       *
       * For every function, it is formatted as (using JS-style `` strings)
       * `\nfunction ${function}\n${function.blocks.map(block => `${block}`).join("\n")}`,
-      * where `${function}` = !function ? "???" : `${function.name} at ${fileName}:${lineNumber}`,
+      * where `${function}` = `${function.name} at ${!function : "?:?" : `${fileName}:${lineNumber}`}`,
+      * where `${function.name}` = demangled name w/ debug info or else raw name
       * where `${block}` = `\t${index}: ${block?.lineNumber}:${block?.columnNumber}}`,
       * where `${number}` = !number ? "?" : `${number}`,
       * where !function and !block are true if there's no debug info for them,
@@ -95,7 +96,8 @@ namespace llvm::pass::coverage::block {
             hasDI = function.getSubprogram();
             out() << "\n" << "function ";
             if (!hasDI) {
-                out() << "???";
+                // can always default to raw name, which has to exist
+                out() << function.getName() << " at " << "?:?";
             } else {
                 const auto& di = *function.getSubprogram();
                 currentFunction = &di;
