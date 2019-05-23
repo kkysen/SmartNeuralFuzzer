@@ -3,3 +3,4 @@ files(runtime.coverage.branch
         BranchCoverageRuntime.cpp)
 
 add_library(runtime.coverage.branch STATIC ${files.share} ${files.runtime.coverage.branch})
+copyLibrary(runtime.coverage.branch)

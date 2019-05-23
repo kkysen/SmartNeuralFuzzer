@@ -7,11 +7,6 @@ include(cmake/Xclang.cmake)
 include(cmake/llvmVersion.cmake)
 include(cmake/llvmImport.cmake)
 
-#files(share.common.debug
-#        share/common/debug.h
-#        share/common/debug.cpp
-#        )
-
 files(share.common
         share/common/numbers.h
         share/common/debug.h
@@ -92,6 +87,23 @@ add_link_options("-fuse-ld=lld")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_compile_options(-Wall -Werror -Wextra -Wno-error=unused-parameter)
+
+function(copyTargetTo target binDir)
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy
+            "$<TARGET_FILE:${target}>"
+            "${CMAKE_BINARY_DIR}/${binDir}/$<TARGET_FILE_NAME:${target}>"
+            COMMENT "Copying $<TARGET_FILE_NAME:${target}> to ${CMAKE_BINARY_DIR}"
+            )
+endfunction()
+
+function(copyLibrary target)
+    copyTargetTo(${target} lib)
+endfunction()
+
+function(copyExecutable target)
+    copyTargetTo(${target} bin)
+endfunction()
 
 add_subdirectory(main)
 add_subdirectory(test)

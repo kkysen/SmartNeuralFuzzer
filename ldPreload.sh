@@ -1,9 +1,9 @@
 #!/bin/bash bash
 
-setLdPreload() {
-    export LD_PRELOAD=/home/khyber/workspace/sync/SmartNeuralFuzzer/build/src/main/pass/register/libpass.register.so
+ldPreloadSet() {
+    export LD_PRELOAD=/home/khyber/workspace/sync/SmartNeuralFuzzer/build/lib/libpass.register.so
 }
 
-unsetLdPreload() {
+ldPreloadUnset() {
     export LD_PRELOAD=
 }
