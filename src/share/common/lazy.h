@@ -21,6 +21,14 @@ public:
         instance = std::make_unique<T>();
     }
     
+    constexpr bool exists() const noexcept {
+        return instance;
+    }
+    
+    constexpr operator bool() const noexcept {
+        return exists();
+    }
+    
     void construct() const {
         if (!instance) {
             reconstruct();
@@ -28,7 +36,7 @@ public:
     }
     
     void destruct() const {
-        instance.release();
+        instance = nullptr;
     }
     
     T& get() const {

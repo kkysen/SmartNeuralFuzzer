@@ -74,10 +74,10 @@ namespace runtime::coverage::branch {
             struct shift {
                 
                 static constexpr Size byte = 3;
-                static_assert(1 << byte == numBits<u8>());
+                static_assert(1u << byte == numBits<u8>());
                 
                 static constexpr Size chunk = 6;
-                static_assert(1 << chunk == numBits<Chunk>());
+                static_assert(1u << chunk == numBits<Chunk>());
                 
             };
             
@@ -90,11 +90,11 @@ namespace runtime::coverage::branch {
             }
             
             constexpr u8 byteBitIndex() const noexcept {
-                return static_cast<u8>(bitIndex & ((1 << shift::byte) - 1));
+                return static_cast<u8>(bitIndex & ((1u << shift::byte) - 1));
             }
             
             constexpr u8 chunkBitIndex() const noexcept {
-                return static_cast<u8>(bitIndex & ((1 << shift::chunk) - 1));
+                return static_cast<u8>(bitIndex & ((1u << shift::chunk) - 1));
             }
         
         public:
@@ -129,6 +129,7 @@ namespace runtime::coverage::branch {
             }
             
             void finalFlush() noexcept {
+                printf("%s\n", __func__);
                 writeBuffer(math::minBytesForBits(bitIndex));
                 const u8 bitsInLastBytes = byteBitIndex();
                 write(&bitsInLastBytes, sizeof(bitsInLastBytes));
@@ -212,7 +213,7 @@ namespace runtime::coverage::branch {
         void onSingleBranch(bool value) noexcept {
             count.branches.single++;
             branches.single.on(value);
-            count.flush(); // TODO remove
+//            count.flush(); // TODO remove
         }
         
         void onMultiBranch(u32 branchNum, u32 numBranches) noexcept {

@@ -84,6 +84,7 @@ fuzz() {
     local exe=${target}.coverage
 
     # optimize (instrument), compile bc to obj, and then link everything
+    # TODO this shouldn't have to be -O3
     LD_PRELOAD=${register} opt-9 -O3 ${loadPasses} ${target}.0.5.precodegen.bc > ${bc}
     clang ${bc} -c -o ${o}
     clang ${flto} ${o} ${runtimes} -lstdc++ -lstdc++fs ${originalLDFLAGS} -o ${exe}
