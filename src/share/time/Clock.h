@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "src/share/io/TimeSpec.h"
+#include "TimeSpec.h"
 
-// TODO like TimeSpec, this shouldn't really go in io, right? (but it should be w/ TimeSpec)
-namespace io {
+namespace _time {
     
     class Clock {
     

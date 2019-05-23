@@ -4,7 +4,7 @@
 
 #include "Clock.h"
 
-namespace io {
+namespace _time {
     
     TimeSpec Clock::now() const noexcept {
         timespec time = {};

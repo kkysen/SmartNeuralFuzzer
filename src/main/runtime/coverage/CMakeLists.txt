@@ -7,6 +7,7 @@ files(runtime.coverage
 
 set(files.share
         ${files.share.common}
+        ${files.share.time}
         ${files.share.io}
         ${files.share.aio}
         ${files.runtime}

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "src/share/io/TimeSpec.h"
+#include "src/share/time/TimeSpec.h"
 #include "src/share/io/fs.h"
 #include "src/share/io/fse.h"
 #include "src/share/common/numbers.h"
@@ -184,6 +184,8 @@ namespace io {
 }
 
 namespace io {
+    
+    using _time::TimeSpec;
     
     struct Stat {
         

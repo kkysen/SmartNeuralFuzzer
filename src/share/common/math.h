@@ -8,6 +8,31 @@
 
 #include <type_traits>
 
+namespace {
+    
+    template <typename T>
+    using Fold = T (*)(const T&, const T&);
+    
+    // overload operator+ so it can be used in fold expressions
+    template <typename T, Fold<T> fold>
+    struct Foldable {
+    
+        T t;
+        
+        /*implicit*/ constexpr Foldable(T t) noexcept : t(t) {}
+        
+        /*implicit*/ constexpr operator T() noexcept {
+            return t;
+        }
+        
+        constexpr Foldable operator+(const Foldable& other) noexcept {
+            return fold(t, other.t);
+        }
+        
+    };
+    
+}
+
 namespace math {
     
     template <typename T>
@@ -30,14 +55,24 @@ namespace math {
         return a == 0 ? abs(b) : b == 0 ? abs(a) : gcd(b, a % b);
     }
     
+    template <typename ...Ts>
+    constexpr std::common_type_t<Ts...> gcd(Ts... xs) noexcept {
+        return (... + Foldable<Ts, gcd>(xs));
+    }
+    
     template <typename A, typename B>
     constexpr std::common_type_t<A, B> lcm(A a, B b) noexcept {
         return (a == 0 || b == 0) ? 0 : (abs(a) / gcd(a, b)) * abs(b);
     }
     
-    template <typename T1, typename... T2>
+    template <typename ...Ts>
+    constexpr std::common_type_t<Ts...> lcm(Ts... xs) noexcept {
+        return (... + Foldable<Ts, lcm>(xs));
+    }
+    
+    template <typename ...Ts>
     constexpr size_t lcmSizeOf() noexcept {
-        return lcm(sizeof(T1), lcmSizeOf<T2...>());
+        return lcm(sizeof(Ts)...);
     }
     
     template <typename A, typename B>

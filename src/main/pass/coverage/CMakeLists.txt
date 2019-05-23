@@ -12,6 +12,7 @@ set(files.share
         ${files.share.common}
         ${files.share.common.debug}
         ${files.share.stde}
+        ${files.share.time}
         ${files.share.io}
         ${files.share.llvm}
         ${files.pass.coverage}

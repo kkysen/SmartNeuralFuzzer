@@ -25,6 +25,13 @@ files(share.stde
         share/stde/getline.cpp
         )
 
+files(share.time
+        share/time/TimeSpec.h
+        share/time/TimeSpec.cpp
+        share/time/Clock.h
+        share/time/Clock.cpp
+        )
+
 files(share.io
         share/io/EnvironmentOutputPath.h
         share/io/EnvironmentOutputPath.cpp
@@ -33,10 +40,6 @@ files(share.io
         share/io/fse.cpp
         share/io/Stat.h
         share/io/Stat.cpp
-        share/io/TimeSpec.h
-        share/io/TimeSpec.cpp
-        share/io/Clock.h
-        share/io/Clock.cpp
         share/io/Dir.h
         share/io/Dir.cpp
         share/io/Writer.h

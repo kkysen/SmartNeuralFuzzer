@@ -8,8 +8,8 @@
 
 #include <time.h>
 
-// TODO this shouldn't really go in io, right?
-namespace io {
+// time is already a function, so I can't have namespace time
+namespace _time {
     
     struct TimeSpec {
         

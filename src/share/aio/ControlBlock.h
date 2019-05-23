@@ -6,8 +6,12 @@
 
 #include <aio.h>
 #include <cerrno>
+#include <src/share/time/TimeSpec.h>
+#include <llvm/ADT/ArrayRef.h>
 
 namespace aio {
+    
+    using _time::TimeSpec;
     
     class ControlBlock {
     
@@ -21,7 +25,7 @@ namespace aio {
     
     public:
         
-        struct Init {
+        struct Args {
             
             int fd;
             off_t offset;
@@ -45,7 +49,13 @@ namespace aio {
             
         };
         
-        constexpr ControlBlock(Init init) noexcept : _cb(init()) {}
+        constexpr ControlBlock() noexcept : _cb({}) {}
+        
+        /*implicit*/ constexpr ControlBlock(Args args) noexcept : _cb(args()) {}
+        
+        /*implicit*/ operator aiocb() const noexcept {
+            return _cb;
+        }
         
         constexpr const aiocb& cb() const noexcept {
             return _cb;
@@ -126,9 +136,9 @@ namespace aio {
         
         int cancel() const noexcept;
         
-        int suspend(const timespec* __restrict__ timeout = nullptr) const noexcept;
+        int suspend(const TimeSpec* = nullptr) const noexcept;
         
-        int suspend(const timespec& timeout) const noexcept;
+        int suspend(const TimeSpec& timeout) const noexcept;
         
         bool idle() const noexcept;
         
@@ -148,13 +158,13 @@ namespace aio {
     
     int cancel(const ControlBlock& cb) noexcept;
     
-    int suspend(const ControlBlock** cbs, size_t n, const timespec* __restrict__ timeout = nullptr) noexcept;
+    int suspend(llvm::ArrayRef<const ControlBlock*> cbs, const TimeSpec* timeout = nullptr) noexcept;
     
-    int suspend(const ControlBlock** cbs, size_t n, const timespec& timeout) noexcept;
+    int suspend(llvm::ArrayRef<const ControlBlock*> cbs, const TimeSpec& timeout) noexcept;
     
-    int suspend(const ControlBlock& cb, const timespec* __restrict__ timeout = nullptr) noexcept;
+    int suspend(const ControlBlock& cb, const TimeSpec* timeout = nullptr) noexcept;
     
-    int suspend(const ControlBlock& cb, const timespec& timeout) noexcept;
+    int suspend(const ControlBlock& cb, const TimeSpec& timeout) noexcept;
     
     bool idle(const ControlBlock& cb) noexcept;
     

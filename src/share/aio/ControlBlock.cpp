@@ -4,6 +4,18 @@
 
 #include "src/share/aio/ControlBlock.h"
 
+namespace {
+    
+    using _time::TimeSpec;
+    
+    const timespec* cast(const TimeSpec* timeSpec) {
+        // TimeSpec and timespec have the same memory layout, just different member names
+        // so this reinterpret_cast is safe
+        return reinterpret_cast<const timespec*>(timeSpec);
+    }
+    
+}
+
 namespace aio {
     
     int ControlBlock::read() const noexcept {
@@ -30,11 +42,11 @@ namespace aio {
         return aio_cancel(fd(), ptr());
     }
     
-    int ControlBlock::suspend(const timespec* timeout) const noexcept {
+    int ControlBlock::suspend(const TimeSpec* timeout) const noexcept {
         return aio::suspend(*this, timeout);
     }
     
-    int ControlBlock::suspend(const timespec& timeout) const noexcept {
+    int ControlBlock::suspend(const TimeSpec& timeout) const noexcept {
         return aio::suspend(*this, timeout);
     }
     
@@ -72,20 +84,21 @@ namespace aio {
         return cb.cancel();
     }
     
-    int suspend(const ControlBlock** cbs, size_t n, const timespec* timeout) noexcept {
-        return aio_suspend(reinterpret_cast<const aiocb**>(cbs), static_cast<int>(n), timeout);
+    int suspend(llvm::ArrayRef<const ControlBlock*> cbs, const TimeSpec* timeout) noexcept {
+        return aio_suspend(reinterpret_cast<const aiocb* const*>(cbs.data()),
+                           static_cast<int>(cbs.size()), ::cast(timeout));
     }
     
-    int suspend(const ControlBlock** cbs, size_t n, const timespec& timeout) noexcept {
-        return suspend(cbs, n, &timeout);
+    int suspend(llvm::ArrayRef<const ControlBlock*> cbs, const TimeSpec& timeout) noexcept {
+        return suspend(cbs, &timeout);
     }
     
-    int suspend(const ControlBlock& cb, const timespec* timeout) noexcept {
+    int suspend(const ControlBlock& cb, const TimeSpec* timeout) noexcept {
         const aiocb* cbs = &cb.cb();
-        return aio_suspend(&cbs, 1, timeout);
+        return aio_suspend(&cbs, 1, ::cast(timeout));
     }
     
-    int suspend(const ControlBlock& cb, const timespec& timeout) noexcept {
+    int suspend(const ControlBlock& cb, const TimeSpec& timeout) noexcept {
         return suspend(cb, &timeout);
     }
     

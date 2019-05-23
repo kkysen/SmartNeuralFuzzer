@@ -15,11 +15,11 @@ namespace fse {
     }
     
     fs::filesystem_error error(const std::string& what, const fs::path& path1) {
-        return fs::filesystem_error(what, path1, std::error_code());
+        return fs::filesystem_error(what, path1, std::error_code(errno, std::system_category()));
     }
     
     fs::filesystem_error error(const std::string& what, const fs::path& path1, const fs::path& path2) {
-        return fs::filesystem_error(what, path1, path2, std::error_code());
+        return fs::filesystem_error(what, path1, path2, std::error_code(errno, std::system_category()));
     }
     
     void* mmapRaw(int fd, int protection, int flags, size_t length, size_t offset) {
