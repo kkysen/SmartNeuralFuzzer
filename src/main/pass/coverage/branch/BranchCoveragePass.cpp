@@ -121,17 +121,21 @@ namespace llvm::pass::coverage::branch {
                     .multi = api.func<u32, u32>("onMultiBranch"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
-            const auto f = [this, &onBranch, &skipRuntimeFunctions = runtimeFunctionFilter()]
-                    (Function& function) {
+            
+            bool modified = false;
+            const auto& skipRuntimeFunctions = runtimeFunctionFilter();
+            for (auto& function : module) {
                 if (skipRuntimeFunctions(function)) {
-                    return false;
+                    continue;
                 }
                 errs() << "Branch: " << function.getName() << "\n";
-                return std::any_of(function.begin(), function.end(), [this, &onBranch](auto& block) {
-                    return BlockPass(flags, onBranch, block).trace();
-                });
-            };
-            return std::any_of(module.begin(), module.end(), f);
+                for (auto& block : function) {
+                    if (BlockPass(flags, onBranch, block).trace()) {
+                        modified = true;
+                    }
+                }
+            }
+            return modified;
         }
         
     };

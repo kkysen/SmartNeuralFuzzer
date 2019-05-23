@@ -46,6 +46,7 @@ namespace runtime::coverage::branch {
             Counts(const Counts& other) = delete;
             
             ~Counts() noexcept {
+                printf("numBranches: %lu, %lu, %lu\n", branches.single, branches.multi, branches.infinite);
                 flush();
             }
             
@@ -211,6 +212,7 @@ namespace runtime::coverage::branch {
         void onSingleBranch(bool value) noexcept {
             count.branches.single++;
             branches.single.on(value);
+            count.flush(); // TODO remove
         }
         
         void onMultiBranch(u32 branchNum, u32 numBranches) noexcept {

@@ -4,8 +4,23 @@ originalLDFlagsCache=originalLDFLAGS.txt
 
 clean() {
     local target=${1}
+    local what=${2}
+
+    local bc=${target}.0.6.coverage.bc
+    local o=${target}.coverage.o
+    local exe=${target}.coverage
+    rm -f ${bc} ${o} ${exe} *.blocks.map
+
+    if [[ "${what}" == "coverage" ]]; then
+        return
+    fi
+
+    rm -f ${target}.*
     make clean
-    rm -f ${target}.* *.blocks.map ${originalLDFlagsCache}
+
+    if [[ "${what}" == "all" ]]; then
+        rm -f ${originalLDFlagsCache}
+    fi
 }
 
 fuzz() {
@@ -17,7 +32,7 @@ fuzz() {
     local target=${1}
     local clean=${2}
     if [[ "${clean}" == "-clean" ]]; then
-        clean ${target}
+        clean ${target} ${3}
         return
     fi
 
