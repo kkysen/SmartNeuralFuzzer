@@ -23,6 +23,8 @@ files(share.stde
         share/stde/c_str.cpp
         share/stde/getline.h
         share/stde/getline.cpp
+        share/stde/reversed.h
+        share/stde/reversed.cpp
         )
 
 files(share.time
@@ -58,6 +60,10 @@ files(share.aio
         share/aio/WriteBufferPool.cpp
         share/aio/IdempotentWriter.h
         share/aio/IdempotentWriter.cpp
+        share/aio/Signal.h
+        share/aio/Signal.cpp
+        share/aio/SignalHandler.h
+        share/aio/SignalHandler.cpp
         )
 
 files(share.llvm

@@ -289,6 +289,8 @@ namespace aio {
 
 namespace test {
     
+    // TODO FIXME remove this is just for compilation testing
+    
     using namespace aio;
     
     bool fatal = false;

@@ -25,7 +25,7 @@ public:
         return instance;
     }
     
-    constexpr operator bool() const noexcept {
+    explicit constexpr operator bool() const noexcept {
         return exists();
     }
     
