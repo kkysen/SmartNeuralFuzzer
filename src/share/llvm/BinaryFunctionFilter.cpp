@@ -2,7 +2,7 @@
 // Created by Khyber on 5/20/2019.
 //
 
-#include "BinaryFunctionFilter.h"
+#include "src/share/llvm/BinaryFunctionFilter.h"
 
 #include "src/share/io/Popen.h"
 #include "src/share/io/Stat.h"

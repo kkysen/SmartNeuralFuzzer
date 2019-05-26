@@ -60,10 +60,21 @@ files(share.aio
         share/aio/WriteBufferPool.cpp
         share/aio/IdempotentWriter.h
         share/aio/IdempotentWriter.cpp
-        share/aio/Signal.h
-        share/aio/Signal.cpp
-        share/aio/SignalHandler.h
-        share/aio/SignalHandler.cpp
+        share/aio/signal/Info.h
+        share/aio/signal/Info.cpp
+        share/aio/signal/Context.h
+        share/aio/signal/Context.cpp
+        share/aio/signal/Disposition.h
+        share/aio/signal/Disposition.cpp
+        share/aio/signal/Signal.h
+        share/aio/signal/Signal.cpp
+        share/aio/signal/RawHandler.h
+        share/aio/signal/UnMaskedAction.h
+        share/aio/signal/UnMaskedAction.cpp
+        share/aio/signal/AltStack.h
+        share/aio/signal/AltStack.cpp
+        share/aio/signal/Handler.h
+        share/aio/signal/Handler.cpp
         )
 
 files(share.llvm

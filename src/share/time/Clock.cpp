@@ -2,7 +2,7 @@
 // Created by Khyber on 5/22/2019.
 //
 
-#include "Clock.h"
+#include "src/share/time/Clock.h"
 
 namespace _time {
     
