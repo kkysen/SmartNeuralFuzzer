@@ -74,6 +74,8 @@ fuzz() {
 
     make -j$(getconf _NPROCESSORS_ONLN)
 
+    # TODO runtimes should use flto, so they should be LLVM bitcode, not object files
+
     local projectDir=~/workspace/sync/SmartNeuralFuzzer
     local libDir=${projectDir}/build/lib
     local register=${libDir}/libpass.register.so

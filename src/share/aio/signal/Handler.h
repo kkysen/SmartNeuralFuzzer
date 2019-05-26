@@ -49,8 +49,14 @@ namespace aio::signal {
         void registerFor(int signal, struct sigaction& oldAction) noexcept;
         
         bool tryRegisterFor(const disposition::Default& disposition) noexcept;
+
+    public:
         
-        void register_();
+        void register_() noexcept;
+    
+        bool registerFor(int signal) noexcept;
+
+    private:
         
         // private constructor so singleton, b/c handler must be global
         Handler();
@@ -58,11 +64,7 @@ namespace aio::signal {
         static Handler instance;
     
     public:
-        
-        static void reRegister() noexcept {
-            instance = Handler();
-        }
-        
+    
         static constexpr Handler& get() noexcept {
             return instance;
         }

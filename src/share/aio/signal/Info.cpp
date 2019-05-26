@@ -23,3 +23,5 @@ namespace aio::signal {
     }
     
 }
+
+#include "src/share/aio/signal/Info_checkMemoryLayout.cpp"

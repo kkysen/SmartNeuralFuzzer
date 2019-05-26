@@ -4,15 +4,20 @@
 
 #pragma once
 
-
-
 #include "src/share/common/numbers.h"
 #include "src/share/common/api.h"
+#include "src/main/runtime/coverage/RAII_API.h"
 
 #define API_BranchCoverage(funcName) API(BranchCoverage, funcName)
 
-API_BranchCoverage(onSingleBranch)(bool value) noexcept;
+#define api API_BranchCoverage
 
-API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept;
+api(onSingleBranch)(bool value) noexcept;
 
-API_BranchCoverage(onInfiniteBranch)(void* address) noexcept;
+api(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept;
+
+api(onInfiniteBranch)(void* address) noexcept;
+
+RAII_API()
+
+#undef api

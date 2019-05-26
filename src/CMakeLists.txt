@@ -56,12 +56,19 @@ files(share.io
 files(share.aio
         share/aio/ControlBlock.h
         share/aio/ControlBlock.cpp
-        share/aio/WriteBufferPool.h
-        share/aio/WriteBufferPool.cpp
         share/aio/IdempotentWriter.h
         share/aio/IdempotentWriter.cpp
+        share/aio/WriteBufferPool.h
+        share/aio/WriteBufferPool.cpp
+        share/aio/WriteBufferBase.h
+        share/aio/WriteBufferBase.cpp
+        share/aio/StandardWriteBuffer.h
+        share/aio/StandardWriteBuffer.cpp
+        share/aio/BoolWriteBuffer.h
+        share/aio/BoolWriteBuffer.cpp
         share/aio/signal/Info.h
         share/aio/signal/Info.cpp
+        share/aio/signal/Info_checkMemoryLayout.cpp
         share/aio/signal/Context.h
         share/aio/signal/Context.cpp
         share/aio/signal/Disposition.h

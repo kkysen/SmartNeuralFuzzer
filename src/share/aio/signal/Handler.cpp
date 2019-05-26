@@ -36,7 +36,7 @@ namespace aio::signal {
     // must be a pure function pointer, so no closures allowed
     // instance is a singleton, no other instances allowed
     void Handler::handle(int signal, siginfo_t* sigInfo, void* context) noexcept {
-        instance(signal, sigInfo, context);
+        get()(signal, sigInfo, context);
     }
     
     void Handler::add(HandlerFunc&& handler) {
@@ -92,13 +92,22 @@ namespace aio::signal {
             return false;
         }
         registerFor(signal, action);
+        return true;
     }
     
-    void Handler::register_() {
+    void Handler::register_() noexcept {
         // use sigaltstack for sigsegv handler if possible
         for (const auto& disposition : disposition::defaults) {
             tryRegisterFor(disposition); // TODO do I need to use bool return value?
         }
+    }
+    
+    bool Handler::registerFor(int signal) noexcept {
+        const auto* disposition = disposition::getDefault(signal);
+        if (!disposition) {
+            return false;
+        }
+        return tryRegisterFor(*disposition);
     }
     
     Handler::Handler() {

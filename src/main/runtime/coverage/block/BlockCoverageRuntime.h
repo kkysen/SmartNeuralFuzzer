@@ -6,8 +6,11 @@
 
 #include "src/share/common/numbers.h"
 #include "src/share/common/api.h"
+#include "src/main/runtime/coverage/RAII_API.h"
 
 #define API_BlockCoverage(funcName) API(BlockCoverage, funcName)
+
+#define api API_BlockCoverage
 
 /*
  * I decided to use u64s here because the number of basic blocks could require such large integer IDs.
@@ -30,4 +33,8 @@
  * Another option is to just compress the output afterwards, separate from the program.
  */
 
-API_BlockCoverage(onBlock)(u64 blockNum) noexcept;
+api(onBlock)(u64 blockNum) noexcept;
+
+RAII_API()
+
+#undef api

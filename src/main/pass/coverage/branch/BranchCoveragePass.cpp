@@ -98,7 +98,7 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            bool traceDynamicDispatches([[maybe_unused]] BasicBlock& block) {
+            bool traceDynamicDispatches([[maybe_unused]] BasicBlock& _block) {
                 return true;
             }
             

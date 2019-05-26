@@ -3,6 +3,7 @@ llvmImportAsLibrary()
 files(runtime.coverage
         CoverageOutput.h
         CoverageOutput.cpp
+        RAII_API.h
         )
 
 set(files.share
