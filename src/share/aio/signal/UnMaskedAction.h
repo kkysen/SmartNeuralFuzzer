@@ -6,10 +6,9 @@
 
 #include "src/share/aio/signal/RawHandler.h"
 #include "src/share/aio/signal/Signal.h"
+#include "src/share/aio/signal/Flag.h"
 
 namespace aio::signal {
-    
-    static constexpr u32 isAction = SA_SIGINFO;
     
     // like sigaction, but no sigset_t mask, which is large
     // doesn't support SIG_DFL either
@@ -21,7 +20,7 @@ namespace aio::signal {
         // RESETHAND is handled explicitly
         // the child ones are handled implicitly,
         // since Handler skips SIGCHLD since it's default disposition is Ign
-        static constexpr u32 handledFlags = SA_RESETHAND | SA_NOCLDSTOP | SA_NOCLDWAIT;
+        static constexpr u32 handledFlags = flag::resetBefore | flag::child::no::stop | flag::child::no::wait;
         
     private:
         
@@ -34,7 +33,7 @@ namespace aio::signal {
         // b/c copied into replacement sigaction
         
         constexpr bool isHandler() const noexcept {
-            return !(flags & SA_SIGINFO);
+            return !(flags & flag::isAction);
         }
     
     public:
@@ -46,10 +45,10 @@ namespace aio::signal {
         }
         
         explicit constexpr UnMaskedAction(RawSigHandler handler, u32 flags = 0) noexcept
-                : handler(handler), flags(flags & ~isAction) {}
+                : handler(handler), flags(flags & ~flag::isAction) {}
         
         explicit constexpr UnMaskedAction(RawActionHandler action, u32 flags = 0) noexcept
-                : action(action), flags(flags | isAction) {}
+                : action(action), flags(flags | flag::isAction) {}
         
         UnMaskedAction() noexcept;
         

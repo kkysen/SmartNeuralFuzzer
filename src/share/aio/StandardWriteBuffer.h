@@ -13,7 +13,7 @@ namespace aio {
     
     public:
         
-        using Buffer = aio::WriteBufferBase<T, onFatalError, N, PoolTs...>;
+        using Buffer = WriteBufferBase<T, onFatalError, N, PoolTs...>;
     
     private:
         
@@ -27,13 +27,17 @@ namespace aio {
     
     public:
         
-        StandardWriteBuffer(typename WriteBufferBase::Pool& pool, int fd) : buffer(pool, fd) {}
+        constexpr size_t size() const noexcept {
+            return buffer.size();
+        }
+        
+        StandardWriteBuffer(typename Buffer::Pool& pool, int fd) : buffer(pool, fd) {}
         
         ~StandardWriteBuffer() {
             write<true>();
         }
         
-        void on(const T& t) noexcept {
+        void on(const T& t) noexcept(false) {
             buffer.raw()[index++] = t;
             if (index == buffer.size()) {
                 write();
@@ -41,7 +45,7 @@ namespace aio {
             }
         }
         
-        void operator()(const T& t) noexcept {
+        void operator()(const T& t) noexcept(false) {
             on(t);
         }
         
@@ -49,26 +53,5 @@ namespace aio {
     
     // other specializations can be made by composition,
     // like the boolean WriteBuffer for single branches
-    
-}
-
-namespace test {
-    
-    // TODO FIXME remove this is just for compilation testing
-    
-    using namespace aio;
-    
-    bool fatal = false;
-    
-    void onFatalError(const std::error_code&) {
-        fatal = true;
-    }
-    
-    void f() {
-        WriteBufferPool<onFatalError, 2, int, long> pool;
-        int fd = 1;
-        auto buffer = pool.request<StandardWriteBuffer, int>()(fd);
-        buffer(1);
-    }
     
 }

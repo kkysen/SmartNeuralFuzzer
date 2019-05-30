@@ -69,11 +69,11 @@ namespace aio::signal {
         return rhs | lhs;
     }
     
-    u32& operator|=(u32& lhs, const AltStack::Flag& rhs) noexcept {
+    constexpr u32& operator|=(u32& lhs, const AltStack::Flag& rhs) noexcept {
         return lhs = lhs | rhs;
     }
     
-    i32& operator|=(i32& lhs, const AltStack::Flag& rhs) noexcept {
+    constexpr i32& operator|=(i32& lhs, const AltStack::Flag& rhs) noexcept {
         return lhs = lhs | rhs;
     }
     

@@ -18,18 +18,26 @@ namespace {
 
 namespace aio::signal {
     
-    void Handler::old(const Signal& signal) noexcept {
+    void Handler::oldHandle(const Signal& signal) const noexcept {
         oldHandlers[signal.signal](signal);
     }
     
-    void Handler::operator()(const Signal& signal) noexcept {
+    void Handler::ownHandle(const Signal& signal) const noexcept {
         for (const auto& handler : stde::reversed(handlers)) {
             handler(signal);
         }
-        old(signal);
     }
     
-    void Handler::operator()(int signal, siginfo_t* sigInfo, void* context) noexcept {
+    void Handler::operator()(const Signal& signal) const noexcept {
+        ownHandle(signal);
+        oldHandle(signal);
+        // TODO FIXME must unregister before raising
+        if (signal.defaultDisposition.isUnrecoverable) {
+            ::raise(signal.signal);
+        }
+    }
+    
+    void Handler::operator()(int signal, siginfo_t* sigInfo, void* context) const noexcept {
         (*this)(Signal(signal, sigInfo, context));
     }
     
@@ -41,6 +49,11 @@ namespace aio::signal {
     
     void Handler::add(HandlerFunc&& handler) {
         handlers.push_back(std::move(handler));
+    }
+    
+    bool Handler::added(HandlerFunc&& handler) {
+        add(std::move(handler));
+        return true;
     }
     
     void Handler::addExisting(int signal, const UnMaskedAction& action) {
@@ -60,18 +73,22 @@ namespace aio::signal {
         return !unMasked.ignore();
     }
     
-    void Handler::registerFor(int signal, struct sigaction& oldAction) noexcept {
+    void Handler::registerFor(int signal, struct sigaction& oldAction, bool reset) noexcept {
+        // reset is for unrecoverable signals
+        // we want to re-raise the signal after processing, so we need to default it first
+        
         // re-use oldAction ref to re-use mask and flags
         auto& action = oldAction;
         action.sa_sigaction = handle;
-        auto& flags = action.sa_flags;
+        auto& flags = reinterpret_cast<u32&>(action.sa_flags);
         // altStack.flag() needs to | directly w/ flags b/c it's overloaded (also does a &~)
-        flags = ((altStack.flag() | flags) | isAction) & ~UnMaskedAction::handledFlags;
+        flags = ((altStack.flag() | flags) | flag::isAction) & ~UnMaskedAction::handledFlags;
+        flags |= reset ? flag::resetBefore : 0u;
         registerSigAction(signal, &action, nullptr);
         handledSignals[signal] = true;
     }
     
-    bool Handler::tryRegisterFor(const disposition::Default& disposition) noexcept {
+    bool Handler::_tryRegisterFor(const disposition::Default& disposition) noexcept {
         // if the disposition is Ign or Cont, don't need to do anything
         // even if there's a signal handler, it won't terminate b/c of it
         // only if the signal handler calls exit(), which calls destructors
@@ -91,8 +108,18 @@ namespace aio::signal {
         if (!shouldRegister) {
             return false;
         }
-        registerFor(signal, action);
+        registerFor(signal, action, disposition.isUnrecoverable);
         return true;
+    }
+    
+    bool Handler::tryRegisterFor(const disposition::Default& disposition) noexcept {
+        if (currentlyRegistering) {
+            return false;
+        }
+        currentlyRegistering = true;
+        const bool retVal = _tryRegisterFor(disposition);
+        currentlyRegistering = false;
+        return retVal;
     }
     
     void Handler::register_() noexcept {
@@ -113,5 +140,7 @@ namespace aio::signal {
     Handler::Handler() {
         register_();
     }
+    
+    Handler Handler::instance;
     
 }

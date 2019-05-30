@@ -18,7 +18,7 @@ namespace aio::signal {
         int signal;
         const Info& info;
         ConstContext context;
-        disposition::Default defaultDisposition;
+        const disposition::Default& defaultDisposition;
         
         constexpr Signal(int signal, const Info& info, ConstContext context) noexcept
                 : signal(signal), info(info), context(context),

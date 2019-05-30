@@ -3,7 +3,7 @@ llvmImportAsLibrary()
 files(runtime.coverage
         CoverageOutput.h
         CoverageOutput.cpp
-        RAII_API.h
+        include.h
         )
 
 set(files.share
@@ -11,6 +11,8 @@ set(files.share
         ${files.share.time}
         ${files.share.io}
         ${files.share.aio}
+        ${files.share.aio.signal}
+        ${files.share.hooks}
         ${files.runtime}
         ${files.runtime.coverage}
         )

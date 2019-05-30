@@ -14,6 +14,8 @@ files(share.common
         share/common/math.h
         share/common/lazy.h
         share/common/api.h
+        share/common/has/field.h
+        share/common/has/method.h
         )
 
 files(share.stde
@@ -66,6 +68,11 @@ files(share.aio
         share/aio/StandardWriteBuffer.cpp
         share/aio/BoolWriteBuffer.h
         share/aio/BoolWriteBuffer.cpp
+        )
+
+files(share.aio.signal
+        share/aio/signal/Flag.h
+        share/aio/signal/Flag.cpp
         share/aio/signal/Info.h
         share/aio/signal/Info.cpp
         share/aio/signal/Info_checkMemoryLayout.cpp
@@ -82,6 +89,22 @@ files(share.aio
         share/aio/signal/AltStack.cpp
         share/aio/signal/Handler.h
         share/aio/signal/Handler.cpp
+        )
+
+files(share.hooks
+        share/hooks/libc/impl.h
+        share/hooks/libc/impl.cpp
+        share/hooks/libc/gettid.h
+        share/hooks/libc/gettid.cpp
+        share/hooks/libc/hooks.cpp
+        share/hooks/lifecycle/hooks.h
+        share/hooks/lifecycle/hooks.cpp
+        share/hooks/lifecycle/LifeCycle.h
+        share/hooks/lifecycle/LifeCycle.cpp
+        share/hooks/lifecycle/LifeCycles.h
+        share/hooks/lifecycle/LifeCycles.cpp
+        share/hooks/lifecycle/LazilyConstructed.h
+        share/hooks/lifecycle/LazilyConstructed.cpp
         )
 
 files(share.llvm
@@ -134,3 +157,6 @@ endfunction()
 
 add_subdirectory(main)
 add_subdirectory(test)
+add_subdirectory(misc)
+
+add_subdirectory(share/hooks/libc/test)

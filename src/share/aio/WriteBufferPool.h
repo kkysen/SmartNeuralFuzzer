@@ -9,7 +9,6 @@
 #include "src/share/io/fse.h"
 
 #include "llvm/ADT/SmallVector.h"
-#include "WriteBufferBase.h"
 
 #include <functional>
 
@@ -71,6 +70,10 @@ namespace aio {
     
     public:
         
+        constexpr size_t size() const noexcept {
+            return pointers.size();
+        }
+        
         // doesn't allocate, so noexcept
         // returns nullptr if it can't find a buffer w/o allocating a new one
         Buffer* requestExisting() noexcept {
@@ -107,7 +110,9 @@ namespace aio {
                 return bufferPtr;
             }
             // SmallVector<Buffer*> -> ArrayRef<Buffer*> -> ArrayRef<ControlBlock*> -> ControlBlock** -> aiocb**
-            if (aio::suspend(pointers, timeout) == -1) {
+            const auto controlBlocks = reinterpret_cast<const ControlBlock* const*>(pointers.data());
+            const auto ref = llvm::ArrayRef(controlBlocks, size());
+            if (aio::suspend(ref, timeout) == -1) {
                 error = errno;
             } else {
                 error = 0;

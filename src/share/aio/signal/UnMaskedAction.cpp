@@ -41,7 +41,7 @@ namespace aio::signal {
     }
     
     void UnMaskedAction::reset() const noexcept {
-        flags &= ~isAction;
+        flags &= ~flag::isAction;
         handler = SIG_IGN;
     }
     

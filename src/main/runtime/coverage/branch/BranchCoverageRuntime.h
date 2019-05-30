@@ -6,7 +6,6 @@
 
 #include "src/share/common/numbers.h"
 #include "src/share/common/api.h"
-#include "src/main/runtime/coverage/RAII_API.h"
 
 #define API_BranchCoverage(funcName) API(BranchCoverage, funcName)
 
@@ -17,7 +16,5 @@ api(onSingleBranch)(bool value) noexcept;
 api(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept;
 
 api(onInfiniteBranch)(void* address) noexcept;
-
-RAII_API()
 
 #undef api

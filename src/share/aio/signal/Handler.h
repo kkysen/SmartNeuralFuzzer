@@ -28,17 +28,22 @@ namespace aio::signal {
         std::array<UnMaskedAction, NSIG> oldHandlers = {};
         std::bitset<disposition::defaults.size()> handledSignals;
         
-        void old(const Signal& signal) noexcept;
+        void oldHandle(const Signal& signal) const noexcept;
         
-        void operator()(const Signal& signal) noexcept;
+        void ownHandle(const Signal& signal) const noexcept;
         
-        void operator()(int signal, siginfo_t* sigInfo, void* context) noexcept;
+        void operator()(const Signal& signal) const noexcept;
+        
+        void operator()(int signal, siginfo_t* sigInfo, void* context) const noexcept;
     
         static void handle(int signal, siginfo_t* sigInfo, void* context) noexcept;
         
     public:
         
         void add(HandlerFunc&& handler);
+        
+        // for defining a global that adds a handler
+        bool added(HandlerFunc&& handler);
     
     private:
         
@@ -46,7 +51,11 @@ namespace aio::signal {
         
         bool tryAddExisting(int signal, struct sigaction& oldAction) noexcept;
         
-        void registerFor(int signal, struct sigaction& oldAction) noexcept;
+        void registerFor(int signal, struct sigaction& oldAction, bool reset) noexcept;
+        
+        bool _tryRegisterFor(const disposition::Default& disposition) noexcept;
+        
+        bool currentlyRegistering = false; // TODO should this be atomic
         
         bool tryRegisterFor(const disposition::Default& disposition) noexcept;
 

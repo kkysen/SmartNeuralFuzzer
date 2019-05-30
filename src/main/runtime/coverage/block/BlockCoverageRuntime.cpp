@@ -4,10 +4,7 @@
 
 #include "src/main/runtime/coverage/block/BlockCoverageRuntime.h"
 
-#include "src/share/common/lazy.h"
-#include "src/share/io/WriteBuffer.h"
-#include "src/share/io/EnvironmentOutputPath.h"
-#include "src/main/runtime/coverage/CoverageOutput.h"
+#include "src/main/runtime/coverage/include.h"
 
 namespace runtime::coverage::block {
     
@@ -25,13 +22,13 @@ namespace runtime::coverage::block {
     
         BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir, "blocks")) {}
         
-        static const LazilyConstructed<BlockCoverageRuntime> instance;
+        static thread_local const LazilyConstructed<BlockCoverageRuntime> instance;
         
     };
     
-    const LazilyConstructed<BlockCoverageRuntime> BlockCoverageRuntime::instance;
+    thread_local const LazilyConstructed<BlockCoverageRuntime> BlockCoverageRuntime::instance;
     
-    auto& rt = BlockCoverageRuntime::instance;
+    auto& rt = BlockCoverageRuntime::instance.lazy;
     
 }
 

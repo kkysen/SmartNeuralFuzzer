@@ -4,10 +4,7 @@
 
 #include "src/main/runtime/coverage/branch/BranchCoverageRuntime.h"
 
-#include "src/share/common/lazy.h"
-#include "src/share/io/WriteBuffer.h"
-#include "src/share/io/EnvironmentOutputPath.h"
-#include "src/main/runtime/coverage/CoverageOutput.h"
+#include "src/main/runtime/coverage/include.h"
 
 #include <numeric>
 
@@ -190,7 +187,7 @@ namespace runtime::coverage::branch {
                                  .bitIndexDiff = bitIndexDiff,
                                  .isMultiple = static_cast<u32>(false),
                                  .low = static_cast<u32>(address),
-                                 .high = static_cast<u32>(address >> 32),
+                                 .high = static_cast<u32>(address >> 32u),
                          });
             }
             
@@ -245,7 +242,7 @@ namespace runtime::coverage::branch {
     
     const LazilyConstructed<BranchCoverageRuntime> BranchCoverageRuntime::instance;
     
-    auto& rt = BranchCoverageRuntime::instance;
+    auto& rt = BranchCoverageRuntime::instance.lazy;
     
 }
 

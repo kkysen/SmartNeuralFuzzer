@@ -38,5 +38,6 @@ function(llvmImportAsRuntime)
 endfunction()
 
 function(llvmPreloadPassRegister)
-    set(ENV{LD_PRELOAD} "$ENV{LD_PRELOAD} ${CMAKE_CURRENT_BINARY_DIR}/src/main/pass/register/libpass.register.so")
+    # messing up other stuff
+#    set(ENV{LD_PRELOAD} "$ENV{LD_PRELOAD} ${CMAKE_CURRENT_BINARY_DIR}/lib/libpass.register.so")
 endfunction()
