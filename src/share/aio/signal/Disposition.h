@@ -5,6 +5,7 @@
 #pragma once
 
 #include "src/share/common/numbers.h"
+#include "src/share/common/deleteCopy.h"
 
 #include <array>
 
@@ -48,8 +49,8 @@ namespace aio::signal::disposition {
                   atLeastStops(terminates || stops),
                   resumes(disposition == Disposition::resume),
                   isIgnored(disposition == Disposition::ignore) {}
-        
-        Default(const Default& other) = delete;
+    
+        deleteCopy(Default);
         
     };
     

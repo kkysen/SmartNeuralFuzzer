@@ -37,8 +37,8 @@ namespace aio {
         ~WriteBufferBase() {
             close(fd);
         }
-        
-        WriteBufferBase(const WriteBufferBase& other) = delete;
+    
+        deleteCopy(WriteBufferBase);
         
         constexpr size_t size() const noexcept {
             return _buffer->size();

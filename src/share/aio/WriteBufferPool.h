@@ -146,8 +146,8 @@ namespace aio {
         }
         
         WriteBufferPool() = default;
-        
-        WriteBufferPool(const WriteBufferPool& other) = delete;
+    
+        deleteCopy(WriteBufferPool);
     
     private:
         

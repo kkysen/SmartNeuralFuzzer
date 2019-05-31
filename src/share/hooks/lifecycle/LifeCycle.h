@@ -4,13 +4,16 @@
 
 #pragma once
 
-#include <src/share/common/lazy.h>
+#include "src/share/common/lazy.h"
+#include "src/share/common/deleteCopy.h"
 
 namespace hooks::lifecycle {
     
     class LifeCycle {
     
     public:
+        
+        deleteCopy(LifeCycle);
     
         // these 3 methods must be idempotent
         

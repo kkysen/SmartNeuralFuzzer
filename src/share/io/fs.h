@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/share/common/deleteCopy.h"
+
 #include <experimental/filesystem>
 
 namespace fs = std::experimental::filesystem;

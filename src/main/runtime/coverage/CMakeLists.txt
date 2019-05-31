@@ -12,6 +12,7 @@ set(files.share
         ${files.share.io}
         ${files.share.aio}
         ${files.share.aio.signal}
+        ${files.share.concurrent}
         ${files.share.hooks}
         ${files.runtime}
         ${files.runtime.coverage}

@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "src/share/hooks/libc/syscall/impl.h"
+
 #include <csignal>
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <pthread.h>
 
 namespace hooks::libc::impl {
@@ -43,10 +44,6 @@ namespace hooks::libc::impl {
     _(pthread_create);
     // variadic args
     _(clone);
-    
-    // conditionally hook
-    // variadic args
-    _(syscall);
     
     // unconditionally hook
     // onSignalWarning

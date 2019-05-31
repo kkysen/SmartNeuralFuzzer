@@ -19,6 +19,8 @@ namespace hooks::lifecycle {
         
     public:
         
+        deleteCopy(LifeCycles);
+        
         LifeCycle& add(std::unique_ptr<LifeCycle>&& object);
         
         void reconstruct() final;

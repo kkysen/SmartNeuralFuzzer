@@ -2,7 +2,7 @@
 // Created by Khyber on 5/30/2019.
 //
 
-#include "src/share/hooks/libc/gettid.h"
+#include "src/share/hooks/libc/syscall/gettid.h"
 
 #include <cstdlib>
 #include <csignal>

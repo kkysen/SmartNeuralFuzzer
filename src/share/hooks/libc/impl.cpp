@@ -38,7 +38,6 @@ namespace hooks::libc::impl {
     _(execlp);
     _(execle);
     _(clone);
-    _(syscall);
     
     #undef _
     #undef getImpl

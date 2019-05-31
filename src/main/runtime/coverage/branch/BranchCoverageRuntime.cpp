@@ -40,7 +40,7 @@ namespace runtime::coverage::branch {
             
             explicit constexpr Counts(io::Writer&& write) noexcept : all({}), write(std::move(write)) {}
             
-            Counts(const Counts& other) = delete;
+            deleteCopy(Counts);
             
             ~Counts() noexcept {
                 printf("numBranches: %lu, %lu, %lu\n", branches.single, branches.multi, branches.infinite);
@@ -136,7 +136,7 @@ namespace runtime::coverage::branch {
             
             explicit constexpr SingleBranches(io::Writer&& write) noexcept : write(std::move(write)) {}
             
-            SingleBranches(const SingleBranches& other) = delete;
+            deleteCopy(SingleBranches);
             
             ~SingleBranches() noexcept {
                 finalFlush();
@@ -171,7 +171,7 @@ namespace runtime::coverage::branch {
             
             explicit constexpr NonSingleBranches(io::Writer&& write) noexcept : buffer(std::move(write)) {}
             
-            NonSingleBranches(const NonSingleBranches& other) = delete;
+            deleteCopy(NonSingleBranches);
             
             void onMulti(u32 branchNum, u32 numBranches, u32 bitIndexDiff) noexcept {
                 onRecord({

@@ -56,7 +56,7 @@ namespace io {
             finalFlush();
         }
         
-        WriteBuffer(const WriteBuffer& other) = delete;
+        deleteCopy(WriteBuffer);
         
         void on(T t) noexcept {
             buffer[index++] = t;

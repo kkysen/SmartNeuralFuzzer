@@ -2,10 +2,9 @@
 // Created by Khyber on 5/30/2019.
 //
 
-#include "src/share/hooks/libc/gettid.h"
-#include "src/share/hooks/libc/impl.h"
+#include "src/share/hooks/libc/syscall/gettid.h"
 
-#include <syscall.h>
+#include "src/share/hooks/libc/syscall/impl.h"
 
 // very new in glibc 2.30, 8/2019
 pid_t gettid() noexcept {

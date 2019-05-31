@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include "src/share/io/fse.h"
+#include "src/share/io/fs.h"
 
 #include <string>
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 
 namespace fse {
@@ -28,8 +29,8 @@ namespace fse {
         constexpr Dir(Dir&& other) noexcept : fd(other.fd) {
             const_cast<int&>(other.fd) = -1;
         }
-        
-        Dir(const Dir& other) = delete;
+    
+        deleteCopy(Dir);
         
         ~Dir();
         

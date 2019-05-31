@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include "src/share/stde/getline.h"
+#include "src/share/common/deleteCopy.h"
+
 #include <cstdio>
 #include <string>
-#include "src/share/stde/getline.h"
 
 namespace io {
     
@@ -29,8 +31,8 @@ namespace io {
         explicit Popen(const std::string& string, const char* mode = defaultMode);
         
         ~Popen();
-        
-        Popen(const Popen& other) = delete;
+    
+        deleteCopy(Popen);
         
         constexpr Popen(Popen&& other) noexcept : _file(other._file) {
             other._file = nullptr;

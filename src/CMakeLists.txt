@@ -16,6 +16,7 @@ files(share.common
         share/common/api.h
         share/common/has/field.h
         share/common/has/method.h
+        share/common/deleteCopy.h
         )
 
 files(share.stde
@@ -89,13 +90,48 @@ files(share.aio.signal
         share/aio/signal/AltStack.cpp
         share/aio/signal/Handler.h
         share/aio/signal/Handler.cpp
+        share/aio/signal/mask/Init.h
+        share/aio/signal/mask/Init.cpp
+        share/aio/signal/mask/Modify.h
+        share/aio/signal/mask/Modify.cpp
+        share/aio/signal/mask/How.h
+        share/aio/signal/mask/How.cpp
+        share/aio/signal/mask/Apply.h
+        share/aio/signal/mask/Apply.cpp
+        share/aio/signal/mask/Mask.h
+        share/aio/signal/mask/Mask.cpp
+        share/aio/signal/mask/Masker.h
+        share/aio/signal/mask/Masker.cpp
+        )
+
+files(share.concurrent
+        share/concurrent/numVirtualCores.h
+        share/concurrent/numVirtualCores.cpp
+        share/concurrent/SpinLock.h
+        share/concurrent/SpinLock.cpp
+        share/concurrent/Mutex.cpp
+        share/concurrent/Mutex.h
+        share/concurrent/AdaptiveMutex.h
+        share/concurrent/AdaptiveMutex.cpp
+        )
+
+set(share.hooks.libc.syscall
+        share/hooks/libc/syscall/impl.h
+        share/hooks/libc/syscall/impl.cpp
+        share/hooks/libc/syscall/gettid.h
+        share/hooks/libc/syscall/gettid.cpp
+        share/hooks/libc/syscall/tgkill.h
+        share/hooks/libc/syscall/tgkill.cpp
+        )
+
+files(share.hooks.libc.syscall
+        ${share.hooks.libc.syscall}
         )
 
 files(share.hooks
+        ${share.hooks.libc.syscall}
         share/hooks/libc/impl.h
         share/hooks/libc/impl.cpp
-        share/hooks/libc/gettid.h
-        share/hooks/libc/gettid.cpp
         share/hooks/libc/hooks.cpp
         share/hooks/lifecycle/hooks.h
         share/hooks/lifecycle/hooks.cpp
@@ -105,6 +141,10 @@ files(share.hooks
         share/hooks/lifecycle/LifeCycles.cpp
         share/hooks/lifecycle/LazilyConstructed.h
         share/hooks/lifecycle/LazilyConstructed.cpp
+        share/hooks/lifecycle/ThreadLifeCycles.h
+        share/hooks/lifecycle/ThreadLifeCycles.cpp
+        share/hooks/lifecycle/ProcessLifeCycles.h
+        share/hooks/lifecycle/ProcessLifeCycles.cpp
         )
 
 files(share.llvm

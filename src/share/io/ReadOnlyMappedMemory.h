@@ -49,8 +49,8 @@ namespace io {
                 : ReadOnlyMappedMemory(path.c_str(), length, flags) {}
         
         ~ReadOnlyMappedMemory();
-        
-        ReadOnlyMappedMemory(const ReadOnlyMappedMemory& other) = delete;
+    
+        deleteCopy(ReadOnlyMappedMemory);
         
         constexpr ReadOnlyMappedMemory(ReadOnlyMappedMemory&& other) noexcept : _view(other._view) {
             other._view = std::string_view(static_cast<const char*>(MAP_FAILED), 0);

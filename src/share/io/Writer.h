@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/share/common/deleteCopy.h"
+
 #include <unistd.h>
 
 namespace io {
@@ -24,7 +26,7 @@ namespace io {
             other.fd = -1; // don't close(fd) early
         }
         
-        Writer(const Writer& other) = delete;
+        deleteCopy(Writer);
         
         ~Writer() noexcept;
         

@@ -41,8 +41,8 @@ namespace aio {
         constexpr IdempotentWriter(int fd, const T& t) noexcept : IdempotentWriter(fd, &t, sizeof(t)) {}
         
         ~IdempotentWriter();
-        
-        IdempotentWriter(const IdempotentWriter& other) = delete;
+    
+        deleteCopy(IdempotentWriter);
         
     };
     

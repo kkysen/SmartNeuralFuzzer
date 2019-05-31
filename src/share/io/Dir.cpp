@@ -4,6 +4,8 @@
 
 #include "src/share/io/Dir.h"
 
+#include "src/share/io/fse.h"
+
 namespace fse {
     
     // TODO FIXME this is totally wrong, ensureDir returns a bool
