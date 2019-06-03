@@ -12,12 +12,15 @@
 namespace hooks::lifecycle {
     
     class LifeCycles : public LifeCycle {
-
-    private:
     
-        llvm::SmallVector<std::unique_ptr<LifeCycle>, 2> objects;
+    private:
         
+        llvm::SmallVector<std::unique_ptr<LifeCycle>, 2> objects;
+    
     public:
+        
+        // llvm::SmallVector() is noexcept, it just isn't declared
+        LifeCycles() noexcept : objects() {};
         
         deleteCopy(LifeCycles);
         
@@ -29,12 +32,14 @@ namespace hooks::lifecycle {
         
         void destruct() noexcept final;
         
+        ~LifeCycles() final;
+        
         void handleSignal(const aio::signal::Signal& signal) noexcept;
-
+    
     private:
         
         static thread_local LifeCycles instance;
-
+    
     public:
         
         static constexpr LifeCycles& get() noexcept {

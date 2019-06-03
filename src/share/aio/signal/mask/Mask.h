@@ -23,6 +23,8 @@ namespace aio::signal::mask {
         /*implicit*/ Mask(Init init = Init::empty) noexcept : set({}) {
             init(set);
         }
+    
+        /*implicit*/ Mask(Init::Type init = Init::empty) noexcept : Mask(Init(init)) {}
         
         static constexpr Mask of(const sigset_t& set) noexcept {
             return Mask(set);

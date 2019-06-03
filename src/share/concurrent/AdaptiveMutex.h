@@ -12,7 +12,7 @@
 
 namespace concurrent {
     
-    template <class Mutex = concurrent::Mutex>
+    template <class Mutex = std::mutex>
     class AdaptiveMutex {
     
     private:
@@ -26,13 +26,16 @@ namespace concurrent {
         // does in fact use an adaptive mutex,
         // so this is mostly for nothing,
         // and the pthread version is likely much more optimized
-        static const size_t getTimeCycles = 0; // for now
+        static const size_t getTimeCycles = 100; // for now, should be measured once at runtime
         
         SpinLock spin;
         Mutex mutex;
         AtomicTime predictedTime = 0;
     
     public:
+        
+        template <class MutexInit>
+        /*implicit*/ constexpr AdaptiveMutex(MutexInit init) noexcept : mutex(init) {}
         
         void unlock() noexcept {
             mutex.unlock();
@@ -68,7 +71,7 @@ namespace concurrent {
             Time elapsed = 0;
             while (!countSpinLock()) {
                 elapsed = (Clock::now() - start).count();
-                if (elapsed >= predictedTime * 2) {
+                if (elapsed >= predictedTime * 2 + 10) {
                     locked = false;
                     break;
                 }
@@ -96,7 +99,7 @@ namespace concurrent {
     #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
     
     template <>
-    class AdaptiveMutex<Mutex> {
+    class AdaptiveMutex<std::mutex> {
     
     private:
         
@@ -121,9 +124,6 @@ namespace concurrent {
         }
         
     };
-    
-    template <>
-    class AdaptiveMutex<std::mutex> : public AdaptiveMutex<Mutex> {};
     
     #endif
     

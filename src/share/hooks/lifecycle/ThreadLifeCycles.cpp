@@ -31,37 +31,27 @@ namespace {
 
 namespace hooks::lifecycle {
     
-    void ThreadLifeCycles::destructSelf() const noexcept {
-        lifeCycles.destruct();
+    void ThreadLifeCycles::killOtherThread(pid_t _tid) const noexcept {
+        if (thread != self::thread()) {
+            // kill thread to stop it from running
+            // we are owned globally, so lifeCycles.destruct() is still valid
+            // now it's safe to call lifeCycles.destruct(),
+            // b/c the other thread isn't using it concurrently
+            self::killThread(_tid);
+        }
     }
     
-    void ThreadLifeCycles::destructOther(pid_t _tid) const noexcept {
-        // kill thread to stop it from running
-        // we are owned globally, so lifeCycles.destruct() is still valid
-        // now it's safe to call lifeCycles.destruct(),
-        // b/c the other thread isn't using it concurrently
-        self::killThread(_tid);
-        lifeCycles.destruct();
-    }
-    
-    void ThreadLifeCycles::destruct() noexcept {
+    ThreadLifeCycles::~ThreadLifeCycles() {
         // need atomic exchange so that only 1 thread can call this at a time
         const auto _tid = tid.exchange(0);
         if (_tid == 0) {
             return;
         }
-        if (thread == self::thread()) {
-            destructSelf();
-        } else {
-            destructOther(_tid);
-        }
+        killOtherThread(_tid);
+        lifeCycles.destruct();
     }
     
-    ThreadLifeCycles::~ThreadLifeCycles() {
-        destruct();
-    }
-    
-    ThreadLifeCycles::ThreadLifeCycles(LifeCycles& lifeCycles) noexcept
-            : lifeCycles(lifeCycles), thread(self::thread()), tid(self::tid()) {}
+    ThreadLifeCycles::ThreadLifeCycles() noexcept
+            : lifeCycles(), thread(self::thread()), tid(self::tid()) {}
     
 }

@@ -29,6 +29,11 @@ namespace hooks::lifecycle {
         for (const auto& e : stde::reversed(objects)) {
             e->destruct();
         }
+        objects.clear();
+    }
+    
+    LifeCycles::~LifeCycles() {
+        destruct();
     }
     
     void LifeCycles::handleSignal(const aio::signal::Signal& signal) noexcept {

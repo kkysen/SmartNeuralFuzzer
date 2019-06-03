@@ -12,6 +12,14 @@
 
 namespace {
     
+    void onDeath() {
+    
+    }
+    
+}
+
+namespace {
+    
     using namespace hooks::lifecycle;
     
     void onMaybeExit() noexcept {

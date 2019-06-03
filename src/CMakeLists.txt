@@ -17,6 +17,8 @@ files(share.common
         share/common/has/field.h
         share/common/has/method.h
         share/common/deleteCopy.h
+        share/common/odrUse.h
+        share/common/odrUse.cpp
         )
 
 files(share.stde
@@ -28,6 +30,8 @@ files(share.stde
         share/stde/getline.cpp
         share/stde/reversed.h
         share/stde/reversed.cpp
+        share/stde/ListDeleter.h
+        share/stde/ListDeleter.cpp
         )
 
 files(share.time
@@ -105,6 +109,8 @@ files(share.aio.signal
         )
 
 files(share.concurrent
+        share/concurrent/NoLock.h
+        share/concurrent/NoLock.cpp
         share/concurrent/numVirtualCores.h
         share/concurrent/numVirtualCores.cpp
         share/concurrent/SpinLock.h
@@ -143,6 +149,8 @@ files(share.hooks
         share/hooks/lifecycle/LazilyConstructed.cpp
         share/hooks/lifecycle/ThreadLifeCycles.h
         share/hooks/lifecycle/ThreadLifeCycles.cpp
+        share/hooks/lifecycle/ThreadLifeCyclesOwner.h
+        share/hooks/lifecycle/ThreadLifeCyclesOwner.cpp
         share/hooks/lifecycle/ProcessLifeCycles.h
         share/hooks/lifecycle/ProcessLifeCycles.cpp
         )

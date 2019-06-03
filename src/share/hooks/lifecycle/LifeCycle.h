@@ -13,6 +13,8 @@ namespace hooks::lifecycle {
     
     public:
         
+        LifeCycle() noexcept = default;
+        
         deleteCopy(LifeCycle);
     
         // these 3 methods must be idempotent

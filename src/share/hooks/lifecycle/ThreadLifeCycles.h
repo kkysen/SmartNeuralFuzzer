@@ -19,21 +19,21 @@ namespace hooks::lifecycle {
     
     private:
         
-        LifeCycles& lifeCycles;
+        LifeCycles lifeCycles;
         const pthread_t thread;
         std::atomic<pid_t> tid;
         
-        void destructSelf() const noexcept;
-        
-        void destructOther(pid_t _tid) const noexcept;
+        void killOtherThread(pid_t _tid) const noexcept;
     
     public:
-        
-        void destruct() noexcept;
-        
+    
         ~ThreadLifeCycles();
         
-        explicit ThreadLifeCycles(LifeCycles& lifeCycles) noexcept;
+        constexpr LifeCycles& operator()() noexcept {
+            return lifeCycles;
+        }
+        
+        explicit ThreadLifeCycles() noexcept;
         
         // can't be killing thread repeatedly
         // though move constructor might be possible, but unnecessary
