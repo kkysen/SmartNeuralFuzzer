@@ -16,6 +16,18 @@ namespace {
     
     }
     
+    void onExit() {
+        onDeath();
+    }
+    
+    void onExec() {
+        onDeath();
+    }
+    
+    void onCrash() {
+        onDeath();
+    }
+    
 }
 
 namespace {

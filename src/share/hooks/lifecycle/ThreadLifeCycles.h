@@ -12,41 +12,14 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <src/share/common/odrUse.h>
 
-namespace hooks::lifecycle {
+namespace hooks::lifecycle::thread {
     
-    class ThreadLifeCycles {
+    extern thread_local LifeCycles lifeCycles;
     
-    private:
-        
-        LifeCycles lifeCycles;
-        const pthread_t thread;
-        std::atomic<pid_t> tid;
-        
-        void killOtherThread(pid_t _tid) const noexcept;
+    void onCreation() noexcept;
     
-    public:
-    
-        ~ThreadLifeCycles();
-        
-        constexpr LifeCycles& operator()() noexcept {
-            return lifeCycles;
-        }
-        
-        explicit ThreadLifeCycles() noexcept;
-        
-        // can't be killing thread repeatedly
-        // though move constructor might be possible, but unnecessary
-        deleteCopy(ThreadLifeCycles);
-        
-        // should be destructed when a thread dies
-        
-        // invalidates it so that destruct() won't do anything
-        // used to throw away a failed ThreadLifeCycle
-        constexpr void invalidate() noexcept {
-            tid.store(0);
-        }
-        
-    };
+    void onDestruction() noexcept;
     
 }

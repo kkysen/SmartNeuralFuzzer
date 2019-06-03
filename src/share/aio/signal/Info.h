@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "src/share/common/numbers.h"
+#include "src/share/aio/signal/Value.h"
 
 #include <string_view>
 
-#include <csignal>
 #include <ctime>
 
 namespace aio::signal {
@@ -16,38 +15,38 @@ namespace aio::signal {
     struct Info {
         
         struct {
-    
+            
             int signal;
             int error;
             int code;
             #ifdef si_trapno
             int trapNumber;
             #endif
-    
+            
             union {
-        
+                
                 int _padding[__SI_PAD_SIZE];
-        
+                
                 // kill()
                 struct {
                     pid_t pid;
                     uid_t uid;
                 } killer;
-        
+                
                 // Posix.1b timers
                 struct {
                     int id;
                     int overrunCount;
-                    sigval_t value;
+                    Value value;
                 } timer;
-        
+                
                 // Posix.1b signals
                 struct {
                     pid_t pid;
                     uid_t uid;
-                    sigval_t value;
+                    Value value;
                 } rt;
-        
+                
                 // SIGCHLD
                 struct {
                     pid_t pid;
@@ -58,7 +57,7 @@ namespace aio::signal {
                         clock_t system;
                     } timeConsumed;
                 } child;
-        
+                
                 // SIGILL, SIGFPE, SIGSEGV, SIGBUS
                 struct {
                     struct {
@@ -75,20 +74,20 @@ namespace aio::signal {
                         #endif
                     } bound;
                 } fault;
-        
+                
                 // SIGPOLL
                 struct {
                     long band;
                     int fd;
                 } poll;
-        
+                
                 // SIGSYS
                 struct {
                     void* callAddress;
                     int number;
                     unsigned int arch;
                 } syscall;
-        
+                
             } __SI_ALIGNMENT;
             
         };
@@ -103,10 +102,16 @@ namespace aio::signal {
         
         static Info& of(siginfo_t& info) noexcept;
         
+        const siginfo_t& impl() const noexcept;
+        
+        siginfo_t& impl() noexcept;
+        
         /*implicit*/ operator const siginfo_t&() const noexcept;
         
         /*implicit*/ operator siginfo_t&() noexcept;
     
+        static Info value(int code, const Value& value) noexcept;
+        
     private:
         
         static constexpr std::pair<bool, std::string_view> memoryLayoutMatchesSigInfoT(
@@ -131,8 +136,8 @@ namespace aio::signal {
                                  //_(value, rt.value)
                                  // can't compare sigval_t's,
                                  // but the two below checks check the individual fields
-                                 _(int, rt.value.sival_int)
-                                 _(ptr, rt.value.sival_ptr)
+                                 _(int, rt.value.get<int>())
+                                 _(ptr, rt.value.raw.ptr)
                                  _(overrun, timer.overrunCount)
                                  _(timerid, timer.id)
                                  _(addr, fault.address.value)
@@ -154,7 +159,7 @@ namespace aio::signal {
         }
         
         static std::pair<bool, std::string_view> memoryLayoutMatchesSigInfoT(size_t trials) noexcept;
-        
+    
     public:
         
         static bool checkMemoryLayoutMatchesSigInfoT(size_t trials = 1000);

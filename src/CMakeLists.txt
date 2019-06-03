@@ -30,8 +30,6 @@ files(share.stde
         share/stde/getline.cpp
         share/stde/reversed.h
         share/stde/reversed.cpp
-        share/stde/ListDeleter.h
-        share/stde/ListDeleter.cpp
         )
 
 files(share.time
@@ -78,6 +76,8 @@ files(share.aio
 files(share.aio.signal
         share/aio/signal/Flag.h
         share/aio/signal/Flag.cpp
+        share/aio/signal/Value.h
+        share/aio/signal/Value.cpp
         share/aio/signal/Info.h
         share/aio/signal/Info.cpp
         share/aio/signal/Info_checkMemoryLayout.cpp
@@ -109,16 +109,22 @@ files(share.aio.signal
         )
 
 files(share.concurrent
-        share/concurrent/NoLock.h
-        share/concurrent/NoLock.cpp
         share/concurrent/numVirtualCores.h
         share/concurrent/numVirtualCores.cpp
-        share/concurrent/SpinLock.h
-        share/concurrent/SpinLock.cpp
-        share/concurrent/Mutex.cpp
-        share/concurrent/Mutex.h
-        share/concurrent/AdaptiveMutex.h
-        share/concurrent/AdaptiveMutex.cpp
+        share/concurrent/lock/NoLock.h
+        share/concurrent/lock/NoLock.cpp
+        share/concurrent/lock/SpinLock.h
+        share/concurrent/lock/SpinLock.cpp
+        share/concurrent/lock/Mutex.cpp
+        share/concurrent/lock/Mutex.h
+        share/concurrent/lock/AdaptiveMutex.h
+        share/concurrent/lock/AdaptiveMutex.cpp
+        share/concurrent/ConditionVariable.h
+        share/concurrent/ConditionVariable.cpp
+        share/concurrent/container/ListDeleter.h
+        share/concurrent/container/ListDeleter.cpp
+        share/concurrent/container/ThreadList.h
+        share/concurrent/container/ThreadList.cpp
         )
 
 set(share.hooks.libc.syscall
@@ -128,6 +134,8 @@ set(share.hooks.libc.syscall
         share/hooks/libc/syscall/gettid.cpp
         share/hooks/libc/syscall/tgkill.h
         share/hooks/libc/syscall/tgkill.cpp
+        share/hooks/libc/syscall/sigqueueinfo.h
+        share/hooks/libc/syscall/sigqueueinfo.cpp
         )
 
 files(share.hooks.libc.syscall
@@ -149,10 +157,14 @@ files(share.hooks
         share/hooks/lifecycle/LazilyConstructed.cpp
         share/hooks/lifecycle/ThreadLifeCycles.h
         share/hooks/lifecycle/ThreadLifeCycles.cpp
-        share/hooks/lifecycle/ThreadLifeCyclesOwner.h
-        share/hooks/lifecycle/ThreadLifeCyclesOwner.cpp
         share/hooks/lifecycle/ProcessLifeCycles.h
         share/hooks/lifecycle/ProcessLifeCycles.cpp
+        share/hooks/lifecycle/signaling/signaling.h
+        share/hooks/lifecycle/signaling/signaling.cpp
+        share/hooks/lifecycle/signaling/Sender.h
+        share/hooks/lifecycle/signaling/Sender.cpp
+        share/hooks/lifecycle/signaling/Receiver.h
+        share/hooks/lifecycle/signaling/Receiver.cpp
         )
 
 files(share.llvm

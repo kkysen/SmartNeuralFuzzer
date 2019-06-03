@@ -16,3 +16,14 @@ string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*$" "\\2" llvmVersionMinor
 string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*$" "\\3" llvmVersionPatch "${llvmVersion}")
 
 string(COMPARE EQUAL ${llvmVersionMajor} ${llvmVersionMajorNewest} llvmVersionMajorIsNewest)
+
+function(llvmGetLibDir var)
+    execute_process(
+            COMMAND bash -c "source ~/.bash_path.sh; dirname $(dirname `which clang`)"
+            OUTPUT_VARIABLE output
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(${var} "${output}/lib" PARENT_SCOPE)
+endfunction()
+
+llvmGetLibDir(llvm.lib.dir)

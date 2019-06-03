@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "src/share/concurrent/NoLock.h"
+#include "src/share/concurrent/lock/NoLock.h"
 #include "src/share/common/deleteCopy.h"
 
 #include <list>

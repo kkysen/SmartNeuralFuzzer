@@ -8,28 +8,7 @@
 
 namespace concurrent {
     
-    // wraps std::mutex, but allows for different initializers
-    class Mutex {
-    
-    private:
-        
-        std::mutex mutex;
-    
-    public:
-        
-        constexpr const std::mutex& impl() const noexcept {
-            return mutex;
-        }
-        
-        constexpr std::mutex& impl() noexcept {
-            return mutex;
-        }
-        
-        constexpr auto native_handle() noexcept {
-            return mutex.native_handle();
-        }
-        
-        constexpr Mutex() noexcept = default;
+    namespace mutex {
         
         class Init {
         
@@ -38,19 +17,19 @@ namespace concurrent {
             enum Type {
                 
                 _default,
-    
+                
                 #ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
                 recursive,
                 #endif
-    
+                
                 #ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
                 errorCheck,
                 #endif
-    
+                
                 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
                 adaptive,
                 #endif
-    
+                
             };
         
         private:
@@ -58,15 +37,15 @@ namespace concurrent {
             struct Raw {
                 
                 static constexpr pthread_mutex_t _default = PTHREAD_MUTEX_INITIALIZER;
-    
+                
                 #ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
                 static constexpr pthread_mutex_t recursive = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
                 #endif
-    
+                
                 #ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
                 static constexpr pthread_mutex_t errorCheck = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
                 #endif
-    
+                
                 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
                 static constexpr pthread_mutex_t adaptive = PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP;
                 #endif
@@ -94,17 +73,49 @@ namespace concurrent {
             
         };
         
-        /*implicit*/ constexpr Mutex(Init init = Init::_default) noexcept {
-            *mutex.native_handle() = init.raw();
+    }
+    
+    // wraps std::mutex, but allows for different initializers
+    template <mutex::Init::Type init = mutex::Init::_default>
+    class Mutex {
+    
+    private:
+        
+        std::mutex mutex;
+    
+    public:
+        
+        constexpr const std::mutex& impl() const noexcept {
+            return mutex;
         }
         
-        void unlock() noexcept;
+        constexpr std::mutex& impl() noexcept {
+            return mutex;
+        }
         
-        bool tryLock() noexcept;
+        constexpr auto native_handle() noexcept {
+            return mutex.native_handle();
+        }
         
-        bool try_lock() noexcept;
+        constexpr Mutex() noexcept {
+            *mutex.native_handle() = mutex::Init(init).raw();
+        }
         
-        void lock() noexcept;
+        void unlock() noexcept {
+            mutex.unlock();
+        }
+        
+        bool tryLock() noexcept {
+            return mutex.try_lock();
+        }
+        
+        bool try_lock() noexcept {
+            return tryLock();
+        }
+        
+        void lock() noexcept {
+            mutex.lock();
+        }
         
     };
     

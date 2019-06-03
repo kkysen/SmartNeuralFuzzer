@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "src/share/concurrent/SpinLock.h"
+#include "SpinLock.h"
 #include "src/share/concurrent/numVirtualCores.h"
-#include "src/share/concurrent/Mutex.h"
+#include "Mutex.h"
 
 #include <mutex>
 
@@ -33,6 +33,8 @@ namespace concurrent {
         AtomicTime predictedTime = 0;
     
     public:
+        
+        constexpr AdaptiveMutex() noexcept = default;
         
         template <class MutexInit>
         /*implicit*/ constexpr AdaptiveMutex(MutexInit init) noexcept : mutex(init) {}
@@ -98,32 +100,14 @@ namespace concurrent {
     
     #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
     
+    template <typename T>
+    class AdaptiveMutex<AdaptiveMutex<T>> : public AdaptiveMutex<T> {};
+    
     template <>
-    class AdaptiveMutex<std::mutex> {
+    class AdaptiveMutex<Mutex<mutex::Init::adaptive>> : public Mutex<mutex::Init::adaptive> {};
     
-    private:
-        
-        Mutex mutex = {Mutex::Init::adaptive};
-    
-    public:
-        
-        void unlock() noexcept {
-            mutex.unlock();
-        }
-        
-        bool tryLock() noexcept {
-            return mutex.try_lock();
-        }
-        
-        bool try_lock() noexcept {
-            return tryLock();
-        }
-        
-        void lock() noexcept {
-            mutex.lock();
-        }
-        
-    };
+    template <>
+    class AdaptiveMutex<std::mutex> : public Mutex<mutex::Init::adaptive> {};
     
     #endif
     

@@ -38,7 +38,9 @@ namespace aio::signal::disposition {
         const bool resumes;
         const bool isIgnored;
         
-        constexpr Default(int signal, Disposition disposition) noexcept
+        const std::string_view name;
+        
+        constexpr Default(int signal, Disposition disposition, std::string_view name) noexcept
                 : signal(signal), disposition(disposition),
                   isUnstoppable(disposition == Disposition::unstoppable),
                   onlyTerminates(disposition == Disposition::terminate),
@@ -48,7 +50,8 @@ namespace aio::signal::disposition {
                   stops(disposition == Disposition::stop),
                   atLeastStops(terminates || stops),
                   resumes(disposition == Disposition::resume),
-                  isIgnored(disposition == Disposition::ignore) {}
+                  isIgnored(disposition == Disposition::ignore),
+                  name(name) {}
     
         deleteCopy(Default);
         
@@ -89,48 +92,47 @@ namespace {
 namespace aio::signal::disposition {
     
     #define _(_signal, _disposition) \
-        Default(SIG##_signal, Disposition::_disposition)
+        Default(_signal, Disposition::_disposition, std::string_view(""#_signal))
     
     // http://man7.org/linux/man-pages/man7/signal.7.html
     constexpr std::array<Default, 34> defaults = {
-            _(ABRT, coreDump),
-            _(ALRM, terminate),
-            _(BUS, unrecoverable),
-            _(CHLD, ignore),
-            _(CLD, ignore),
-            _(CONT, resume),
-//          _(EMT, terminate),
-            _(FPE, unrecoverable),
-            _(HUP, terminate),
-            _(ILL, unrecoverable),
-//          _(INFO, terminate),
-            _(INT, terminate),
-            _(IO, terminate),
-            _(IOT, coreDump),
-            _(KILL, unstoppable), // terminate
-//          _(LOST, terminate),
-            _(PIPE, terminate),
-            _(POLL, terminate),
-            _(PROF, terminate),
-            _(PWR, terminate),
-            _(QUIT, coreDump),
-            _(SEGV, unrecoverable),
-            _(STKFLT, terminate),
-            _(STOP, unstoppable), // stop
-            _(TSTP, stop),
-            _(SYS, coreDump),
-            _(TERM, terminate),
-            _(TRAP, coreDump),
-            _(TTIN, stop),
-            _(TTOU, stop),
-//          _(UNUSED, coreDump),
-            _(URG, ignore),
-            _(USR1, terminate),
-            _(USR1, terminate),
-            _(VTALRM, terminate),
-            _(XCPU, coreDump),
-            _(XFSZ, coreDump),
-            _(WINCH, ignore),
+            _(SIGABRT, coreDump),
+            _(SIGALRM, terminate),
+            _(SIGBUS, unrecoverable),
+            _(SIGCHLD, ignore),
+            _(SIGCONT, resume),
+//          _(SIGEMT, terminate),
+            _(SIGFPE, unrecoverable),
+            _(SIGHUP, terminate),
+            _(SIGILL, unrecoverable),
+//          _(SIGINFO, terminate),
+            _(SIGINT, terminate),
+            _(SIGIO, terminate),
+            _(SIGIOT, coreDump),
+            _(SIGKILL, unstoppable), // terminate
+//          _(SIGLOST, terminate),
+            _(SIGPIPE, terminate),
+            _(SIGPOLL, terminate),
+            _(SIGPROF, terminate),
+            _(SIGPWR, terminate),
+            _(SIGQUIT, coreDump),
+            _(SIGSEGV, unrecoverable),
+            _(SIGSTKFLT, terminate),
+            _(SIGSTOP, unstoppable), // stop
+            _(SIGTSTP, stop),
+            _(SIGSYS, coreDump),
+            _(SIGTERM, terminate),
+            _(SIGTRAP, coreDump),
+            _(SIGTTIN, stop),
+            _(SIGTTOU, stop),
+//          _(SIGUNUSED, coreDump),
+            _(SIGURG, ignore),
+            _(SIGUSR1, terminate),
+            _(SIGUSR1, terminate),
+            _(SIGVTALRM, terminate),
+            _(SIGXCPU, coreDump),
+            _(SIGXFSZ, coreDump),
+            _(SIGWINCH, ignore),
     };
     
     #undef _
