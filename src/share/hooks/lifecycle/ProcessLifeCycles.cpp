@@ -37,8 +37,7 @@ namespace hooks::lifecycle {
     
     void ProcessLifeCycles::reconstruct() noexcept {
         tids.clear();
-        own.operator=(std::move(add()));
-//            own = add();
+        own = add();
     }
     
     void ProcessLifeCycles::destruct() const noexcept {

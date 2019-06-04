@@ -92,10 +92,10 @@ namespace {
 namespace aio::signal::disposition {
     
     #define _(_signal, _disposition) \
-        Default(_signal, Disposition::_disposition, std::string_view(""#_signal))
+        Default(_signal, Disposition::_disposition, std::string_view(#_signal))
     
     // http://man7.org/linux/man-pages/man7/signal.7.html
-    constexpr std::array<Default, 34> defaults = {
+    constexpr std::array<Default, 33> defaults = {
             _(SIGABRT, coreDump),
             _(SIGALRM, terminate),
             _(SIGBUS, unrecoverable),

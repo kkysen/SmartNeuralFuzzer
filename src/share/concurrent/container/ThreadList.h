@@ -46,7 +46,20 @@ namespace concurrent {
         
         deleteCopy(ThreadData);
         
-        ThreadData& operator=(ThreadData&& other) noexcept = default;
+        ThreadData& operator=(ThreadData&& other) noexcept {
+            if (this == &other) {
+                return *this;
+            }
+            struct Bytes {
+                u8 bytes[sizeof(ThreadData)];
+            };
+            auto& ownBytes = reinterpret_cast<Bytes&>(*this);
+            auto& otherBytes = reinterpret_cast<Bytes&>(static_cast<ThreadData&>(other));
+            Bytes tempBytes = ownBytes;
+            ownBytes = otherBytes;
+            otherBytes = tempBytes;
+            return *this;
+        }
         
         ~ThreadData() {
             if (list.empty()) {
@@ -76,7 +89,7 @@ namespace concurrent {
     private:
         
         List list;
-        Lock lock;
+        mutable Lock lock;
         mutable ConditionVariable noThreadsLeft;
     
     public:
