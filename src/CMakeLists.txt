@@ -171,18 +171,37 @@ files(share.hook
         )
 
 files(share.capability
+        share/capability/Capability.h
+        share/capability/Capability.cpp
+        share/capability/fields.h
         share/capability/Version.h
         share/capability/Version.cpp
         share/capability/Header.h
         share/capability/Header.cpp
-        share/capability/Capability.h
-        share/capability/Capability.cpp
+        share/capability/DirectCapabilitySet.h
+        share/capability/DirectCapabilitySet.cpp
         share/capability/Data.h
         share/capability/Data.cpp
         share/capability/Capabilities.h
         share/capability/Capabilities.cpp
         share/capability/reboot.h
         share/capability/reboot.cpp
+        share/capability/BitCache.h
+        share/capability/BitCache.cpp
+        share/capability/BitCached.h
+        share/capability/BitCached.cpp
+        share/capability/prctl.h
+        share/capability/prctl.cpp
+        share/capability/Bound.h
+        share/capability/Bound.cpp
+        share/capability/Ambient.h
+        share/capability/Ambient.cpp
+        share/capability/IndirectCapabilitySet.h
+        share/capability/IndirectCapabilitySet.cpp
+        share/capability/BoundSet.h
+        share/capability/BoundSet.cpp
+        share/capability/AmbientSet.h
+        share/capability/AmbientSet.cpp
         )
 
 files(share.llvm

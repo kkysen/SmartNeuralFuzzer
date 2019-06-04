@@ -5,6 +5,7 @@ add_executable(misc.signalHandlerInception signalHandlerInception.cpp)
 add_executable(misc.rt_sigqueueinfo rt_sigqueueinfo.cpp)
 add_executable(misc.stdListIteratorInvalidation stdListIteratorInvalidation.cpp)
 add_executable(misc.reboot reboot.cpp ${files.share.capability})
+add_executable(misc.prctlReturnErrno prctlReturnErrno.cpp)
 
 add_custom_target(misc DEPENDS
         misc.aio

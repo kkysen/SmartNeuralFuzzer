@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "src/share/capability/Capability.h"
+#include "src/share/capability/DirectCapabilitySet.h"
 
 #include <linux/capability.h>
 
@@ -12,9 +12,9 @@ namespace capability {
     
     struct Data {
         
-        Capability effective;
-        Capability permitted;
-        Capability inheritable;
+        DirectCapabilitySet effective;
+        DirectCapabilitySet permitted;
+        DirectCapabilitySet inheritable;
     
         using Impl = __user_cap_data_struct;
     

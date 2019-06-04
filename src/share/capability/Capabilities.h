@@ -6,6 +6,8 @@
 
 #include "src/share/capability/Header.h"
 #include "src/share/capability/Data.h"
+#include "src/share/capability/BoundSet.h"
+#include "src/share/capability/AmbientSet.h"
 
 namespace capability {
     
@@ -13,6 +15,8 @@ namespace capability {
         
         const Header header;
         Data data;
+        BoundSet bound;
+        AmbientSet ambient;
     
     public:
         
@@ -20,11 +24,11 @@ namespace capability {
         
         #define field(name) \
         \
-        constexpr const Capability& name() const noexcept { \
+        constexpr const DirectCapabilitySet& name() const noexcept { \
             return data.name; \
         } \
         \
-        constexpr Capability& name() noexcept { \
+        constexpr DirectCapabilitySet& name() noexcept { \
             return data.name; \
         }
         
