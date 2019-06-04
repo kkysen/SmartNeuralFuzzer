@@ -13,7 +13,8 @@ set(files.share
         ${files.share.aio}
         ${files.share.aio.signal}
         ${files.share.concurrent}
-        ${files.share.hooks}
+        ${files.share.hook}
+        ${files.share.capability}
         ${files.runtime}
         ${files.runtime.coverage}
         )

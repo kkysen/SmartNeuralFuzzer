@@ -5,6 +5,7 @@
 #include "src/main/pass/coverage/includes.h"
 #include "src/share/llvm/conversions.h"
 #include "src/share/llvm/debug.h"
+#include "src/share/io/fse.h"
 
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Support/raw_ostream.h"
@@ -12,7 +13,6 @@
 
 #include <numeric>
 #include <fstream>
-#include <src/share/io/fse.h>
 
 namespace llvm::pass::coverage::block {
     

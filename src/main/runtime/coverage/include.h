@@ -7,10 +7,10 @@
 #include "src/share/io/WriteBuffer.h"
 #include "src/share/io/EnvironmentOutputPath.h"
 #include "src/main/runtime/coverage/CoverageOutput.h"
-#include "src/share/hooks/lifecycle/LazilyConstructed.h"
+#include "src/share/hook/lifecycle/LazilyConstructed.h"
 
 namespace runtime::coverage {
     
-    using hooks::lifecycle::LazilyConstructed;
+    using hook::lifecycle::LazilyConstructed;
     
 }

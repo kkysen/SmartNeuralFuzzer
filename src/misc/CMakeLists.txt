@@ -1,14 +1,16 @@
-llvmImportAsLibrary()
+add_subdirectory(aio)
+add_subdirectory(thread)
 
-set(files.share ${files.share.aio} ${files.share.io})
+add_executable(misc.signalHandlerInception signalHandlerInception.cpp)
+add_executable(misc.rt_sigqueueinfo rt_sigqueueinfo.cpp)
+add_executable(misc.stdListIteratorInvalidation stdListIteratorInvalidation.cpp)
+add_executable(misc.reboot reboot.cpp ${files.share.capability})
 
-add_link_options(-lrt -pthread -ltinfo)
-add_link_options("-L${llvm.lib.dir}" -lLLVMSupport)
-
-add_executable(aio aio.cpp ${files.share})
-
-add_executable(signalHandlerInception signalHandlerInception.cpp)
-add_executable(rt_sigqueueinfo rt_sigqueueinfo.cpp)
-add_executable(repeatedSigqueue repeatedSigqueue.cpp)
-add_executable(tid tid.cpp)
-add_executable(stdListIteratorInvalidation stdListIteratorInvalidation.cpp)
+add_custom_target(misc DEPENDS
+        misc.aio
+        misc.rt_sigqueueinfo
+        misc.repeatedSigqueue
+        misc.tid
+        misc.stdListIteratorInvalidation
+        misc.reboot
+        )

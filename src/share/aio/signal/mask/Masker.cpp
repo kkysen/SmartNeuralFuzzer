@@ -2,8 +2,7 @@
 // Created by Khyber on 5/30/2019.
 //
 
-#include "Masker.h"
-#include "How.h"
+#include "src/share/aio/signal/mask/Masker.h"
 
 namespace aio::signal::mask {
     

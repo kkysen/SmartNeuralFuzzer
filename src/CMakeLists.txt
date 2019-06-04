@@ -127,44 +127,62 @@ files(share.concurrent
         share/concurrent/container/ThreadList.cpp
         )
 
-set(share.hooks.libc.syscall
-        share/hooks/libc/syscall/impl.h
-        share/hooks/libc/syscall/impl.cpp
-        share/hooks/libc/syscall/gettid.h
-        share/hooks/libc/syscall/gettid.cpp
-        share/hooks/libc/syscall/tgkill.h
-        share/hooks/libc/syscall/tgkill.cpp
-        share/hooks/libc/syscall/sigqueueinfo.h
-        share/hooks/libc/syscall/sigqueueinfo.cpp
+set(share.hook.libc.syscall
+        share/hook/libc/syscall/impl.h
+        share/hook/libc/syscall/impl.cpp
+        share/hook/libc/syscall/gettid.h
+        share/hook/libc/syscall/gettid.cpp
+        share/hook/libc/syscall/tgkill.h
+        share/hook/libc/syscall/tgkill.cpp
+        share/hook/libc/syscall/sigqueueinfo.h
+        share/hook/libc/syscall/sigqueueinfo.cpp
+        share/hook/libc/syscall/cap.h
+        share/hook/libc/syscall/cap.cpp
         )
 
-files(share.hooks.libc.syscall
-        ${share.hooks.libc.syscall}
+files(share.hook.libc.syscall
+        ${share.hook.libc.syscall}
         )
 
-files(share.hooks
-        ${share.hooks.libc.syscall}
-        share/hooks/libc/impl.h
-        share/hooks/libc/impl.cpp
-        share/hooks/libc/hooks.cpp
-        share/hooks/lifecycle/hooks.h
-        share/hooks/lifecycle/hooks.cpp
-        share/hooks/lifecycle/LifeCycle.h
-        share/hooks/lifecycle/LifeCycle.cpp
-        share/hooks/lifecycle/LifeCycles.h
-        share/hooks/lifecycle/LifeCycles.cpp
-        share/hooks/lifecycle/LazilyConstructed.h
-        share/hooks/lifecycle/LazilyConstructed.cpp
-        share/hooks/lifecycle/ThreadLifeCycles.h
-        share/hooks/lifecycle/ThreadLifeCycles.cpp
-        share/hooks/lifecycle/ProcessLifeCycles.h
-        share/hooks/lifecycle/ProcessLifeCycles.cpp
-        share/hooks/lifecycle/signaling/signaling.h
-        share/hooks/lifecycle/signaling/signaling.cpp
-        share/hooks/lifecycle/signaling/Sender.h
-        share/hooks/lifecycle/signaling/Sender.cpp
-        share/hooks/lifecycle/signaling/Receiver.h
-        share/hooks/lifecycle/signaling/Receiver.cpp
+files(share.hook
+        ${share.hook.libc.syscall}
+        share/hook/libc/impl.h
+        share/hook/libc/impl.cpp
+        share/hook/libc/hooks.h
+        share/hook/libc/hooks.cpp
+        share/hook/lifecycle/hooks.h
+        share/hook/lifecycle/hooks.cpp
+        share/hook/lifecycle/LifeCycle.h
+        share/hook/lifecycle/LifeCycle.cpp
+        share/hook/lifecycle/LifeCycles.h
+        share/hook/lifecycle/LifeCycles.cpp
+        share/hook/lifecycle/LazilyConstructed.h
+        share/hook/lifecycle/LazilyConstructed.cpp
+        share/hook/lifecycle/ThreadLifeCycles.h
+        share/hook/lifecycle/ThreadLifeCycles.cpp
+        share/hook/lifecycle/ProcessLifeCycles.h
+        share/hook/lifecycle/ProcessLifeCycles.cpp
+        share/hook/lifecycle/signaling/signaling.h
+        share/hook/lifecycle/signaling/signaling.cpp
+        share/hook/lifecycle/signaling/Sender.h
+        share/hook/lifecycle/signaling/Sender.cpp
+        share/hook/lifecycle/signaling/Receiver.h
+        share/hook/lifecycle/signaling/Receiver.cpp
+        )
+
+files(share.capability
+        share/capability/Version.h
+        share/capability/Version.cpp
+        share/capability/Header.h
+        share/capability/Header.cpp
+        share/capability/Capability.h
+        share/capability/Capability.cpp
+        share/capability/Data.h
+        share/capability/Data.cpp
+        share/capability/Capabilities.h
+        share/capability/Capabilities.cpp
+        share/capability/reboot.h
+        share/capability/reboot.cpp
         )
 
 files(share.llvm
@@ -194,7 +212,7 @@ set(CMAKE_CXX_COMPILER clang++)
 
 add_link_options("-fuse-ld=lld")
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+#set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_compile_options(-Wall -Werror -Wextra -Wno-error=unused-parameter)
 
@@ -219,4 +237,4 @@ add_subdirectory(main)
 add_subdirectory(test)
 add_subdirectory(misc)
 
-add_subdirectory(share/hooks/libc/test)
+add_subdirectory(share/hook/libc/test)

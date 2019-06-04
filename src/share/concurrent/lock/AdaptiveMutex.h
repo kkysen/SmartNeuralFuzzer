@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "SpinLock.h"
+#include "src/share/concurrent/lock/SpinLock.h"
+#include "src/share/concurrent/lock/Mutex.h"
 #include "src/share/concurrent/numVirtualCores.h"
-#include "Mutex.h"
 
 #include <mutex>
 

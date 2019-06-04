@@ -52,7 +52,3 @@ namespace debug {
         indentation.unIndent();
     }
 }
-
-std::ostream& operator<<(std::ostream& out, bool boolean) {
-    return out << (boolean ? "true" : "false");
-}

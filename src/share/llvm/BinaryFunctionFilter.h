@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <src/share/common/lazy.h>
 #include "src/share/io/ReadOnlyMappedMemory.h"
+#include "src/share/common/lazy.h"
 
 #include "llvm/IR/Function.h"
 #include "llvm/ADT/StringRef.h"

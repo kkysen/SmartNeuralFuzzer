@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "Mask.h"
-#include "How.h"
+#include "src/share/aio/signal/mask/Mask.h"
+#include "src/share/aio/signal/mask/How.h"
 
 namespace aio::signal::mask {
     

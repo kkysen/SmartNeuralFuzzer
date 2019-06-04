@@ -17,13 +17,17 @@ string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*$" "\\3" llvmVersionPatch
 
 string(COMPARE EQUAL ${llvmVersionMajor} ${llvmVersionMajorNewest} llvmVersionMajorIsNewest)
 
-function(llvmGetLibDir var)
-    execute_process(
-            COMMAND bash -c "source ~/.bash_path.sh; dirname $(dirname `which clang`)"
-            OUTPUT_VARIABLE output
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    set(${var} "${output}/lib" PARENT_SCOPE)
-endfunction()
+# doesn't have same ABI
 
-llvmGetLibDir(llvm.lib.dir)
+#function(llvmGetLibDir var)
+#    execute_process(
+#            COMMAND bash -c "source ~/.bash_path.sh; dirname $(dirname `which clang`)"
+#            OUTPUT_VARIABLE output
+#            OUTPUT_STRIP_TRAILING_WHITESPACE
+#    )
+#    set(${var} "${output}/lib" PARENT_SCOPE)
+#endfunction()
+#
+#llvmGetLibDir(llvm.lib.dir)
+
+llvmConfig(libdir llvm.lib.dir)

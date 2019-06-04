@@ -295,8 +295,6 @@ namespace debug {
     
 }
 
-std::ostream& operator<<(std::ostream& out, bool boolean);
-
 #define debug_info() (debug::Info { \
     .funcName = __func__, \
     .fileName = __FILE__, \
