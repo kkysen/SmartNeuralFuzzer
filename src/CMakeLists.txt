@@ -164,6 +164,7 @@ files(share.hook
         share/hook/libc/hooksImpl/exit.cpp
         share/hook/libc/hooksImpl/warnings.cpp
         share/hook/libc/hooksImpl/reboot.cpp
+        share/hook/libc/hooksImpl/signals.h
         share/hook/libc/hooksImpl/signals.cpp
         share/hook/libc/hooksImpl/blocked.cpp
         share/hook/libc/hooksImpl/Wrapped.h

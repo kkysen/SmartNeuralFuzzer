@@ -48,29 +48,4 @@ namespace hook::libc {
         }
     }
     
-    void onSignalWarning(int signal) noexcept {
-        const auto* dispositionPtr = aio::signal::disposition::getDefault(signal);
-        if (!dispositionPtr) {
-            return;
-        }
-        const auto& disposition = *dispositionPtr;
-        if (disposition.isUnstoppable) {
-            // normally these are uncatchable (SIGKILL, SIGSTOP),
-            // but I'm catching them before they're raised
-            // so I have a chance to clean up first
-            onKill();
-        } else if (disposition.terminates) {
-            // only call onCrash() if we're sure the program will exit immediately
-            if (hook::libc::impl::signal(signal, nullptr) == SIG_DFL) {
-                onKill();
-            }
-        }
-    }
-    
-    void onSignalHandlerChange(int signal) noexcept {
-        if (signal == lifecycle::signaling::constants::signal) {
-            // TODO
-        }
-    }
-    
 }

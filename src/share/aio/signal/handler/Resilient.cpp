@@ -6,16 +6,15 @@
 
 namespace aio::signal::handler {
     
-    void Resilient::oldHandle(const Signal& signal) const noexcept {
-        oldHandlers[signal.signal](signal);
+    bool Resilient::oldHandle(const Signal& signal) const noexcept {
+        return oldHandlers[signal.signal](signal);
     }
     
     void Resilient::operator()(const Signal& signal) const noexcept {
         ownHandle(signal);
-        oldHandle(signal);
-        // TODO FIXME must unregister before raising
-        if (signal.defaultDisposition.isUnrecoverable) {
-            ::raise(signal.signal);
+        if (!oldHandle(signal)) {
+            // if there was no old signal, then we should've crashed here
+            reRaise(signal);
         }
     }
     

@@ -12,7 +12,7 @@
 namespace aio::signal::handler {
     
     // like sigaction, but no sigset_t mask, which is large
-    // doesn't support SIG_DFL either
+    // doesn't support SIG_DFL either, i.e., when executing, SIG_DFL is treated as SIG_IGN
     // also doesn't store sa_restorer, but that's never used
     class UnMaskedAction {
     
@@ -40,8 +40,12 @@ namespace aio::signal::handler {
     
     public:
         
-        constexpr bool ignore() const noexcept {
+        constexpr bool ignores() const noexcept {
             return isHandler() && integralHandler == Const::ignore;
+        }
+        
+        constexpr bool defaults() const noexcept {
+            return isHandler() && integralHandler == Const::default_;
         }
         
         constexpr bool hasAction(RawAction _action) const noexcept {
@@ -60,7 +64,7 @@ namespace aio::signal::handler {
         constexpr UnMaskedAction() noexcept : UnMaskedAction(Const::ignore) {}
         
         explicit constexpr UnMaskedAction(const struct sigaction& sigAction) noexcept
-                : action(nullptr), flags(sigAction.sa_flags) {
+                : integralHandler(Const::ignore), flags(sigAction.sa_flags) {
             if (isHandler()) {
                 handler = sigAction.sa_handler;
             } else {

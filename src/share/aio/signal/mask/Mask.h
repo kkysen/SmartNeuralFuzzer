@@ -20,11 +20,11 @@ namespace aio::signal::mask {
     
         explicit constexpr Mask(const sigset_t& set) noexcept : set(set) {}
         
-        /*implicit*/ Mask(Init init = Init::empty) noexcept : set({}) {
-            init(set);
-        }
+        /*implicit*/ Mask(Init init) noexcept;
     
-        /*implicit*/ Mask(Init::Type init = Init::empty) noexcept : Mask(Init(init)) {}
+        /*implicit*/ Mask(Init::Type init) noexcept;
+        
+        Mask() noexcept;
         
         static constexpr Mask of(const sigset_t& set) noexcept {
             return Mask(set);
@@ -46,63 +46,33 @@ namespace aio::signal::mask {
             return impl();
         }
         
-        bool modify(Modify modify, int signal) noexcept {
-            return modify(set, signal);
-        }
+        bool modify(Modify modify, int signal) noexcept;
         
-        bool add(int signal) noexcept {
-            return modify(Modify::add, signal);
-        }
+        bool add(int signal) noexcept;
         
-        bool remove(int signal) noexcept {
-            return modify(Modify::remove, signal);
-        }
+        bool remove(int signal) noexcept;
         
-        bool has(int signal) const noexcept {
-            return ::sigismember(&set, signal) == 1;
-        }
+        bool has(int signal) const noexcept;
         
-        Mask& operator+=(int signal) noexcept {
-            add(signal);
-            return *this;
-        }
+        Mask& operator+=(int signal) noexcept;
         
-        Mask& operator-=(int signal) noexcept {
-            remove(signal);
-            return *this;
-        }
+        Mask& operator-=(int signal) noexcept;
         
-        bool operator&(int signal) const noexcept {
-            return has(signal);
-        }
+        bool operator&(int signal) const noexcept;
         
-        bool apply(Apply apply, How how, Mask& old) const noexcept {
-            return apply(how, set, old.set);
-        }
+        bool apply(Apply apply, How how, Mask& old) const noexcept;
         
-        bool apply(Apply apply, How how) const noexcept {
-            return apply(how, set);
-        }
+        bool apply(Apply apply, How how) const noexcept;
         
-        Mask(Apply apply, const Mask& mask, How how) noexcept : set({}) {
-            apply(how, mask.set, set);
-        }
+        Mask(Apply apply, const Mask& mask, How how) noexcept;
         
-        bool process(How how, Mask& old) const noexcept {
-            return apply(Apply::process, how, old);
-        }
+        bool process(How how, Mask& old) const noexcept;
         
-        bool thread(How how, Mask& old) const noexcept {
-            return apply(Apply::thread, how, old);
-        }
+        bool thread(How how, Mask& old) const noexcept;
         
-        bool process(How how) const noexcept {
-            return apply(Apply::process, how);
-        }
+        bool process(How how) const noexcept;
         
-        bool thread(How how) const noexcept {
-            return apply(Apply::thread, how);
-        }
+        bool thread(How how) const noexcept;
         
     };
     

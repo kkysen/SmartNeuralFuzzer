@@ -17,9 +17,5 @@ namespace hook::libc {
     void onCrash() noexcept;
     
     void onFork(pid_t cpid);
-    
-    void onSignalWarning(int signal) noexcept;
-    
-    void onSignalHandlerChange(int signal) noexcept;
 
 }

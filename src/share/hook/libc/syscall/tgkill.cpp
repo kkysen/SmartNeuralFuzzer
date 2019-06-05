@@ -4,8 +4,9 @@
 
 #include "src/share/hook/libc/syscall/tgkill.h"
 
-#include "src/share/hook/libc/syscall/impl.h"
+#include "src/share/hook/libc/hooksImpl/include.h"
 
 int tgkill(int tgid, int tid, int sig) noexcept {
-    return hook::libc::impl::syscall(SYS_tgkill, tgid, tid, sig);
+    signal::Disable disable;
+    return ::syscall(SYS_tgkill, tgid, tid, sig);
 }

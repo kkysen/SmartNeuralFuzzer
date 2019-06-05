@@ -40,11 +40,11 @@ namespace aio::signal::handler {
         
         /*implicit*/ operator sighandler_t() noexcept;
         
+        constexpr bool operator==(const Raw& rhs) const noexcept {
+            return raw == rhs;
+        }
+        
     };
-    
-    constexpr bool operator==(const Const& lhs, const typename Const::Raw& rhs) noexcept {
-        return lhs == Const(rhs);
-    }
     
     constexpr bool operator==(const typename Const::Raw& lhs, const Const& rhs) noexcept {
         return rhs == lhs;

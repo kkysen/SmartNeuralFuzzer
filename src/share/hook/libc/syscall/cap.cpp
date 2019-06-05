@@ -4,12 +4,14 @@
 
 #include "src/share/hook/libc/syscall/cap.h"
 
-#include "src/share/hook/libc/syscall/impl.h"
+#include "src/share/hook/libc/hooksImpl/include.h"
 
 int capget(__user_cap_header_struct* header, __user_cap_data_struct* data) noexcept {
-    return hook::libc::impl::syscall(SYS_capget, header, data);
+    signal::Disable disable;
+    return ::syscall(SYS_capget, header, data);
 }
 
 int capset(__user_cap_header_struct* header, const __user_cap_data_struct* data) noexcept {
-    return hook::libc::impl::syscall(SYS_capset, header, data);
+    signal::Disable disable;
+    return ::syscall(SYS_capset, header, data);
 }

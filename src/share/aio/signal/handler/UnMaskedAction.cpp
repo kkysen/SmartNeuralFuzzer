@@ -14,7 +14,9 @@ namespace {
     bool handle(const Signal& signal, handler::Raw handler) noexcept {
         // don't support SIG_DFL
         switch (handler::Const(handler)) {
+            case handler::Const::error:
             case handler::Const::ignore:
+            case handler::Const::hold:
             case handler::Const::default_: {
                 return false;
             }

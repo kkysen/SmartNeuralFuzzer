@@ -6,6 +6,7 @@
 
 #include "src/share/hook/libc/hooks.h"
 #include "src/share/hook/libc/impl.h"
+#include "src/share/hook/libc/hooksImpl/signals.h"
 
 namespace {
     using namespace hook::libc;

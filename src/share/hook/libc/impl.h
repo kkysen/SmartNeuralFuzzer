@@ -42,11 +42,11 @@ namespace hook::libc::impl {
     _(quick_exit);
     
     // unconditionally hook
-    // onSignalWarning -> onKill
+    // signal::onWarning -> onKill
     _(raise);
     
     // conditionally hook
-    // onSignalWarning -> onKill
+    // signal::onWarning -> onKill
     _(kill);
     _(killpg);
     _(pthread_kill);
@@ -56,7 +56,7 @@ namespace hook::libc::impl {
     _(reboot);
     
     // change signal handlers
-    // onSignalHandlerChange
+    // signal::onHandlerChange
     _(signal);
     _(sigaction);
     

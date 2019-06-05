@@ -17,24 +17,22 @@ namespace aio::signal::handler {
      * it can also be re-registered whenever another signal handler overwrites this.
      */
     class Resilient : public Base<Resilient> {
-    
+
     private:
         
         using Super = Base<Resilient>;
         
-//        friend class Base<Resilient>;
+        friend class Base;
         
         std::array<UnMaskedAction, NSIG> oldHandlers = {};
         std::bitset<disposition::defaults.size()> handledSignals;
         
-        void oldHandle(const Signal& signal) const noexcept;
+        bool oldHandle(const Signal& signal) const noexcept;
         
         void operator()(const Signal& signal) const noexcept;
-    
-    private:
-    
-        static constexpr bool shouldSkip(const UnMaskedAction& action) noexcept {
-            return action.ignore();
+        
+        constexpr bool shouldSkip(const UnMaskedAction& action) const noexcept {
+            return action.ignores();
         }
     
         constexpr void addExisting(int signal, const UnMaskedAction& action) {
@@ -46,15 +44,13 @@ namespace aio::signal::handler {
             handledSignals.set(signal, true);
         }
         
-        static constexpr bool shouldRegister(const disposition::Default& disposition) noexcept {
+        constexpr bool shouldRegister(const disposition::Default& disposition) const noexcept {
             return disposition.atLeastStops;
         }
         
-        static constexpr bool shouldResetBefore(const disposition::Default& disposition) noexcept {
-            return disposition.isUnrecoverable;
+        constexpr u32 extraFlags(const disposition::Default&) const noexcept {
+            return 0;
         }
-        
-    private:
         
         // private constructor so singleton, b/c handler must be global
         explicit Resilient(bool registerImmediately);

@@ -7,7 +7,7 @@
 extern "C"
 int raise(int signal) noexcept {
     trace();
-    onSignalWarning(signal);
+    signal::onWarning(signal);
     return impl::raise(signal);
 }
 
@@ -19,7 +19,7 @@ int kill(pid_t pid, int signal) noexcept {
         (pid == 0 /*|| pid == -1*/
          || (pid > 0 && pid == (own = getpid()))
          || (pid < -1 && -pid == own))) {
-        onSignalWarning(signal);
+        signal::onWarning(signal);
     }
     return impl::kill(pid, signal);
 }
@@ -28,7 +28,7 @@ extern "C"
 int killpg(int processGroup, int signal) noexcept {
     trace();
     if (processGroup == 0) {
-        onSignalWarning(signal);
+        signal::onWarning(signal);
     }
     return impl::killpg(processGroup, signal);
 }
@@ -36,6 +36,6 @@ int killpg(int processGroup, int signal) noexcept {
 extern "C"
 int pthread_kill(pthread_t thread, int signal) noexcept {
     trace();
-    onSignalWarning(signal);
+    signal::onWarning(signal);
     return impl::pthread_kill(thread, signal);
 }
