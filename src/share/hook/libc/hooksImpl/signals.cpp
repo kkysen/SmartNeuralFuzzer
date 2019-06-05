@@ -2,6 +2,7 @@
 // Created by Khyber on 6/4/2019.
 //
 
+#include <src/share/aio/signal/handler/Passive.h>
 #include "src/share/hook/libc/hooksImpl/signals.h"
 
 #include "src/share/hook/libc/hooksImpl/include.h"
@@ -80,7 +81,7 @@ namespace hook::libc::signal {
         if (!isSpecialSignal(signal)) {
             return;
         }
-        // TODO
+        handler::Passive::get().registerFor(signal);
     }
     
 }

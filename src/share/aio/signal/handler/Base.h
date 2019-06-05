@@ -182,7 +182,7 @@ namespace aio::signal::handler {
         void register_() noexcept {
             // use sigaltstack for sigsegv handler if possible
             for (const auto& disposition : disposition::defaults) {
-                tryRegisterFor(disposition); // TODO do I need to use bool return value?
+                tryRegisterFor(disposition);
             }
         }
         

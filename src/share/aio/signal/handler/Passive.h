@@ -46,7 +46,7 @@ namespace aio::signal::handler {
         void operator()(const Signal& signal) const noexcept;
         
         bool shouldSkip(const UnMaskedAction& action) const noexcept {
-            return !action.defaults(); // TODO FIXME UnMaskedAction is supposed to never = SIG_DFL
+            return !action.defaults();
         }
         
         constexpr void addExisting(int signal, const UnMaskedAction& action) {
