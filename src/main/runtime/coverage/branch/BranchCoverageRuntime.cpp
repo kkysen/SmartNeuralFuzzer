@@ -204,13 +204,12 @@ namespace runtime::coverage::branch {
                     : single(std::move(singleWrite)), nonSingle(std::move(nonSingleWrite)) {}
             
         } branches;
-
+    
     public:
         
         void onSingleBranch(bool value) noexcept {
             count.branches.single++;
             branches.single.on(value);
-//            count.flush(); // TODO remove
         }
         
         void onMultiBranch(u32 branchNum, u32 numBranches) noexcept {
@@ -224,29 +223,27 @@ namespace runtime::coverage::branch {
             branches.nonSingle.onInfinite(reinterpret_cast<u64>(address), branches.single.resetBitIndexDiff());
             count.flush();
         }
-
-    private:
     
+    private:
+        
         explicit BranchCoverageRuntime(fse::Dir&& dir) noexcept(false)
                 : count(writer(dir, "counts")),
                   branches(writer(dir, "single"), writer(dir, "nonSingle")) {}
-
-    public:
     
+    public:
+        
         explicit BranchCoverageRuntime() noexcept(false)
                 : BranchCoverageRuntime(output().dir.dir("branch")) {}
         
-        static const LazilyConstructed<BranchCoverageRuntime> instance;
-        
     };
     
-    const LazilyConstructed<BranchCoverageRuntime> BranchCoverageRuntime::instance;
-    
-    auto& rt = BranchCoverageRuntime::instance.lazy;
+    thread_local auto& rt = LazilyConstructed<BranchCoverageRuntime>::add();
     
 }
 
-using runtime::coverage::branch::rt;
+namespace {
+    using runtime::coverage::branch::rt;
+}
 
 API_BranchCoverage(onSingleBranch)(bool value) noexcept {
 //    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");

@@ -19,20 +19,18 @@ namespace runtime::coverage::block {
         void onBlock(u64 blockNum) noexcept {
             buffer.on(blockNum);
         }
-    
-        BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir, "blocks")) {}
         
-        static thread_local const LazilyConstructed<BlockCoverageRuntime> instance;
+        BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir, "blocks")) {}
         
     };
     
-    thread_local const LazilyConstructed<BlockCoverageRuntime> BlockCoverageRuntime::instance;
-    
-    auto& rt = BlockCoverageRuntime::instance.lazy;
+    thread_local auto& rt = LazilyConstructed<BlockCoverageRuntime>::add();
     
 }
 
-using runtime::coverage::block::rt;
+namespace {
+    using runtime::coverage::block::rt;
+}
 
 API_BlockCoverage(onBlock)(u64 blockNum) noexcept {
 //    printf("BlockCoverage: onBlock: %ld\n", blockNum);
