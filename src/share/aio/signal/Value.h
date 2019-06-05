@@ -11,18 +11,18 @@
 namespace aio::signal {
     
     class Value {
-
+    
     public:
         
         union Raw {
             u64 val;
             void* ptr;
         } raw;
-
+    
     private:
-
-        explicit constexpr Value(Raw raw) noexcept : raw(raw) {}
         
+        explicit constexpr Value(Raw raw) noexcept : raw(raw) {}
+    
     public:
         
         /*implicit*/ constexpr Value(sigval_t value) noexcept : Value({.ptr = value.sival_ptr}) {}
@@ -90,14 +90,24 @@ namespace aio::signal {
             return get<T>();
         }
         
+        template <typename T>
+        constexpr bool operator==(const T& t) const noexcept {
+            return get<T>() == t;
+        }
+        
+        template <typename T>
+        constexpr bool operator!=(const T& t) const noexcept {
+            return !((*this) == t);
+        }
+        
         struct of {
-    
+            
             template <typename T>
             static constexpr Value val(T t) noexcept {
                 static_assert(sizeof(t) <= sizeof(Raw));
                 return Value({.val = static_cast<u64>(t)});
             }
-    
+            
             template <typename T>
             static constexpr Value ptr(const T& t) noexcept {
                 return Value({.ptr = &t});

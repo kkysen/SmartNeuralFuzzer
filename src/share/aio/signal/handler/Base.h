@@ -8,17 +8,16 @@
 #include "src/share/aio/signal/handler/AltStack.h"
 #include "src/share/aio/signal/handler/UnMaskedAction.h"
 #include "src/share/concurrent/lock/AdaptiveMutex.h"
+#include "src/share/hook/libc/impl.h"
 #include "src/share/stde/reversed.h"
 
 #include "llvm/ADT/SmallVector.h"
-#include "Passive.h"
-
 
 namespace aio::signal::handler {
     
     template <class Impl>
     class Base {
-
+    
     private:
         
         AltStack altStack;
@@ -27,7 +26,7 @@ namespace aio::signal::handler {
         // doesn't need to be atomic, just volatile to prevent reordering for async signal handlers
         volatile bool currentlyRegistering = false;
         concurrent::AdaptiveMutex<> lock;
-
+    
     protected:
         
         void ownHandle(const Signal& signal) const noexcept {
@@ -35,7 +34,7 @@ namespace aio::signal::handler {
                 handler(signal);
             }
         }
-
+    
     private:
         
         void operator()(int signal, siginfo_t* sigInfo, void* context) const noexcept {
@@ -47,7 +46,7 @@ namespace aio::signal::handler {
         static void handle(int signal, siginfo_t* sigInfo, void* context) noexcept {
             get()(signal, sigInfo, context);
         }
-
+    
     public:
         
         // should only be added at process start,
@@ -55,7 +54,7 @@ namespace aio::signal::handler {
         void add(HandlerFunc&& handler) {
             handlers.push_back(std::move(handler));
         }
-    
+        
         // for defining a global that adds a handler
         bool added(HandlerFunc&& handler) {
             add(std::move(handler));
@@ -64,14 +63,27 @@ namespace aio::signal::handler {
 
     private:
         
-        static void registerSigAction(int signal,
-                                      const struct sigaction* action, struct sigaction* oldAction) noexcept {
-            assert(::sigaction(signal, action, oldAction) == 0);
+        static void registerSigAction(
+                int signal, const struct sigaction* action, struct sigaction* oldAction) noexcept {
+            assert(hook::libc::impl::sigaction(signal, action, oldAction) == 0);
             // only possible errors can't happen:
             // EFAULT: action or oldAction or not part of address space, but they obviously are
             // EINVAL: invalid signal specified, incl. SIGKILL and SIGSTOP,
             //      but I go through a list of all the signals (dispositions) and skip SIGKILL and SIGSTOP
         }
+
+    protected:
+        
+        static void unRegister(int signal) noexcept {
+            constexpr struct sigaction action = {
+                    .sa_flags = 0,
+                    .sa_mask = {},
+                    .sa_handler = SIG_DFL,
+            };
+            registerSigAction(signal, &action, nullptr);
+        }
+        
+    private:
         
         bool tryAddExisting(int signal, struct sigaction& oldAction) noexcept {
             registerSigAction(signal, nullptr, &oldAction);
@@ -133,7 +145,7 @@ namespace aio::signal::handler {
             currentlyRegistering = false;
             return retVal;
         }
-
+    
     public:
         
         void register_() noexcept {
@@ -150,7 +162,7 @@ namespace aio::signal::handler {
             }
             return tryRegisterFor(*disposition);
         }
-
+    
     protected:
         
         explicit Base(bool registerImmediately) {
@@ -158,9 +170,9 @@ namespace aio::signal::handler {
                 register_();
             }
         }
-
-    public:
     
+    public:
+        
         static constexpr Impl& get() noexcept {
             return Impl::instance;
         }

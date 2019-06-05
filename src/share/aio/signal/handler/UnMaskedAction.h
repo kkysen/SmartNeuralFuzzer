@@ -73,7 +73,7 @@ namespace aio::signal::handler {
             integralHandler = Const::ignore;
         }
         
-        void operator()(const Signal& signal) const noexcept;
+        bool operator()(const Signal& signal) const noexcept;
         
     };
     

@@ -17,7 +17,7 @@ namespace hook::lifecycle::signaling {
         const auto& info = signal.info;
         return info.signal == constants::signal
                && info.code == constants::code
-               && info.rt.value.val<decltype(constants::magicNumber)>() == constants::magicNumber
+               && info.rt.value == constants::magicNumber
                && info.rt.pid == getpid()
                && info.rt.uid == getuid();
     }

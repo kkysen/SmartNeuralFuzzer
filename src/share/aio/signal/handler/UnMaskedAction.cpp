@@ -11,20 +11,21 @@ namespace {
     
     using namespace aio::signal;
     
-    void handle(const Signal& signal, handler::Raw handler) noexcept {
+    bool handle(const Signal& signal, handler::Raw handler) noexcept {
         // don't support SIG_DFL
         switch (handler::Const(handler)) {
             case handler::Const::ignore:
             case handler::Const::default_: {
-                return;
+                return false;
             }
             default: {
                 handler(signal.signal);
+                return true;
             }
         }
     }
     
-    void handle(const Signal& signal, handler::RawAction handler) noexcept {
+    bool handle(const Signal& signal, handler::RawAction handler) noexcept {
         const siginfo_t& sigInfo = signal.info;
         const ucontext_t& context = signal.context;
         // TODO why is this casting to an incompatible type?
@@ -34,21 +35,19 @@ namespace {
         siginfo_t* sigInfoPtr = &mutSigInfo;
         void* contextPtr = &mutContext;
         handler(signal.signal, sigInfoPtr, contextPtr);
+        return true;
     }
     
 }
 
 namespace aio::signal::handler {
     
-    void UnMaskedAction::operator()(const Signal& signal) const noexcept {
-        if (isHandler()) {
-            handle(signal, handler);
-        } else {
-            handle(signal, action);
-        }
-        if (flags & SA_RESETHAND) {
+    bool UnMaskedAction::operator()(const Signal& signal) const noexcept {
+        const bool handled = isHandler() ? handle(signal, handler) : handle(signal, action);
+        if (handled && flags & SA_RESETHAND) {
             reset();
         }
+        return handled;
     }
     
 }

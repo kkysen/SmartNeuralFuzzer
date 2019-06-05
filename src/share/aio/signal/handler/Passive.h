@@ -35,8 +35,10 @@ namespace aio::signal::handler {
     
         UnMaskedAction oldHandler;
     
-        void oldHandle(const Signal& signal) const noexcept;
+        bool oldHandle(const Signal& signal) const noexcept;
     
+        [[noreturn]] static void reRaise(const Signal& signal) noexcept;
+        
         void operator()(const Signal& signal) const noexcept;
 
     private:

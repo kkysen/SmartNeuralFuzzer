@@ -28,12 +28,16 @@ namespace _time {
         
         /*implicit*/ constexpr TimeSpec(timespec timespec) noexcept
                 : TimeSpec(Args {.seconds = timespec.tv_sec, .nanoseconds = timespec.tv_nsec}) {}
-                
-        /*implicit*/ constexpr operator timespec() const noexcept {
+        
+        constexpr timespec impl() const noexcept {
             return {
-                .tv_sec = seconds,
-                .tv_nsec = nanoseconds,
+                    .tv_sec = seconds,
+                    .tv_nsec = nanoseconds,
             };
+        }
+        
+        /*implicit*/ constexpr operator timespec() const noexcept {
+            return impl();
         }
         
         // TODO other related functions

@@ -8,9 +8,11 @@
 
 namespace hook::lifecycle::signaling {
     
-    struct Receiver {
+    class Receiver {
         
         bool isValid(const Signal& signal) const noexcept __attribute__((pure));
+
+    public:
         
         bool operator()(const Signal& signal) const noexcept;
         
