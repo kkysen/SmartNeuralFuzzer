@@ -8,16 +8,10 @@
 #include "src/share/hook/lifecycle/hooks.h"
 #include "src/share/common/has/method.h"
 
-namespace {
-    
-    def_has_method(flush);
-    
-}
-
 namespace hook::lifecycle {
     
     template <typename T>
-    class LazilyConstructed : public hook::lifecycle::LifeCycle {
+    class LazilyConstructed : public LifeCycle {
     
     public:
     
@@ -25,12 +19,6 @@ namespace hook::lifecycle {
         
         void reconstruct() final {
             lazy.reconstruct();
-        }
-        
-        void flush() noexcept final {
-            if constexpr (::has::flush<T>()) {
-                lazy().flush();
-            }
         }
         
         void destruct() noexcept final {

@@ -17,11 +17,9 @@ namespace hook::lifecycle {
         
         deleteCopy(LifeCycle);
     
-        // these 3 methods must be idempotent
+        // these 2 methods must be idempotent
         
         virtual void reconstruct() = 0;
-        
-        virtual void flush() noexcept = 0;
         
         virtual void destruct() noexcept = 0;
         
