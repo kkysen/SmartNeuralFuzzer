@@ -17,6 +17,10 @@
 
 #include "llvm/ADT/SmallVector.h"
 
+#include <thread>
+
+#include <unistd.h>
+
 namespace aio::signal::handler {
     
     template <class Impl>
@@ -49,7 +53,7 @@ namespace aio::signal::handler {
             }
         }
         
-        static void reRaise(const Signal& signal) noexcept {
+        [[noreturn]] static void reRaise(const Signal& signal) noexcept {
             // We need to unregister ourselves and unmask our signal,
             // so that rt_tgsigqueueinfo will raise the signal immediately,
             // so that the SIGKILL will be sent afterward,
@@ -74,6 +78,11 @@ namespace aio::signal::handler {
             ::rt_tgsigqueueinfo(pid, tid, signal.signal,
                                 &const_cast<siginfo_t&>(signal.info.impl()));
             ::tgkill(pid, tid, SIGKILL);
+            
+            // convince compiler that this is noreturn
+            using namespace std::literals;
+            std::this_thread::sleep_for(10ms);
+            ::exit(signal.signal);
         }
     
     private:
@@ -110,6 +119,7 @@ namespace aio::signal::handler {
         
         bool added(std::function<void()>&& handler) {
             add(std::move(handler));
+            return true;
         }
     
     private:

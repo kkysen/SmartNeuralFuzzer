@@ -24,25 +24,17 @@ namespace hook::lifecycle {
         
         deleteCopy(LifeCycles);
         
-        LifeCycle& add(std::unique_ptr<LifeCycle>&& object);
+        template <class LifeCycleImpl>
+        LifeCycleImpl& add(std::unique_ptr<LifeCycleImpl>&& object) {
+            objects.push_back(std::move(object));
+            return static_cast<LifeCycleImpl&>(*objects.back());
+        }
         
         void reconstruct() final;
         
         void destruct() noexcept final;
         
         ~LifeCycles() final;
-        
-        void handleSignal(const aio::signal::Signal& signal) noexcept;
-    
-    private:
-        
-        static thread_local LifeCycles instance;
-    
-    public:
-        
-        static constexpr LifeCycles& get() noexcept {
-            return instance;
-        }
         
     };
     
