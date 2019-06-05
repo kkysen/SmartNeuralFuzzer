@@ -20,9 +20,13 @@ namespace hook::libc::impl {
     #define _(F) extern decltype(::F)* const F
     
     // unconditionally hook
-    // onFork
+    // onProcessConstruction
     _(fork);
     _(vfork);
+    
+    // unconditionally hook
+    // onThreadConstruction
+    _(pthread_create);
     
     // unconditionally hook
     // onExec

@@ -158,7 +158,7 @@ files(share.hook
         share/hook/libc/hooks.h
         share/hook/libc/hooks.cpp
         share/hook/libc/hooksImpl/include.h
-        share/hook/libc/hooksImpl/fork.cpp
+        share/hook/libc/hooksImpl/clone.cpp
         share/hook/libc/hooksImpl/exec.cpp
         share/hook/libc/hooksImpl/execVariadic.cpp
         share/hook/libc/hooksImpl/exit.cpp

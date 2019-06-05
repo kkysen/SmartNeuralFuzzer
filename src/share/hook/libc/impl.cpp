@@ -19,6 +19,8 @@ namespace hook::libc::impl {
     const auto fork = __libc_fork;
     const auto vfork = __libc_vfork;
     
+    _(pthread_create);
+    
     _(execv);
     _(execvp);
     _(execvpe);

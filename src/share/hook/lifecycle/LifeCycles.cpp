@@ -19,12 +19,6 @@ namespace hook::lifecycle {
         }
     }
     
-    void LifeCycles::flush() noexcept {
-        for (const auto& e : stde::reversed(objects)) {
-            e->flush();
-        }
-    }
-    
     void LifeCycles::destruct() noexcept {
         for (const auto& e : stde::reversed(objects)) {
             e->destruct();

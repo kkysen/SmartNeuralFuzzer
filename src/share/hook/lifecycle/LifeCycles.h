@@ -28,8 +28,6 @@ namespace hook::lifecycle {
         
         void reconstruct() final;
         
-        void flush() noexcept final;
-        
         void destruct() noexcept final;
         
         ~LifeCycles() final;

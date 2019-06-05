@@ -41,11 +41,15 @@ namespace hook::libc {
         destruct();
     }
     
-    void onFork(pid_t cpid) {
+    void onProcessConstruction(pid_t cpid) {
         if (!cpid) {
             // if in child
             reconstruct();
         }
+    }
+    
+    void onThreadConstruction() noexcept {
+        ProcessLifeCycles::onThreadConstruction();
     }
     
 }

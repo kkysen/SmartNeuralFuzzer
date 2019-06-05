@@ -16,6 +16,8 @@ namespace hook::libc {
     
     void onCrash() noexcept;
     
-    void onFork(pid_t cpid);
+    void onProcessConstruction(pid_t cpid);
+    
+    void onThreadConstruction() noexcept;
 
 }
