@@ -22,7 +22,7 @@ namespace aio::signal::handler {
         
         using Super = Base<Resilient>;
         
-        friend class Base<Resilient>;
+//        friend class Base<Resilient>;
         
         std::array<UnMaskedAction, NSIG> oldHandlers = {};
         std::bitset<disposition::defaults.size()> handledSignals;
@@ -32,12 +32,19 @@ namespace aio::signal::handler {
         void operator()(const Signal& signal) const noexcept;
     
     private:
-        
-        static bool shouldSkip(const UnMaskedAction& action) noexcept;
-        
-        void addExisting(int signal, const UnMaskedAction& action);
-
-        void recordHandledSignal(int signal) noexcept;
+    
+        static constexpr bool shouldSkip(const UnMaskedAction& action) noexcept {
+            return action.ignore();
+        }
+    
+        constexpr void addExisting(int signal, const UnMaskedAction& action) {
+            oldHandlers[signal] = action;
+        }
+    
+        constexpr void recordHandledSignal(int signal) noexcept {
+            // don't use operator[] b/c it has a non-constexpr proxy
+            handledSignals.set(signal, true);
+        }
         
         static constexpr bool shouldRegister(const disposition::Default& disposition) noexcept {
             return disposition.atLeastStops;

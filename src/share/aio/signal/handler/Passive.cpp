@@ -22,10 +22,6 @@ namespace aio::signal::handler {
         }
     }
     
-    bool Passive::shouldSkip(const UnMaskedAction& action) noexcept {
-        return action != default; // TODO FIXME UnMaskedAction is supposed to never = SIG_DFL
-    }
-    
     Passive::Passive(bool registerImmediately) : Base(registerImmediately) {}
     
     Passive Passive::instance(true);

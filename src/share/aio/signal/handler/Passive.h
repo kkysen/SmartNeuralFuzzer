@@ -27,7 +27,7 @@ namespace aio::signal::handler {
     
         using Super = Base<Passive>;
     
-        friend class Base<Passive>;
+//        friend class Base<Passive>;
     
         static constexpr auto specialSignal = hook::lifecycle::signaling::constants::signal;
     
@@ -40,16 +40,18 @@ namespace aio::signal::handler {
         void operator()(const Signal& signal) const noexcept;
 
     private:
-    
-        static bool shouldSkip(const UnMaskedAction& action) noexcept;
-    
+        
+        static bool shouldSkip(const UnMaskedAction& action) noexcept {
+            return action != default; // TODO FIXME UnMaskedAction is supposed to never = SIG_DFL
+        }
+        
         constexpr void addExisting(int signal, const UnMaskedAction& action) {
             if (signal == specialSignal) {
                 oldHandler = action;
             }
         }
     
-        constexpr void recordHandledSignal(int) noexcept {}
+        static constexpr void recordHandledSignal(int) noexcept {}
     
         static constexpr bool shouldRegister(const disposition::Default& disposition) noexcept {
             return disposition.terminates;

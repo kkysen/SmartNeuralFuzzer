@@ -19,18 +19,6 @@ namespace aio::signal::handler {
         }
     }
     
-    bool Resilient::shouldSkip(const UnMaskedAction& action) noexcept {
-        return action.ignore();
-    }
-    
-    void Resilient::addExisting(int signal, const UnMaskedAction& action) {
-        oldHandlers[signal] = action;
-    }
-    
-    void Resilient::recordHandledSignal(int signal) noexcept {
-        handledSignals[signal] = true;
-    }
-    
     Resilient::Resilient(bool registerImmediately) : Base(registerImmediately) {}
     
     Resilient Resilient::instance(false);
