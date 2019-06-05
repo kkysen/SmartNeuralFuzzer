@@ -40,17 +40,6 @@ namespace {
 
 namespace aio::signal::handler {
     
-    UnMaskedAction::UnMaskedAction() noexcept : UnMaskedAction(SIG_IGN) {}
-    
-    bool UnMaskedAction::ignore() const noexcept {
-        return isHandler() && handler == SIG_IGN;
-    }
-    
-    void UnMaskedAction::reset() const noexcept {
-        flags &= ~flag::isAction;
-        handler = SIG_IGN;
-    }
-    
     void UnMaskedAction::operator()(const Signal& signal) const noexcept {
         if (isHandler()) {
             handle(signal, handler);

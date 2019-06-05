@@ -7,6 +7,7 @@
 #include "src/share/aio/signal/handler/Raw.h"
 #include "src/share/aio/signal/Signal.h"
 #include "src/share/aio/signal/handler/Flag.h"
+#include "src/share/aio/signal/handler/Const.h"
 
 namespace aio::signal::handler {
     
@@ -14,18 +15,19 @@ namespace aio::signal::handler {
     // doesn't support SIG_DFL either
     // also doesn't store sa_restorer, but that's never used
     class UnMaskedAction {
-
+    
     public:
         
         // RESETHAND is handled explicitly
         // the child ones are handled implicitly,
         // since Handler skips SIGCHLD since it's default disposition is Ign
         static constexpr u32 handledFlags = flag::resetBefore | flag::child::no::stop | flag::child::no::wait;
-        
+    
     private:
         
         union {
-            mutable Raw handler;
+            mutable Const integralHandler;
+            Raw handler;
             RawAction action;
         };
         mutable u32 flags;
@@ -38,11 +40,16 @@ namespace aio::signal::handler {
     
     public:
         
-        bool ignore() const noexcept;
+        constexpr bool ignore() const noexcept {
+            return isHandler() && integralHandler == Const::ignore;
+        }
         
         constexpr bool hasAction(RawAction _action) const noexcept {
             return !isHandler() && action == _action;
         }
+        
+        explicit constexpr UnMaskedAction(Const integralHandler, u32 flags = 0) noexcept
+                : integralHandler(integralHandler), flags(flags & ~flag::isAction) {}
         
         explicit constexpr UnMaskedAction(Raw handler, u32 flags = 0) noexcept
                 : handler(handler), flags(flags & ~flag::isAction) {}
@@ -50,7 +57,7 @@ namespace aio::signal::handler {
         explicit constexpr UnMaskedAction(RawAction action, u32 flags = 0) noexcept
                 : action(action), flags(flags | flag::isAction) {}
         
-        UnMaskedAction() noexcept;
+        constexpr UnMaskedAction() noexcept : UnMaskedAction(Const::ignore) {}
         
         explicit constexpr UnMaskedAction(const struct sigaction& sigAction) noexcept
                 : action(nullptr), flags(sigAction.sa_flags) {
@@ -60,8 +67,11 @@ namespace aio::signal::handler {
                 action = sigAction.sa_sigaction;
             }
         }
-        
-        void reset() const noexcept;
+    
+        constexpr void reset() const noexcept {
+            flags &= ~flag::isAction;
+            integralHandler = Const::ignore;
+        }
         
         void operator()(const Signal& signal) const noexcept;
         

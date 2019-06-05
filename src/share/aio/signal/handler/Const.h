@@ -10,7 +10,7 @@
 namespace aio::signal::handler {
     
     class Const {
-
+    
     public:
         
         enum Raw : intptr_t {
@@ -41,5 +41,21 @@ namespace aio::signal::handler {
         /*implicit*/ operator sighandler_t() noexcept;
         
     };
+    
+    constexpr bool operator==(const Const& lhs, const typename Const::Raw& rhs) noexcept {
+        return lhs == Const(rhs);
+    }
+    
+    constexpr bool operator==(const typename Const::Raw& lhs, const Const& rhs) noexcept {
+        return rhs == lhs;
+    }
+    
+    constexpr bool operator!=(const Const& lhs, const typename Const::Raw& rhs) noexcept {
+        return !(lhs == rhs);
+    }
+    
+    constexpr bool operator!=(const typename Const::Raw& lhs, const Const& rhs) noexcept {
+        return !(lhs == rhs);
+    }
     
 }
