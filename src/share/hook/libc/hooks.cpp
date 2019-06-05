@@ -7,7 +7,7 @@
 #include "src/share/hook/libc/impl.h"
 #include "src/share/hook/lifecycle/ProcessLifeCycles.h"
 #include "src/share/hook/lifecycle/signaling/signaling.h"
-#include "src/share/aio/signal/Signal.h"
+#include "src/share/aio/signal/handler/Passive.h"
 
 namespace {
     
@@ -51,5 +51,14 @@ namespace hook::libc {
     void onThreadConstruction() noexcept {
         ProcessLifeCycles::onThreadConstruction();
     }
+    
+}
+
+namespace {
+    
+    using aio::signal::handler::Passive;
+    using hook::libc::onCrash;
+    
+    const auto unused = Passive::get().added(onCrash);
     
 }

@@ -101,6 +101,16 @@ namespace aio::signal::handler {
             add(std::move(handler));
             return true;
         }
+        
+        void add(std::function<void()>&& handler) {
+            add([_handler = std::move(handler)](const Signal&) {
+                _handler();
+            });
+        }
+        
+        bool added(std::function<void()>&& handler) {
+            add(std::move(handler));
+        }
     
     private:
         
