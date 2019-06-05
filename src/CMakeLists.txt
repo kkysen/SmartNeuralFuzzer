@@ -95,6 +95,8 @@ files(share.aio.signal
         share/aio/signal/handler/AltStack.h
         share/aio/signal/handler/AltStack.cpp
         share/aio/signal/handler/Func.h
+        share/aio/signal/handler/Base.h
+        share/aio/signal/handler/Base.cpp
         share/aio/signal/handler/Resilient.h
         share/aio/signal/handler/Resilient.cpp
         share/aio/signal/handler/Passive.h

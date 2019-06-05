@@ -4,13 +4,7 @@
 
 #pragma once
 
-#include "src/share/aio/signal/handler/Func.h"
-#include "src/share/aio/signal/handler/UnMaskedAction.h"
-#include "src/share/aio/signal/handler/AltStack.h"
-#include "src/share/stde/reversed.h"
-#include "src/share/common/numbers.h"
-
-#include "llvm/ADT/SmallVector.h"
+#include "src/share/aio/signal/handler/Base.h"
 
 #include <bitset>
 
@@ -22,64 +16,43 @@ namespace aio::signal::handler {
      * When combined with support in hook::libc,
      * it can also be re-registered whenever another signal handler overwrites this.
      */
-    class Resilient {
+    class Resilient : public Base<Resilient> {
     
     private:
         
-        AltStack altStack;
-        llvm::SmallVector<HandlerFunc, 2> handlers;
+        using Super = Base<Resilient>;
+        
+        friend class Base<Resilient>;
+        
         std::array<UnMaskedAction, NSIG> oldHandlers = {};
         std::bitset<disposition::defaults.size()> handledSignals;
         
         void oldHandle(const Signal& signal) const noexcept;
         
-        void ownHandle(const Signal& signal) const noexcept;
-        
         void operator()(const Signal& signal) const noexcept;
-        
-        void operator()(int signal, siginfo_t* sigInfo, void* context) const noexcept;
-    
-        static void handle(int signal, siginfo_t* sigInfo, void* context) noexcept;
-        
-    public:
-        
-        void add(HandlerFunc&& handler);
-        
-        // for defining a global that adds a handler
-        bool added(HandlerFunc&& handler);
     
     private:
         
+        static bool shouldSkip(const UnMaskedAction& action) noexcept;
+        
         void addExisting(int signal, const UnMaskedAction& action);
-        
-        bool tryAddExisting(int signal, struct sigaction& oldAction) noexcept;
-        
-        void registerFor(int signal, struct sigaction& oldAction, bool reset) noexcept;
-        
-        bool _tryRegisterFor(const disposition::Default& disposition) noexcept;
-        
-        bool currentlyRegistering = false; // TODO should this be atomic
-        
-        bool tryRegisterFor(const disposition::Default& disposition) noexcept;
 
-    public:
+        void recordHandledSignal(int signal) noexcept;
         
-        void register_() noexcept;
-    
-        bool registerFor(int signal) noexcept;
-
+        static constexpr bool shouldRegister(const disposition::Default& disposition) noexcept {
+            return disposition.atLeastStops;
+        }
+        
+        static constexpr bool shouldResetBefore(const disposition::Default& disposition) noexcept {
+            return disposition.isUnrecoverable;
+        }
+        
     private:
         
         // private constructor so singleton, b/c handler must be global
-        Resilient(bool registerImmediately);
+        explicit Resilient(bool registerImmediately);
     
         static Resilient instance;
-    
-    public:
-    
-        static constexpr Resilient& get() noexcept {
-            return instance;
-        }
         
     };
     

@@ -4,12 +4,9 @@
 
 #pragma once
 
-#include "src/share/hook/lifecycle/signaling/signaling.h"
+#include "src/share/aio/signal/handler/Base.h"
 
-#include "src/share/aio/signal/handler/AltStack.h"
-#include "src/share/aio/signal/handler/Func.h"
-
-#include "llvm/ADT/SmallVector.h"
+#include "src/share/hook/lifecycle/signaling/Receiver.h"
 
 namespace aio::signal::handler {
     
@@ -24,10 +21,50 @@ namespace aio::signal::handler {
      * That is, it behaves like the Resilient handler in this case,
      * only running the user's signal handler after this one.
      */
-    class Passive {
+    class Passive : public Base<Passive> {
+
+    private:
     
-        AltStack altStack;
-        llvm::SmallVector<HandlerFunc, 2> handlers;
+        using Super = Base<Passive>;
+    
+        friend class Base<Passive>;
+    
+        static constexpr auto specialSignal = hook::lifecycle::signaling::constants::signal;
+    
+        static constexpr auto receiver = hook::lifecycle::signaling::Receiver();
+    
+        UnMaskedAction oldHandler;
+    
+        void oldHandle(const Signal& signal) const noexcept;
+    
+        void operator()(const Signal& signal) const noexcept;
+
+    private:
+    
+        static bool shouldSkip(const UnMaskedAction& action) noexcept;
+    
+        constexpr void addExisting(int signal, const UnMaskedAction& action) {
+            if (signal == specialSignal) {
+                oldHandler = action;
+            }
+        }
+    
+        constexpr void recordHandledSignal(int) noexcept {}
+    
+        static constexpr bool shouldRegister(const disposition::Default& disposition) noexcept {
+            return disposition.terminates;
+        }
+    
+        static constexpr bool shouldResetBefore(const disposition::Default&) noexcept {
+            return true;
+        }
+
+    private:
+    
+        // private constructor so singleton, b/c handler must be global
+        explicit Passive(bool registerImmediately);
+    
+        static Passive instance;
     
     };
     

@@ -10,7 +10,7 @@
 
 namespace hook::lifecycle::signaling {
     
-    bool Receiver::isValid(const Signal& signal) noexcept {
+    bool Receiver::isValid(const Signal& signal) const noexcept {
         if (signal.signal != constants::signal) {
             return false;
         }
@@ -22,7 +22,7 @@ namespace hook::lifecycle::signaling {
                && info.rt.uid == getuid();
     }
     
-    bool Receiver::operator()(const Signal& signal) noexcept {
+    bool Receiver::operator()(const Signal& signal) const noexcept {
         if (!isValid(signal)) {
             return false;
         }
