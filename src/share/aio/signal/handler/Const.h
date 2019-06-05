@@ -7,9 +7,9 @@
 #include <cstdint>
 #include <csignal>
 
-namespace aio::signal {
+namespace aio::signal::handler {
     
-    class HandlerConst {
+    class Const {
 
     public:
         
@@ -30,13 +30,13 @@ namespace aio::signal {
     
     public:
         
-        /*implicit*/ constexpr HandlerConst(Raw raw) noexcept : raw(raw) {}
+        /*implicit*/ constexpr Const(Raw raw) noexcept : raw(raw) {}
         
         /*implicit*/ constexpr operator Raw() noexcept {
             return raw;
         }
         
-        /*implicit*/ HandlerConst(sighandler_t handler) noexcept;
+        /*implicit*/ Const(sighandler_t handler) noexcept;
         
         /*implicit*/ operator sighandler_t() noexcept;
         

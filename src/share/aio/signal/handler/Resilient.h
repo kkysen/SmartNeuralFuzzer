@@ -4,22 +4,25 @@
 
 #pragma once
 
-#include "src/share/aio/signal/UnMaskedAction.h"
-#include "src/share/aio/signal/AltStack.h"
+#include "src/share/aio/signal/handler/Func.h"
+#include "src/share/aio/signal/handler/UnMaskedAction.h"
+#include "src/share/aio/signal/handler/AltStack.h"
 #include "src/share/stde/reversed.h"
 #include "src/share/common/numbers.h"
 
 #include "llvm/ADT/SmallVector.h"
 
-#include <functional>
 #include <bitset>
 
 // signals are async IO b/c they're IO interrupts
-namespace aio::signal {
+namespace aio::signal::handler {
     
-    using HandlerFunc = std::function<void(const Signal& signal)>;
-    
-    class Handler {
+    /**
+     * This is a resilient handler b/c it overwrites and wraps existing signal handlers.
+     * When combined with support in hook::libc,
+     * it can also be re-registered whenever another signal handler overwrites this.
+     */
+    class Resilient {
     
     private:
         
@@ -68,13 +71,13 @@ namespace aio::signal {
     private:
         
         // private constructor so singleton, b/c handler must be global
-        Handler();
+        Resilient(bool registerImmediately);
     
-        static Handler instance;
+        static Resilient instance;
     
     public:
     
-        static constexpr Handler& get() noexcept {
+        static constexpr Resilient& get() noexcept {
             return instance;
         }
         

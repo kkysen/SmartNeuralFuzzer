@@ -2,7 +2,7 @@
 // Created by Khyber on 5/23/2019.
 //
 
-#include "src/share/aio/signal/Handler.h"
+#include "src/share/aio/signal/handler/Resilient.h"
 
 namespace {
     
@@ -16,19 +16,19 @@ namespace {
     
 }
 
-namespace aio::signal {
+namespace aio::signal::handler {
     
-    void Handler::oldHandle(const Signal& signal) const noexcept {
+    void Resilient::oldHandle(const Signal& signal) const noexcept {
         oldHandlers[signal.signal](signal);
     }
     
-    void Handler::ownHandle(const Signal& signal) const noexcept {
+    void Resilient::ownHandle(const Signal& signal) const noexcept {
         for (const auto& handler : stde::reversed(handlers)) {
             handler(signal);
         }
     }
     
-    void Handler::operator()(const Signal& signal) const noexcept {
+    void Resilient::operator()(const Signal& signal) const noexcept {
         ownHandle(signal);
         oldHandle(signal);
         // TODO FIXME must unregister before raising
@@ -37,30 +37,30 @@ namespace aio::signal {
         }
     }
     
-    void Handler::operator()(int signal, siginfo_t* sigInfo, void* context) const noexcept {
+    void Resilient::operator()(int signal, siginfo_t* sigInfo, void* context) const noexcept {
         (*this)(Signal(signal, sigInfo, context));
     }
     
     // must be a pure function pointer, so no closures allowed
     // instance is a singleton, no other instances allowed
-    void Handler::handle(int signal, siginfo_t* sigInfo, void* context) noexcept {
+    void Resilient::handle(int signal, siginfo_t* sigInfo, void* context) noexcept {
         get()(signal, sigInfo, context);
     }
     
-    void Handler::add(HandlerFunc&& handler) {
+    void Resilient::add(HandlerFunc&& handler) {
         handlers.push_back(std::move(handler));
     }
     
-    bool Handler::added(HandlerFunc&& handler) {
+    bool Resilient::added(HandlerFunc&& handler) {
         add(std::move(handler));
         return true;
     }
     
-    void Handler::addExisting(int signal, const UnMaskedAction& action) {
+    void Resilient::addExisting(int signal, const UnMaskedAction& action) {
         oldHandlers[signal] = action;
     }
     
-    bool Handler::tryAddExisting(int signal, struct sigaction& oldAction) noexcept {
+    bool Resilient::tryAddExisting(int signal, struct sigaction& oldAction) noexcept {
         registerSigAction(signal, nullptr, &oldAction);
         const auto unMasked = UnMaskedAction(oldAction);
         if (!unMasked.ignore()) {
@@ -73,7 +73,7 @@ namespace aio::signal {
         return !unMasked.ignore();
     }
     
-    void Handler::registerFor(int signal, struct sigaction& oldAction, bool reset) noexcept {
+    void Resilient::registerFor(int signal, struct sigaction& oldAction, bool reset) noexcept {
         // reset is for unrecoverable signals
         // we want to re-raise the signal after processing, so we need to default it first
         
@@ -88,7 +88,7 @@ namespace aio::signal {
         handledSignals[signal] = true;
     }
     
-    bool Handler::_tryRegisterFor(const disposition::Default& disposition) noexcept {
+    bool Resilient::_tryRegisterFor(const disposition::Default& disposition) noexcept {
         // if the disposition is Ign or Cont, don't need to do anything
         // even if there's a signal handler, it won't terminate b/c of it
         // only if the signal handler calls exit(), which calls destructors
@@ -112,7 +112,7 @@ namespace aio::signal {
         return true;
     }
     
-    bool Handler::tryRegisterFor(const disposition::Default& disposition) noexcept {
+    bool Resilient::tryRegisterFor(const disposition::Default& disposition) noexcept {
         if (currentlyRegistering) {
             return false;
         }
@@ -122,14 +122,14 @@ namespace aio::signal {
         return retVal;
     }
     
-    void Handler::register_() noexcept {
+    void Resilient::register_() noexcept {
         // use sigaltstack for sigsegv handler if possible
         for (const auto& disposition : disposition::defaults) {
             tryRegisterFor(disposition); // TODO do I need to use bool return value?
         }
     }
     
-    bool Handler::registerFor(int signal) noexcept {
+    bool Resilient::registerFor(int signal) noexcept {
         const auto* disposition = disposition::getDefault(signal);
         if (!disposition) {
             return false;
@@ -137,10 +137,13 @@ namespace aio::signal {
         return tryRegisterFor(*disposition);
     }
     
-    Handler::Handler() {
-        register_();
+    Resilient::Resilient(bool registerImmediately) {
+        if (registerImmediately) {
+            register_();
+        }
     }
     
-    Handler Handler::instance;
+    // this intrusive
+    Resilient Resilient::instance(false);
     
 }

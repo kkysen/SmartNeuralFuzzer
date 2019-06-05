@@ -6,7 +6,7 @@
 
 #include "src/share/hook/lifecycle/signaling/signaling.h"
 #include "src/share/aio/signal/mask/Mask.h"
-#include "src/share/aio/signal/HandlerConst.h"
+#include "src/share/aio/signal/handler/Const.h"
 
 namespace {
     
@@ -62,20 +62,20 @@ int pthread_sigmask(int how, const sigset_t* set, sigset_t* oldSet) noexcept {
 
 
 sighandler_t sigset(int signal, sighandler_t disposition) noexcept {
-    using aio::signal::HandlerConst;
-    switch (HandlerConst(disposition)) {
-        case HandlerConst::error:
-        case HandlerConst::ignore: {
+    using aio::signal::handler::Const;
+    switch (handler::Const(disposition)) {
+        case handler::Const::error:
+        case handler::Const::ignore: {
             break;
         }
-        case HandlerConst::hold: {
+        case handler::Const::hold: {
             if (signal == ::constants::signal) {
                 errno = EINVAL;
-                return HandlerConst(HandlerConst::error);
+                return handler::Const(handler::Const::error);
             }
             break;
         }
-        case HandlerConst::default_:
+        case handler::Const::default_:
         default: {
             onSignalHandlerChange(signal);
             break;

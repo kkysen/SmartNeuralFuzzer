@@ -8,7 +8,7 @@
 
 #include <csignal>
 
-namespace aio::signal::flag {
+namespace aio::signal::handler::flag {
     
     #define Flag constexpr u32
     

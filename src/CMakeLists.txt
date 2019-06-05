@@ -74,10 +74,10 @@ files(share.aio
         )
 
 files(share.aio.signal
-        share/aio/signal/HandlerConst.h
-        share/aio/signal/HandlerConst.cpp
-        share/aio/signal/Flag.h
-        share/aio/signal/Flag.cpp
+        share/aio/signal/handler/Const.h
+        share/aio/signal/handler/Const.cpp
+        share/aio/signal/handler/Flag.h
+        share/aio/signal/handler/Flag.cpp
         share/aio/signal/Value.h
         share/aio/signal/Value.cpp
         share/aio/signal/Info.h
@@ -89,13 +89,16 @@ files(share.aio.signal
         share/aio/signal/Disposition.cpp
         share/aio/signal/Signal.h
         share/aio/signal/Signal.cpp
-        share/aio/signal/RawHandler.h
-        share/aio/signal/UnMaskedAction.h
-        share/aio/signal/UnMaskedAction.cpp
-        share/aio/signal/AltStack.h
-        share/aio/signal/AltStack.cpp
-        share/aio/signal/Handler.h
-        share/aio/signal/Handler.cpp
+        share/aio/signal/handler/Raw.h
+        share/aio/signal/handler/UnMaskedAction.h
+        share/aio/signal/handler/UnMaskedAction.cpp
+        share/aio/signal/handler/AltStack.h
+        share/aio/signal/handler/AltStack.cpp
+        share/aio/signal/handler/Func.h
+        share/aio/signal/handler/Resilient.h
+        share/aio/signal/handler/Resilient.cpp
+        share/aio/signal/handler/Passive.h
+        share/aio/signal/handler/Passive.cpp
         share/aio/signal/mask/Init.h
         share/aio/signal/mask/Init.cpp
         share/aio/signal/mask/Modify.h

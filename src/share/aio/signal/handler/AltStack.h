@@ -10,7 +10,7 @@
 
 #include <csignal>
 
-namespace aio::signal {
+namespace aio::signal::handler {
     
     class AltStack {
 

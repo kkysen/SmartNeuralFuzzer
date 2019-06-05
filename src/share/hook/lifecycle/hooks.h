@@ -5,7 +5,7 @@
 #pragma once
 
 #include "src/share/hook/lifecycle/LifeCycle.h"
-#include "src/share/aio/signal/Handler.h"
+#include "src/share/aio/signal/handler/Resilient.h"
 
 namespace hook::lifecycle {
     

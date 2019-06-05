@@ -2,11 +2,11 @@
 // Created by Khyber on 5/26/2019.
 //
 
-#include "src/share/aio/signal/AltStack.h"
+#include "src/share/aio/signal/handler/AltStack.h"
 
 #include <cassert>
 
-namespace aio::signal {
+namespace aio::signal::handler {
     
     bool AltStack::register_(int flags) const noexcept {
         const stack_t ss = {

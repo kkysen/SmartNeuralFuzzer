@@ -2,7 +2,8 @@
 // Created by Khyber on 5/25/2019.
 //
 
-#include "src/share/aio/signal/UnMaskedAction.h"
+#include "src/share/aio/signal/handler/UnMaskedAction.h"
+#include "src/share/aio/signal/handler/Const.h"
 
 #include <cassert>
 
@@ -10,15 +11,20 @@ namespace {
     
     using namespace aio::signal;
     
-    void handle(const Signal& signal, RawSigHandler handler) noexcept {
+    void handle(const Signal& signal, handler::Raw handler) noexcept {
         // don't support SIG_DFL
-        if (handler == SIG_IGN || handler == SIG_DFL) {
-            return;
+        switch (handler::Const(handler)) {
+            case handler::Const::ignore:
+            case handler::Const::default_: {
+                return;
+            }
+            default: {
+                handler(signal.signal);
+            }
         }
-        handler(signal.signal);
     }
     
-    void handle(const Signal& signal, RawActionHandler handler) noexcept {
+    void handle(const Signal& signal, handler::RawAction handler) noexcept {
         const siginfo_t& sigInfo = signal.info;
         const ucontext_t& context = signal.context;
         // TODO why is this casting to an incompatible type?
@@ -32,7 +38,7 @@ namespace {
     
 }
 
-namespace aio::signal {
+namespace aio::signal::handler {
     
     UnMaskedAction::UnMaskedAction() noexcept : UnMaskedAction(SIG_IGN) {}
     

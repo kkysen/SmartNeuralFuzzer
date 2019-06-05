@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "src/share/aio/signal/RawHandler.h"
+#include "src/share/aio/signal/handler/Raw.h"
 #include "src/share/aio/signal/Signal.h"
-#include "src/share/aio/signal/Flag.h"
+#include "src/share/aio/signal/handler/Flag.h"
 
-namespace aio::signal {
+namespace aio::signal::handler {
     
     // like sigaction, but no sigset_t mask, which is large
     // doesn't support SIG_DFL either
@@ -25,8 +25,8 @@ namespace aio::signal {
     private:
         
         union {
-            mutable RawSigHandler handler;
-            RawActionHandler action;
+            mutable Raw handler;
+            RawAction action;
         };
         mutable u32 flags;
         // skip sigset_t mask b/c pretty large and already taken care of
@@ -40,14 +40,14 @@ namespace aio::signal {
         
         bool ignore() const noexcept;
         
-        constexpr bool hasAction(RawActionHandler _action) const noexcept {
+        constexpr bool hasAction(RawAction _action) const noexcept {
             return !isHandler() && action == _action;
         }
         
-        explicit constexpr UnMaskedAction(RawSigHandler handler, u32 flags = 0) noexcept
+        explicit constexpr UnMaskedAction(Raw handler, u32 flags = 0) noexcept
                 : handler(handler), flags(flags & ~flag::isAction) {}
         
-        explicit constexpr UnMaskedAction(RawActionHandler action, u32 flags = 0) noexcept
+        explicit constexpr UnMaskedAction(RawAction action, u32 flags = 0) noexcept
                 : action(action), flags(flags | flag::isAction) {}
         
         UnMaskedAction() noexcept;
