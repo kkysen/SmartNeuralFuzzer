@@ -16,9 +16,9 @@ namespace aio::signal::mask {
         
         sigset_t set;
         
-        explicit constexpr Mask(const sigset_t& set) noexcept : set(set) {}
-    
     public:
+    
+        explicit constexpr Mask(const sigset_t& set) noexcept : set(set) {}
         
         /*implicit*/ Mask(Init init = Init::empty) noexcept : set({}) {
             init(set);
@@ -30,12 +30,20 @@ namespace aio::signal::mask {
             return Mask(set);
         }
         
-        /*implicit*/ constexpr operator const sigset_t&() const noexcept {
+        constexpr const sigset_t& impl() const noexcept {
+            return set;
+        }
+    
+        constexpr sigset_t& impl() noexcept {
             return set;
         }
         
+        /*implicit*/ constexpr operator const sigset_t&() const noexcept {
+            return impl();
+        }
+        
         /*implicit*/ constexpr operator const sigset_t&() noexcept {
-            return set;
+            return impl();
         }
         
         bool modify(Modify modify, int signal) noexcept {
@@ -64,7 +72,7 @@ namespace aio::signal::mask {
             return *this;
         }
         
-        bool operator&(int signal) noexcept {
+        bool operator&(int signal) const noexcept {
             return has(signal);
         }
         

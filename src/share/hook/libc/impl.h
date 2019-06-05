@@ -12,14 +12,12 @@
 #include <pthread.h>
 #include <sys/reboot.h>
 
+extern "C"
+int sigvec(int sig, const struct sigvec *vec, struct sigvec *ovec) noexcept __attribute_deprecated__;
+
 namespace hook::libc::impl {
     
     #define _(F) extern decltype(::F)* const F
-    
-    // affect signal handlers
-    // onSignalHandlerChange
-    _(signal);
-    _(sigaction);
     
     // unconditionally hook
     // onFork
@@ -56,6 +54,31 @@ namespace hook::libc::impl {
     // conditionally hook
     // onKill
     _(reboot);
+    
+    // change signal handlers
+    // onSignalHandlerChange
+    _(signal);
+    _(sigaction);
+    
+    // change signal mask
+    // don't allow lifecycle::signaling::constants::signal
+    _(sigprocmask);
+    _(pthread_sigmask);
+    
+    // change signal mask or handlers
+    // old APIs but still need to guard it
+    _(sigset);
+    _(sighold);
+    
+    // really old APIs that don't really work
+    // these are just going to be completely blocked
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    _(sigvec);
+    _(sigblock);
+    _(sigsetmask);
+    _(siggetmask);
+#pragma clang diagnostic pop
     
     #undef _
     

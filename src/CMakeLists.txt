@@ -74,6 +74,8 @@ files(share.aio
         )
 
 files(share.aio.signal
+        share/aio/signal/HandlerConst.h
+        share/aio/signal/HandlerConst.cpp
         share/aio/signal/Flag.h
         share/aio/signal/Flag.cpp
         share/aio/signal/Value.h
@@ -150,6 +152,17 @@ files(share.hook
         share/hook/libc/impl.cpp
         share/hook/libc/hooks.h
         share/hook/libc/hooks.cpp
+        share/hook/libc/hooksImpl/include.h
+        share/hook/libc/hooksImpl/fork.cpp
+        share/hook/libc/hooksImpl/exec.cpp
+        share/hook/libc/hooksImpl/execVariadic.cpp
+        share/hook/libc/hooksImpl/exit.cpp
+        share/hook/libc/hooksImpl/warnings.cpp
+        share/hook/libc/hooksImpl/reboot.cpp
+        share/hook/libc/hooksImpl/signals.cpp
+        share/hook/libc/hooksImpl/blocked.cpp
+        share/hook/libc/hooksImpl/Wrapped.h
+        share/hook/libc/hooksImpl/Wrapped.cpp
         share/hook/lifecycle/hooks.h
         share/hook/lifecycle/hooks.cpp
         share/hook/lifecycle/LifeCycle.h
