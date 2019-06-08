@@ -4,9 +4,9 @@
 
 #include "src/share/io/fse.h"
 
-#ifndef __EXCEPTIONS
+#include "src/share/common/hardAssert.h"
+
 #include "llvm/Support/ErrorHandling.h"
-#endif
 
 namespace fse {
     
@@ -44,11 +44,19 @@ namespace fse {
         return !existed;
     }
     
+    void fakeThrow(const std::exception& exception) {
+        #ifndef NDEBUG
+        llvm_unreachable(exception.what());
+        #else
+        __assert_fail(exception.what(), __FILE__, __LINE__, __ASSERT_FUNCTION);
+        #endif
+    }
+    
     void _throw(const std::exception& exception) {
         #ifdef __EXCEPTIONS
         throw exception;
         #else
-        llvm_unreachable(exception.what());
+        fakeThrow(exception);
         #endif
     }
     

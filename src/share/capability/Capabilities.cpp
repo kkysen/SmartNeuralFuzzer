@@ -4,7 +4,7 @@
 
 #include "src/share/capability/Capabilities.h"
 
-#include <cassert>
+#include "src/share/common/hardAssert.h"
 
 namespace capability {
     
@@ -18,7 +18,7 @@ namespace capability {
     
     Capabilities Capabilities::get(Header header) noexcept {
         Capabilities capabilities(header);
-        assert(capabilities.get());
+        hardAssert(capabilities.get());
         return capabilities;
     }
     

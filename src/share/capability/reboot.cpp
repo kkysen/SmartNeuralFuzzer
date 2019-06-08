@@ -5,9 +5,9 @@
 #include "src/share/capability/reboot.h"
 
 #include "src/share/capability/Capabilities.h"
+#include "src/share/common/hardAssert.h"
 
 #include <cerrno>
-#include <cassert>
 
 namespace capability {
     
@@ -16,7 +16,7 @@ namespace capability {
         if (capabilities.get()) {
             return capabilities.effective().sysBoot;
         } else {
-            assert(errno == EINVAL);
+            hardAssert(errno == EINVAL);
             errno = 0;
             return geteuid() == 0;
         }

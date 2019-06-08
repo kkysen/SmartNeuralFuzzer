@@ -3,15 +3,14 @@
 //
 
 #include "src/share/hook/libc/hooksImpl/include.h"
-
-#include <cassert>
+#include "src/share/common/hardAssert.h"
 
 namespace {
     
     [[noreturn]] void outdatedAPI() noexcept {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
-        assert(("The BSD signal API is too old. Its masks are only 32-bits, so the API doesn't work.", false)); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+        hardAssert(("The BSD signal API is too old. Its masks are only 32-bits, so the API doesn't work.", false)); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
 #pragma clang diagnostic pop
     }
     

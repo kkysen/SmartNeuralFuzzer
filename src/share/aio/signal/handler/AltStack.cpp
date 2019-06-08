@@ -4,7 +4,7 @@
 
 #include "src/share/aio/signal/handler/AltStack.h"
 
-#include <cassert>
+#include "src/share/common/hardAssert.h"
 
 namespace aio::signal::handler {
     
@@ -38,7 +38,7 @@ namespace aio::signal::handler {
          * ENOMEM: ss_size is not < MINSIGSTKSZ b/c static_assert(size >= MINSIGSTKSZ)
          * EPERM: currently executing on sig alt stack
          */
-        assert(errno == EPERM);
+        hardAssert(errno == EPERM);
         return false;
     }
     

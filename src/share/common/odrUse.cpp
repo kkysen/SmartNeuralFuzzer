@@ -3,10 +3,10 @@
 //
 
 #include "src/share/common/odrUse.h"
+#include "src/share/common/hardAssert.h"
 
-#include <cassert>
 #include <cstdint>
 
 void odrUsePointer(const void* pointer) noexcept {
-    assert(reinterpret_cast<intptr_t>(pointer) != -1);
+    hardAssert(reinterpret_cast<intptr_t>(pointer) != -1);
 }

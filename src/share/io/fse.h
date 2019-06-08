@@ -51,6 +51,9 @@ namespace fse {
     bool ensureDir(const fs::path& path);
     
     // assert if compiled with -fno-exceptions
+    void fakeThrow(const std::exception& exception);
+    
+    // assert if compiled with -fno-exceptions
     void _throw(const std::exception& exception);
     
 }

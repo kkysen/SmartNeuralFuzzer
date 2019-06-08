@@ -14,6 +14,7 @@
 #include "src/share/hook/libc/syscall/sigqueueinfo.h"
 #include "src/share/hook/libc/syscall/tgkill.h"
 #include "src/share/stde/reversed.h"
+#include "src/share/common/hardAssert.h"
 
 #include "llvm/ADT/SmallVector.h"
 
@@ -127,7 +128,7 @@ namespace aio::signal::handler {
         static void sigAction(
                 int signal, const struct sigaction* action, struct sigaction* oldAction) noexcept {
             hook::libc::signal::Disable disable;
-            assert(::sigaction(signal, action, oldAction) == 0);
+            hardAssert(::sigaction(signal, action, oldAction) == 0);
             // only possible errors can't happen:
             // EFAULT: action or oldAction or not part of address space, but they obviously are
             // EINVAL: invalid signal specified, incl. SIGKILL and SIGSTOP,

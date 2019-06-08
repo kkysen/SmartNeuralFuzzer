@@ -13,6 +13,7 @@ files(share.common
         share/common/debug.cpp
         share/common/math.h
         share/common/lazy.h
+        share/common/hardAssert.h
         share/common/api.h
         share/common/has/field.h
         share/common/has/method.h
@@ -258,7 +259,7 @@ function(copyTargetTo target binDir)
             COMMAND "${CMAKE_COMMAND}" -E copy
             "$<TARGET_FILE:${target}>"
             "${CMAKE_BINARY_DIR}/${binDir}/$<TARGET_FILE_NAME:${target}>"
-            COMMENT "Copying $<TARGET_FILE_NAME:${target}> to ${CMAKE_BINARY_DIR}"
+            COMMENT "Copying $<TARGET_FILE_NAME:${target}> to ${CMAKE_BINARY_DIR}/${binDir}"
             )
 endfunction()
 
