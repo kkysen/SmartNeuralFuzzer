@@ -58,9 +58,13 @@ namespace io {
         
         deleteCopy(WriteBuffer);
         
-        void on(T t) noexcept {
+        void on(const T& t) noexcept {
             buffer[index++] = t;
             tryFlush();
+        }
+        
+        void operator()(const T& t) noexcept {
+            on(t);
         }
         
     };

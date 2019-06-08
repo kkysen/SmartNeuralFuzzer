@@ -5,17 +5,18 @@
 #pragma once
 
 #include "src/share/common/numbers.h"
+#include "src/share/hook/libc/syscall/gettid.h"
 
 #include <string_view>
 #include <iostream>
 #include <sstream>
-#include <cstring>
 #include <array>
-
 #include <fstream>
+
+#include <csignal>
+#include <cstring>
+
 #include <unistd.h>
-#include <syscall.h>
-#include <signal.h>
 
 namespace debug {
     
@@ -124,7 +125,7 @@ namespace debug {
                 out(out),
                 info(info),
                 mode(mode),
-                threadId(!mode ? 0 : static_cast<pid_t>(syscall(SYS_gettid))),
+                threadId(!mode ? 0 : gettid()),
                 processId(!mode ? 0 : getpid()) {}
     
     private:

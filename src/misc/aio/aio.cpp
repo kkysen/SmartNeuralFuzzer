@@ -42,9 +42,10 @@ void aioTest(llvm::ArrayRef<std::string> ss) {
         buffer('\n');
     }
     
-    char* data = new char[1000000];
-    write(fd, data, 1000000);
-    
+//    char* data = new char[1000000];
+//    write(fd, data, 1000000);
+//    delete[] data;
+
 //    std::cout << pool.size() << std::endl;
 }
 
@@ -53,27 +54,47 @@ void ioTest(llvm::ArrayRef<std::string> ss) {
     auto writer = Writer(fd);
     WriteBuffer<char> buffer(std::move(writer));
     
+    size_t j = 0;
     for (const auto& s : ss) {
-        for (const auto c : s) {
-            buffer.on(c);
+        j++;
+//        std::cout << j++ << std::endl;
+//        for (const auto c : s) {
+//            buffer(c);
+//        }
+//        for (auto it = s.begin(); it != s.end(); ++it) {
+//            const char c = *it;
+//            buffer(c);
+//        }
+        size_t n = s.size();
+        for (size_t i = 0; i < n; i++) {
+            const char c = s[i];
+            buffer(c);
         }
-        buffer.on('\n');
+        buffer('\n');
     }
     
 }
 
+void g(llvm::ArrayRef<std::string> ss) {
+    using namespace std::chrono;
+//    std::vector<std::string> ss2(ss.begin(), ss.end());
+//    std::cout << " io: " << measure<nanoseconds>::time(ioTest, ss) << std::endl;
+    std::cout << "aio: " << measure<nanoseconds>::time(aioTest, ss) << std::endl;
+}
+
 void f(u32 n) {
+//    std::cout << "io buffer size: " << WriteBuffer<char>::bufferSize << std::endl;
+    
     std::vector<std::string> v;
     v.reserve(n);
     for (u32 i = 0; i < n; i++) {
         v.push_back(std::to_string(i));
     }
     
-    using namespace std::chrono;
-    
-    std::cout << "aio: " << measure<nanoseconds>::time(aioTest, v) << std::endl;
-    std::cout << " io: " << measure<nanoseconds>::time(ioTest, v) << std::endl;
-    
+    for (int i = 0; i < 10; i++) {
+        g(v);
+    }
+
 //    std::cout << " io: " << measure<nanoseconds>::time(ioTest, v) << std::endl;
 //    std::cout << "aio: " << measure<nanoseconds>::time(aioTest, v) << std::endl;
 }
@@ -84,6 +105,8 @@ int main(int argc, const char* const* argv) {
         std::stringstream ss(argv[1]);
         ss >> n;
     }
-    f(n);
+    for (int i = 0; i < 10; i++) {
+        f(n);
+    }
 //    sleep(1);
 }

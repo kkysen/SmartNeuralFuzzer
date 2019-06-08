@@ -135,8 +135,7 @@ files(share.concurrent
         )
 
 set(share.hook.libc.syscall
-        share/hook/libc/syscall/impl.h
-        share/hook/libc/syscall/impl.cpp
+        share/hook/libc/syscall/include.h
         share/hook/libc/syscall/gettid.h
         share/hook/libc/syscall/gettid.cpp
         share/hook/libc/syscall/tgkill.h

@@ -12,6 +12,6 @@ endfunction()
 
 function(XclangLoadTargets)
     foreach (arg ${ARGN})
-        XclangLoad("$<TARGET_FILE:${arg}>")
+        XclangLoad("${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:${arg}>")
     endforeach ()
 endfunction()

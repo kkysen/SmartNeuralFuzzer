@@ -6,7 +6,7 @@
 #include <vector>
 
 #include <unistd.h>
-#include <sys/syscall.h>
+#include <syscall.h>
 
 //const pid_t pid = getpid();
 

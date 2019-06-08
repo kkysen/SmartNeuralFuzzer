@@ -2,16 +2,15 @@ set(files.share)
 
 if (${llvmVersionMajorIsNewest})
     
-    set(newestClang clang-${llvmVersionMajorNewest})
+    set(newestClang ${llvm.preload} clang-${llvmVersionMajorNewest})
     set(CMAKE_C_COMPILER ${newestClang})
     set(CMAKE_CXX_COMPILER ${newestClang})
     set(newestClang)
     
-    llvmPreloadPassRegister()
+    #    add_compile_options(-ftime-report)
     
-#    add_compile_options(-ftime-report)
-    
-    XclangLoadTargets(pass.coverage.block pass.coverage.branch)
+    XclangLoadTargets(pass.coverage.block)
+    #    XclangLoadTargets(pass.coverage.block pass.coverage.branch)
 
 endif ()
 
@@ -32,14 +31,17 @@ set(tests
         using_libstdc++
         )
 set(tests.touch)
+set(tests.bin)
 foreach (test ${tests})
-    add_executable(${test} ${files.share} "${test}.cpp")
-    target_link_libraries(${test} runtime.coverage.branch runtime.coverage.block)
-    add_dependencies(${test} pass)
+    add_executable(test.${test} ${files.share} "${test}.cpp")
+    target_link_libraries(test.${test} runtime.coverage.branch runtime.coverage.block)
+    add_dependencies(test.${test} pass)
     
-    add_custom_target(${test}.touch touch ${CMAKE_CURRENT_SOURCE_DIR}/${test}.cpp)
-    list(APPEND tests.touch ${test}.touch)
+    add_custom_target(test.${test}.touch touch ${CMAKE_CURRENT_SOURCE_DIR}/${test}.cpp)
+    
+    list(APPEND tests.bin test.${test})
+    list(APPEND tests.touch test.${test}.touch)
 endforeach ()
 
-add_custom_target(test DEPENDS ${tests})
+add_custom_target(test DEPENDS ${tests.bin})
 add_custom_target(test.touch DEPENDS ${tests.touch})

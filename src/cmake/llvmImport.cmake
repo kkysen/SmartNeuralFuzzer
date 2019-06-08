@@ -37,7 +37,4 @@ function(llvmImportAsRuntime)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
 endfunction()
 
-function(llvmPreloadPassRegister)
-    # messing up other stuff
-#    set(ENV{LD_PRELOAD} "$ENV{LD_PRELOAD} ${CMAKE_CURRENT_BINARY_DIR}/lib/libpass.register.so")
-endfunction()
+set(llvm.preload "LD_PRELOAD=${CMAKE_CURRENT_BINARY_DIR}/lib/libpass.register.so")

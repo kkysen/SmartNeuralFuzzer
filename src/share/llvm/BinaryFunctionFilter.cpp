@@ -27,7 +27,6 @@ namespace {
         using namespace llvm::sys::fs;
         
         const auto cacheDir = getCacheDir();
-        bool empty = true;
         const auto now = TimePoint<>::clock::now();
         std::error_code ec;
         for (auto it = directory_iterator(cacheDir.string(), ec);
@@ -43,7 +42,6 @@ namespace {
             }
             const auto status = *statusOrErr;
             if (status.type() != file_type::regular_file) {
-                empty = false;
                 continue;
             }
             using namespace std::literals;
@@ -52,12 +50,7 @@ namespace {
             if (cacheAge > maxAge) {
                 llvm::errs() << "purging old cache file: " << entry.path() << "\n";
                 remove(entry.path());
-            } else {
-                empty = false;
             }
-        }
-        if (empty) {
-            remove(cacheDir);
         }
     }
     

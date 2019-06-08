@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "src/share/hook/libc/syscall/impl.h"
-
+#include <cstdlib>
 #include <csignal>
 
-#include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <sys/reboot.h>
 

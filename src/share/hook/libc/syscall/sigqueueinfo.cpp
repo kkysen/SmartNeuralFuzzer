@@ -4,7 +4,7 @@
 
 #include "src/share/hook/libc/syscall/sigqueueinfo.h"
 
-#include "src/share/hook/libc/syscall/impl.h"
+#include "src/share/hook/libc/syscall/include.h"
 
 int rt_sigqueueinfo(pid_t tgid, int signal, siginfo_t* info) noexcept {
     return syscall(SYS_rt_sigqueueinfo, tgid, signal, info);

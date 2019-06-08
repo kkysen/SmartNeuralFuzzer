@@ -14,6 +14,7 @@ set(files.share
         ${files.share.stde}
         ${files.share.time}
         ${files.share.io}
+        ${files.share.hook.libc.syscall}
         ${files.share.llvm}
         ${files.pass.coverage}
         )

@@ -7,7 +7,7 @@
 #include <csignal>
 
 #include <unistd.h>
-#include <sys/syscall.h>
+#include <syscall.h>
 
 void log(std::string_view sv) noexcept {
     write(STDERR_FILENO, sv.data(), sv.size());
