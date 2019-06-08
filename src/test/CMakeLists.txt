@@ -2,7 +2,8 @@ set(files.share)
 
 if (${llvmVersionMajorIsNewest})
     
-    set(newestClang ${llvm.preload} clang-${llvmVersionMajorNewest})
+    # this is the LD_PRELOAD wrapper executable
+    set(newestClang ${CMAKE_BINARY_DIR}/bin/clang-9)
     set(CMAKE_C_COMPILER ${newestClang})
     set(CMAKE_CXX_COMPILER ${newestClang})
     set(newestClang)

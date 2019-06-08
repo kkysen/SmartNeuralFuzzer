@@ -26,6 +26,11 @@ int main(int argc, char** argv) {
         (newLdPreload += pathSeparator) += oldLdPreload;
     }
     setenv(ldPreload, newLdPreload.c_str(), true);
+    
+    // I got this idea from ccache.
+    // Just use the current name of the program to search in path,
+    // so I can just make a link to this program
+    // w/ the name of whatever program I want it to wrap.
     argv[0] = getCommand(argv[0]);
     execvpe(argv[0], argv, environ);
 }
