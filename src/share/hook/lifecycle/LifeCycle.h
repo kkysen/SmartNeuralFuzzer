@@ -16,7 +16,7 @@ namespace hook::lifecycle {
         LifeCycle() noexcept = default;
         
         deleteCopy(LifeCycle);
-    
+        
         // these 2 methods must be idempotent
         
         virtual void reconstruct() = 0;
@@ -25,7 +25,7 @@ namespace hook::lifecycle {
         
         // actual destructor should just do the same as destruct,
         // but doesn't have to be idempotent (not part of API)
-        virtual ~LifeCycle() = 0;
+        virtual ~LifeCycle() {};
         
     };
     

@@ -33,10 +33,6 @@ namespace llvm::pass {
         bool contains(StringRef functionName) const noexcept;
         
         bool operator()(StringRef functionName) const noexcept;
-        
-        bool contains(Function& function) const noexcept;
-    
-        bool operator()(Function& function) const noexcept;
     
         void add(StringRef functionName);
         

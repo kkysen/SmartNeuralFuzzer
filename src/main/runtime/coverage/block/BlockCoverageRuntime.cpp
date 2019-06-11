@@ -34,5 +34,7 @@ namespace {
 
 API_BlockCoverage(onBlock)(u64 blockNum) noexcept {
 //    printf("BlockCoverage: onBlock: %ld\n", blockNum);
-    rt().onBlock(blockNum);
+    if (rt) {
+        rt().onBlock(blockNum);
+    }
 }

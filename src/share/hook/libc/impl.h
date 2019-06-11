@@ -11,78 +11,82 @@
 #include <pthread.h>
 #include <sys/reboot.h>
 
-extern "C"
-int sigvec(int sig, const struct sigvec *vec, struct sigvec *ovec) noexcept __attribute_deprecated__;
-
 namespace hook::libc::impl {
-    
-    #define _(F) extern decltype(::F)* const F
     
     // unconditionally hook
     // onProcessConstruction
-    _(fork);
-    _(vfork);
+    pid_t fork() noexcept;
+    
+    pid_t vfork() noexcept;
     
     // unconditionally hook
     // onThreadConstruction
-    _(pthread_create);
+    int
+    pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (* startRoutine)(void*), void* arg) noexcept;
     
     // unconditionally hook
     // onExec
-    _(execv);
-    _(execvp);
-    _(execvpe);
-    _(fexecve);
+    int execv(const char* path, char* const argv[]) noexcept;
+    
+    int execvp(const char* file, char* const argv[]) noexcept;
+    
+    int execvpe(const char* file, char* const argv[], char* const envp[]) noexcept;
+    
+    int fexecve(int fd, char *const argv[], char *const envp[]) noexcept;
+    
     // variadic args
-    _(execl);
-    _(execlp);
-    _(execle);
+    // these are uncallable; the non-variadic ones are called
+//    int execl(const char* path, const char* arg, ...) noexcept;
+//    int execlp(const char* file, const char* arg, ...) noexcept;
+//    int execle(const char* path, const char* arg, ...) noexcept;
     
     // unconditionally hook
     // onExit
-    _(_exit);
-    _(_Exit);
-    _(quick_exit);
+    [[noreturn]] void _exit(int status) noexcept;
+    
+    [[noreturn]] void _Exit(int status) noexcept;
+    
+    [[noreturn]] void quick_exit(int status) noexcept;
     
     // unconditionally hook
     // signal::onWarning -> onKill
-    _(raise);
+    int raise(int signal) noexcept;
     
     // conditionally hook
     // signal::onWarning -> onKill
-    _(kill);
-    _(killpg);
-    _(pthread_kill);
+    int kill(pid_t pid, int signal) noexcept;
+    
+    int killpg(pid_t processGroup, int signal) noexcept;
+    
+    int pthread_kill(pthread_t thread, int signal) noexcept;
     
     // conditionally hook
     // onKill
-    _(reboot);
+    int reboot(int how) noexcept;
     
     // change signal handlers
     // signal::onHandlerChange
-    _(signal);
-    _(sigaction);
+    sighandler_t signal(int signal, sighandler_t handler) noexcept;
+    
+    int sigaction(int signal, const struct sigaction* action, struct sigaction* oldAction) noexcept;
     
     // change signal mask
     // don't allow lifecycle::signaling::constants::signal
-    _(sigprocmask);
-    _(pthread_sigmask);
+    int sigprocmask(int how, const sigset_t* mask, sigset_t* oldMask) noexcept;
+    
+    int pthread_sigmask(int how, const sigset_t* mask, sigset_t* oldMask) noexcept;
     
     // change signal mask or handlers
     // old APIs but still need to guard it
-    _(sigset);
-    _(sighold);
+    sighandler_t sigset(int signal, sighandler_t disposition) noexcept;
+    
+    int sighold(int signal) noexcept;
     
     // really old APIs that don't really work
     // these are just going to be completely blocked
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    _(sigvec);
-    _(sigblock);
-    _(sigsetmask);
-    _(siggetmask);
-#pragma clang diagnostic pop
-    
-    #undef _
+//    int sigvec(int signal, const struct sigvec* vec, struct sigvec* oldVec) noexcept __attribute_deprecated__;
+//    int sigblock(int mask) noexcept __attribute_deprecated__;
+//    int sigsetmask(int mask) noexcept __attribute_deprecated__;
+//    int siggetmask() noexcept __attribute_deprecated__;
     
 }

@@ -6,10 +6,14 @@
 
 #include "src/share/hook/libc/syscall/include.h"
 
-int capget(__user_cap_header_struct* header, __user_cap_data_struct* data) noexcept {
-    return ::syscall(SYS_capget, header, data);
-}
-
-int capset(__user_cap_header_struct* header, const __user_cap_data_struct* data) noexcept {
-    return ::syscall(SYS_capset, header, data);
+namespace syscalls {
+    
+    int capget(__user_cap_header_struct* header, __user_cap_data_struct* data) noexcept {
+        return raw(SYS_capget, header, data);
+    }
+    
+    int capset(__user_cap_header_struct* header, const __user_cap_data_struct* data) noexcept {
+        return raw(SYS_capset, header, data);
+    }
+    
 }

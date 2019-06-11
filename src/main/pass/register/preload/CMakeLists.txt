@@ -1,6 +1,5 @@
-add_compile_definitions(BIN_PATH_PASS_REGISTER=\"${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:pass.register>\")
 
-add_executable(pass.register.preload preloadPassRegister.cpp ${files.share.common})
+add_executable(pass.register.preload preloadPassRegister.cpp ${files.share} ${files.share.common})
 copyExecutable(pass.register.preload)
 
 function(copyAs alias)

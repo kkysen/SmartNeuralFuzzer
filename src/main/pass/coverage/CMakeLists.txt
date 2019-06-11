@@ -14,7 +14,6 @@ set(files.share
         ${files.share.stde}
         ${files.share.time}
         ${files.share.io}
-        ${files.share.hook.libc.syscall}
         ${files.share.llvm}
         ${files.pass.coverage}
         )
@@ -25,4 +24,6 @@ add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE_BRANCH=\"${CMAKE_BINARY_DIR}/l
 add_subdirectory(block)
 add_subdirectory(branch)
 
-add_custom_target(pass.coverage DEPENDS pass.coverage.block pass.coverage.branch)
+add_subdirectory(test)
+
+add_custom_target(pass.coverage DEPENDS pass.coverage.block pass.coverage.branch pass.coverage.test)

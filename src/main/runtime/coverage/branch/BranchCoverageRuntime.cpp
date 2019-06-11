@@ -247,15 +247,21 @@ namespace {
 
 API_BranchCoverage(onSingleBranch)(bool value) noexcept {
 //    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
-    rt().onSingleBranch(value);
+    if (rt) {
+        rt().onSingleBranch(value);
+    }
 }
 
 API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept {
 //    printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
-    rt().onMultiBranch(branchNum, numBranches);
+    if (rt) {
+        rt().onMultiBranch(branchNum, numBranches);
+    }
 }
 
 API_BranchCoverage(onInfiniteBranch)(void* address) noexcept {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
-    rt().onInfiniteBranch(address);
+    if (rt) {
+        rt().onInfiniteBranch(address);
+    }
 }

@@ -32,18 +32,20 @@ namespace hook::lifecycle {
         static void onThreadConstruction() noexcept;
         
         static void onThreadDestruction() noexcept;
+        
+        static bool onProcessConstruction() noexcept;
 
     private:
         
         void reconstruct();
     
-        void destruct() const noexcept;
+        [[noreturn]] void destruct() const noexcept;
 
     public:
         
         static void onProcessReconstruction();
-
-        static void onProcessDestruction() noexcept;
+    
+        [[noreturn]] static void onProcessDestruction() noexcept;
         
     };
     

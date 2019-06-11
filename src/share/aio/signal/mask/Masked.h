@@ -9,7 +9,7 @@
 
 namespace aio::signal::mask {
     
-    class Masker {
+    class Masked {
     
     private:
         
@@ -24,9 +24,9 @@ namespace aio::signal::mask {
         // Apply::process blocks everything, so only
         // an unstoppable (SIGKILL, SIGSTOP) or unrecoverable (SIGSEGV, etc.)
         // signal can stop the current thread
-        explicit Masker(const Mask& mask, How how, Apply apply = Apply::process) noexcept;
+        explicit Masked(const Mask& mask, How how, Apply apply = Apply::process) noexcept;
         
-        ~Masker();
+        ~Masked();
         
     };
     

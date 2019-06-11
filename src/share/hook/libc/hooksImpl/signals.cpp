@@ -36,6 +36,11 @@ namespace {
         removeSpecialSignal(static_cast<How>(how), set);
     }
     
+    void onHandlerChange(int signal, sighandler_t oldHandler) noexcept {
+        const struct sigaction oldAction = {.sa_handler = oldHandler};
+        signal::onHandlerChange(signal, &oldAction);
+    }
+    
 }
 
 namespace hook::libc::signal {
@@ -77,34 +82,40 @@ namespace hook::libc::signal {
         }
     }
     
-    void onHandlerChange(int signal) noexcept {
+    void onHandlerChange(int signal, const struct sigaction* oldAction) noexcept {
         if (!isSpecialSignal(signal)) {
             return;
         }
-        handler::Passive::get().registerFor(signal);
+        handler::Passive::get().registerFor(signal, oldAction);
     }
     
 }
 
 sighandler_t signal(int signal, sighandler_t handler) noexcept {
 //    trace();
-    printf("%s(%d)\n", __func__, signal);
-    const auto retVal = impl::signal(signal, handler);
-    if (handler) {
-        // skip nullptr handler that doesn't change anything
-        signal::onHandlerChange(signal);
+    if (enabled()) {
+        printf("%s(%d)\n", __func__, signal);
     }
-    return retVal;
+    const auto oldHandler = impl::signal(signal, handler);
+    if (oldHandler != SIG_ERR && handler) {
+        // skip nullptr handler that doesn't change anything
+        ::onHandlerChange(signal, oldHandler);
+    }
+    return oldHandler;
 }
 
 int sigaction(int signal, const struct sigaction* action, struct sigaction* oldAction) noexcept {
 //    trace();
-    printf("%s(%d)\n", __func__, signal);
-    const auto retVal = impl::sigaction(signal, action, oldAction);
+    if (enabled()) {
+        printf("%s(%d)\n", __func__, signal);
+    }
     if (action) {
-        // skip nullptr action that doesn't change anything
-        signal::onHandlerChange(signal);
         removeSpecialSignal(How::set, &action->sa_mask);
+    }
+    const auto retVal = impl::sigaction(signal, action, oldAction);
+    if (retVal != -1 && action) {
+        // skip nullptr action that doesn't change anything
+        signal::onHandlerChange(signal, oldAction);
     }
     return retVal;
 }
@@ -123,11 +134,10 @@ int pthread_sigmask(int how, const sigset_t* set, sigset_t* oldSet) noexcept {
 
 sighandler_t sigset(int signal, sighandler_t disposition) noexcept {
     using aio::signal::handler::Const;
+    bool changes = false;
     switch (handler::Const(disposition)) {
         case handler::Const::error:
-        case handler::Const::ignore: {
             break;
-        }
         case handler::Const::hold: {
             if (isSpecialSignal(signal)) {
                 errno = EINVAL;
@@ -135,13 +145,18 @@ sighandler_t sigset(int signal, sighandler_t disposition) noexcept {
             }
             break;
         }
+        case handler::Const::ignore:
         case handler::Const::default_:
         default: {
-            signal::onHandlerChange(signal);
+            changes = true;
             break;
         }
     }
-    return impl::sigset(signal, disposition);
+    const auto oldHandler = impl::sigset(signal, disposition);
+    if (oldHandler != SIG_ERR && changes) {
+        ::onHandlerChange(signal, oldHandler);
+    }
+    return oldHandler;
 }
 
 int sighold(int signal) noexcept {

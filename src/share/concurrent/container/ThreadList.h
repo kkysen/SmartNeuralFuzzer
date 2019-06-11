@@ -12,6 +12,8 @@
 #include <list>
 #include <condition_variable>
 
+#include "src/share/common/debug.h" // TODO remove
+
 namespace concurrent {
     
     template <typename T, class Allocator = std::allocator<T>>
@@ -68,8 +70,11 @@ namespace concurrent {
                 return;
             }
             std::lock_guard guard(lock);
+            using namespace std::literals;
+            _dbg("erasing "s + std::to_string(*node));
             list.erase(node);
             if (list.empty()) {
+                _dbg("notifying");
                 noThreadsLeft.notifyOne();
             }
         }
@@ -94,6 +99,10 @@ namespace concurrent {
     
     public:
     
+        constexpr size_t size() const noexcept {
+            return list.size();
+        }
+    
         deleteCopy(ThreadList);
     
         ThreadList() noexcept = default;
@@ -110,7 +119,13 @@ namespace concurrent {
         template <class F>
         void forEach(F f) const noexcept {
             std::lock_guard guard(lock);
-            for (const auto& e : list) {
+            _dbg(list.size());
+            pid_t localList[list.size()];
+            size_t i = 0;
+            for (const auto e : list) {
+                localList[i++] = e;
+            }
+            for (const auto e : localList) {
                 f(e);
             }
         }
@@ -138,7 +153,7 @@ namespace concurrent {
             // then we block, and since the other thread isn't in a signal handler,
             // it can continue and release the lock soon
             std::lock_guard guard(lock);
-            delete &list;
+            list.~List();
             // this way we also don't need any signal masks
         }
         

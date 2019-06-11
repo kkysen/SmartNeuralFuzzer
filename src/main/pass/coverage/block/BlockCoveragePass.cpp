@@ -3,7 +3,7 @@
 //
 
 #include "src/main/pass/coverage/includes.h"
-#include "src/share/llvm/conversions.h"
+#include "src/share/llvm/lib/conversions.h"
 #include "src/share/llvm/debug.h"
 #include "src/share/io/fse.h"
 
@@ -39,13 +39,13 @@ namespace llvm::pass::coverage::block {
         }
         
         class Output {
-
+        
         private:
             
             std::error_code ec;
-            
+        
         public:
-    
+            
             fs::path path;
             
             explicit Output(const Module& module) {
@@ -73,9 +73,9 @@ namespace llvm::pass::coverage::block {
     public:
         
         explicit BlockIndicesSourceMap(const Module& module) : BlockIndicesSourceMap(Output(module)) {}
-
-    private:
     
+    private:
+        
         static std::string getDIPath(const DIScope& di) {
             using convert::view;
             // TODO fs::path::lexically_normal() should be used
@@ -86,10 +86,10 @@ namespace llvm::pass::coverage::block {
                                  / view(di.getFilename()))
                     .string();
         }
-    
+        
         bool hasDI = true;
         const DISubprogram* currentFunction = nullptr;
-
+    
     public:
         
         void function(const Function& function) {
@@ -143,27 +143,19 @@ namespace llvm::pass::coverage::block {
             u64 blockIndex = 0;
             
             BlockIndicesSourceMap sourceMap(module);
-            const auto& skipRuntimeFunctions = runtimeFunctionFilter();
             
-            for (auto& function : module) {
-                if (function.empty()) {
-                    continue;
-                }
-                if (skipRuntimeFunctions(function)) {
-                    continue;
-                }
-                errs() << "Block: " << function.getName() << "\n";
-                sourceMap.function(function);
-                for (auto& block : function) {
-                    IRBuilder<> builder(&*block.getFirstInsertionPt());
-                    IRBuilderExt ext(builder);
-                    const auto& callInst = *ext.call(onBlock, {ext.constants().getInt(blockIndex)});
-                    sourceMap.block(blockIndex, callInst, &block == &function.front());
-                    blockIndex++;
-                }
-            }
-            
-            return true;
+            return filteredFunctions(module)
+                    .forEach([&](BasicBlock& block) -> bool {
+                        IRBuilder<> builder(&*block.getFirstInsertionPt());
+                        IRBuilderExt ext(builder);
+                        const auto& callInst = *ext.call(onBlock, {ext.constants().getInt(blockIndex)});
+                        sourceMap.block(blockIndex, callInst, &block == &block.getParent()->front());
+                        blockIndex++;
+                        return true;
+                    }, [&](Function& function) {
+                        errs() << "Block: " << function.getName() << "\n";
+                        sourceMap.function(function);
+                    });
         }
         
     };

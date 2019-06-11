@@ -2,15 +2,17 @@
 // Created by Khyber on 5/20/2019.
 //
 
-#include "src/share/llvm/BinaryFunctionFilter.h"
+#include "src/share/llvm/lib/BinaryFunctionFilter.h"
 
 #include "src/share/io/Popen.h"
 #include "src/share/io/Stat.h"
-#include "src/share/llvm/conversions.h"
+#include "src/share/llvm/lib/conversions.h"
 
 #include "llvm/Support/FileSystem.h"
 
 #include <fstream>
+
+#include <csignal> // TODO remove
 
 namespace {
     
@@ -105,13 +107,16 @@ namespace {
         using namespace llvm::convert;
         bool lastLineEmpty = false;
         llvm::StringSet<> functionNameLines; // need to remove duplicates
-        io::Popen(getCommand(objectFilePath))
+        const bool someLines = io::Popen(getCommand(objectFilePath))
                 .forEachLine([&functionNameLines, &lastLineEmpty](const auto& line) {
                     const auto functionName = symbolLineToFunctionName(line, lastLineEmpty);
                     if (!functionName.empty()) {
                         functionNameLines.insert(ref(functionName));
                     }
                 });
+        if (!someLines) {
+            raise(SIGKILL);
+        }
         std::ofstream cacheFile(cacheFilePath);
         size_t length = 0;
         for (const auto& entry : functionNameLines) {
@@ -132,14 +137,6 @@ namespace llvm::pass {
     
     bool BinaryFunctionFilter::operator()(StringRef functionName) const noexcept {
         return contains(functionName);
-    }
-    
-    bool BinaryFunctionFilter::contains(Function& function) const noexcept {
-        return contains(convert::view(function.getName()));
-    }
-    
-    bool BinaryFunctionFilter::operator()(Function& function) const noexcept {
-        return contains(function);
     }
     
     void BinaryFunctionFilter::add(StringRef functionName) {

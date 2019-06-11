@@ -31,6 +31,8 @@ files(share.stde
         share/stde/getline.cpp
         share/stde/reversed.h
         share/stde/reversed.cpp
+        share/stde/split.h
+        share/stde/split.cpp
         )
 
 files(share.time
@@ -57,6 +59,8 @@ files(share.io
         share/io/ReadOnlyMappedMemory.cpp
         share/io/Popen.h
         share/io/Popen.cpp
+        share/io/LdPreload.h
+        share/io/LdPreload.cpp
         )
 
 files(share.aio
@@ -112,8 +116,8 @@ files(share.aio.signal
         share/aio/signal/mask/Apply.cpp
         share/aio/signal/mask/Mask.h
         share/aio/signal/mask/Mask.cpp
-        share/aio/signal/mask/Masker.h
-        share/aio/signal/mask/Masker.cpp
+        share/aio/signal/mask/Masked.h
+        share/aio/signal/mask/Masked.cpp
         )
 
 files(share.concurrent
@@ -145,6 +149,12 @@ set(share.hook.libc.syscall
         share/hook/libc/syscall/sigqueueinfo.cpp
         share/hook/libc/syscall/cap.h
         share/hook/libc/syscall/cap.cpp
+        share/hook/libc/syscall/_exit.h
+        share/hook/libc/syscall/_exit.cpp
+        share/hook/libc/syscall/kill.h
+        share/hook/libc/syscall/kill.cpp
+        share/hook/libc/syscall/forceKill.h
+        share/hook/libc/syscall/forceKill.cpp
         )
 
 files(share.hook.libc.syscall
@@ -223,10 +233,23 @@ files(share.capability
         share/capability/AmbientSet.cpp
         )
 
+# these only depend on LLVMSupport and LLVMCore (and pthread, tinfo)
+set(share.llvm.lib
+        share/llvm/lib/alignment.h
+        share/llvm/lib/conversions.h
+        share/llvm/lib/conversions.cpp
+        share/llvm/lib/BinaryFunctionFilter.h
+        share/llvm/lib/BinaryFunctionFilter.cpp
+        )
+
+files(share.llvm.lib
+        ${share.llvm.lib}
+        )
+
 files(share.llvm
+        ${share.llvm.lib}
         share/llvm/Types.h
         share/llvm/Constants.h
-        share/llvm/alignment.h
         share/llvm/IRBuilderExt.h
         share/llvm/AllocaArgs.h
         share/llvm/LoadStore.h
@@ -237,10 +260,8 @@ files(share.llvm
         share/llvm/utils.h
         share/llvm/utils.cpp
         share/llvm/registerStandardPass.h
-        share/llvm/conversions.h
-        share/llvm/conversions.cpp
-        share/llvm/BinaryFunctionFilter.h
-        share/llvm/BinaryFunctionFilter.cpp
+        share/llvm/FilteredFunctions.h
+        share/llvm/FilteredFunctions.cpp
         )
 
 set(CMAKE_CXX_STANDARD 17)
@@ -250,7 +271,7 @@ set(CMAKE_CXX_COMPILER clang++)
 
 add_link_options("-fuse-ld=lld")
 
-#set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_compile_options(-Wall -Werror -Wextra -Wno-error=unused-parameter)
 
@@ -269,6 +290,15 @@ endfunction()
 
 function(copyExecutable target)
     copyTargetTo(${target} bin)
+endfunction()
+
+function(copyLibraryBC target)
+    copyLibrary(${target})
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND "${CMAKE_SOURCE_DIR}/src/main/tools/ar2bc.sh" ${target}
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+            COMMENT "Linking ${target} as LLVM bitcode"
+            )
 endfunction()
 
 add_subdirectory(main)

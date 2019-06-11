@@ -4,6 +4,8 @@
 
 #include "src/main/pass/register/register.h"
 
+#include "src/share/io/LdPreload.h"
+
 namespace llvm::pass {
     
     void addGlobalExtension(ExtensionPoint extensionPoint, ExtensionFunc extensionFunc) {
@@ -13,5 +15,19 @@ namespace llvm::pass {
         // when the actual destructor function has been unloaded
         PassManagerBuilder::addGlobalExtension(extensionPoint, extensionFunc);
     }
+    
+}
+
+namespace {
+    
+    bool unSetLdPreload() noexcept {
+        env::path::LdPreload ldPreload;
+        ldPreload.load();
+        ldPreload -= BIN_PATH_PASS_REGISTER;
+        ldPreload.store();
+        return true;
+    }
+    
+    const bool unused = unSetLdPreload();
     
 }

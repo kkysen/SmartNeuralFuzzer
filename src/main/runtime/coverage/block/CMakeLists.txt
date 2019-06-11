@@ -3,4 +3,4 @@ files(runtime.coverage.block
         BlockCoverageRuntime.cpp)
 
 add_library(runtime.coverage.block STATIC ${files.share} ${files.runtime.coverage.block})
-copyLibrary(runtime.coverage.block)
+copyLibraryBC(runtime.coverage.block)

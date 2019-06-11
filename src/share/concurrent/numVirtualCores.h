@@ -9,10 +9,8 @@
 
 namespace concurrent {
     
-    const size_t numVirtualCores = ::get_nprocs();
+    extern const size_t numVirtualCores;
     
-    bool isSingleThreaded() noexcept {
-        return __builtin_expect(numVirtualCores == 0, false);
-    }
+    bool isSingleThreaded() noexcept;
 
 }

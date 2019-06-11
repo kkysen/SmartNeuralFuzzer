@@ -9,7 +9,9 @@ extern "C"
 pid_t fork() noexcept {
     trace();
     const auto cpid = impl::fork();
-    onProcessConstruction(cpid);
+    if (cpid != -1) {
+        onProcessConstruction(cpid);
+    }
     return cpid;
 }
 
@@ -17,7 +19,9 @@ extern "C"
 pid_t vfork() noexcept {
     trace();
     const auto cpid = impl::vfork();
-    onProcessConstruction(cpid); // TODO is this necessary
+    if (cpid != -1) {
+        onProcessConstruction(cpid); // TODO is this necessary
+    }
     return cpid;
 }
 

@@ -39,8 +39,8 @@ namespace io {
         }
         
         template <class F>
-        void forEachLine(F f, char delimiter = '\n') {
-            stde::forEachLine(f, file(), delimiter);
+        bool forEachLine(F f, char delimiter = '\n') {
+            return stde::forEachLine(f, file(), delimiter);
         }
         
     };

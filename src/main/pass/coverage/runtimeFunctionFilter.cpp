@@ -8,7 +8,7 @@ namespace {
     
     using llvm::pass::BinaryFunctionFilter;
     
-    bool initialized = false;
+    std::atomic<bool> initialized = false;
     BinaryFunctionFilter filter;
     
 }
@@ -16,14 +16,18 @@ namespace {
 namespace llvm::pass::coverage {
     
     const BinaryFunctionFilter& runtimeFunctionFilter() {
-        if (initialized) {
+        if (initialized.exchange(true)) {
             return filter;
         }
-        initialized = true;
         constexpr std::string_view paths[] = {BIN_PATH_RUNTIME_COVERAGE_BLOCK, BIN_PATH_RUNTIME_COVERAGE_BRANCH};
-        for (auto path : paths) {
+        for (const auto path : paths) {
             filter.add(fs::path(path));
         }
         return filter;
     }
+    
+    FilteredFunctions filteredFunctions(Module& module, const BinaryFunctionFilter& filter) {
+        return {.filter = filter, .module = module};
+    }
+    
 }

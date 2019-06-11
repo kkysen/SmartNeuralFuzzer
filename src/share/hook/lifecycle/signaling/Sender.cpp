@@ -9,7 +9,7 @@
 namespace hook::lifecycle::signaling {
     
     void Sender::operator()(pid_t tid) {
-        ::rt_tgsigqueueinfo(info.rt.pid, tid, constants::signal, &info.impl());
+        syscalls::rt_tgsigqueueinfo(info.rt.pid, tid, constants::signal, &info.impl());
     }
     
 }

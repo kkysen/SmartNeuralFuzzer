@@ -1,0 +1,10 @@
+all: $(exe)
+
+$(bc): $(dependencies)
+	$(opt) $(optArgs) -o $(bc)
+
+$(obj): $(bc)
+	$(cc) $(bc) -c -o $(obj)
+
+$(exe): $(obj) $(linkDependencies)
+	$(cc) $(linkArgs) -o $(exe)

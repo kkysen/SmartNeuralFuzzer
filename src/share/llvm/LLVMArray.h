@@ -8,7 +8,7 @@
 #include "src/share/llvm/Types.h"
 #include "src/share/llvm/Constants.h"
 #include "src/share/llvm/IRBuilderExt.h"
-#include "src/share/llvm/alignment.h"
+#include "src/share/llvm/lib/alignment.h"
 #include "src/share/llvm/AllocaArgs.h"
 #include "src/share/llvm/LoadStore.h"
 

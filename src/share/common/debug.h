@@ -125,7 +125,7 @@ namespace debug {
                 out(out),
                 info(info),
                 mode(mode),
-                threadId(!mode ? 0 : gettid()),
+                threadId(!mode ? 0 : syscalls::gettid()),
                 processId(!mode ? 0 : getpid()) {}
     
     private:

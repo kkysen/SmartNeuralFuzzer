@@ -13,7 +13,7 @@
 #include <sys/types.h>
 
 void printTid(bool parent) {
-    printf("tid: %d (%s)\n", gettid(), parent ? "parent" : "child");
+    printf("tid: %d (%s)\n", syscalls::gettid(), parent ? "parent" : "child");
 }
 
 int main() {

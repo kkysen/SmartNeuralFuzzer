@@ -122,20 +122,12 @@ namespace llvm::pass::coverage::branch {
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
             
-            bool modified = false;
-            const auto& skipRuntimeFunctions = runtimeFunctionFilter();
-            for (auto& function : module) {
-                if (skipRuntimeFunctions(function)) {
-                    continue;
-                }
-                errs() << "Branch: " << function.getName() << "\n";
-                for (auto& block : function) {
-                    if (BlockPass(flags, onBranch, block).trace()) {
-                        modified = true;
-                    }
-                }
-            }
-            return modified;
+            return filteredFunctions(module)
+                    .forEach([&](BasicBlock& block) -> bool {
+                        return BlockPass(flags, onBranch, block).trace();
+                    }, [](Function& function) {
+                        errs() << "Branch: " << function.getName() << "\n";
+                    });
         }
         
     };

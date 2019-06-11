@@ -6,3 +6,9 @@
 
 #include <unistd.h>
 #include <syscall.h>
+
+namespace syscalls {
+    
+    constexpr auto raw = ::syscall;
+    
+}

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "src/share/llvm/alignment.h"
+#include "src/share/llvm/lib/alignment.h"
 #include "src/share/llvm/IRBuilderExt.h"
 
 namespace llvm {

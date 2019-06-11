@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include "src/share/llvm/BinaryFunctionFilter.h"
+#include "src/share/llvm/FilteredFunctions.h"
 
 namespace llvm::pass::coverage {
     
     const BinaryFunctionFilter& runtimeFunctionFilter();
+    
+    FilteredFunctions filteredFunctions(Module& module, const BinaryFunctionFilter& filter = runtimeFunctionFilter());
     
 }

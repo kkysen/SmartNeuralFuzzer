@@ -5,14 +5,17 @@
 #include "src/share/hook/lifecycle/ProcessLifeCycles.h"
 
 #include "src/share/hook/lifecycle/ThreadLifeCycles.h"
+#include "src/share/aio/signal/mask/Masked.h"
 #include "src/share/hook/lifecycle/signaling/Sender.h"
 #include "src/share/hook/libc/syscall/gettid.h"
+#include "src/share/hook/libc/syscall/forceKill.h"
+#include "src/share/hook/libc/hooksImpl/signals.h"
 #include "src/share/common/odrUse.h"
 
 namespace hook::lifecycle {
     
     ProcessLifeCycles::Own ProcessLifeCycles::add() {
-        return tids.add(gettid());
+        return tids.add(syscalls::gettid());
     }
     
     ProcessLifeCycles ProcessLifeCycles::instance;
@@ -26,7 +29,12 @@ namespace hook::lifecycle {
     
     void ProcessLifeCycles::onThreadDestruction() noexcept {
         thread::destruct();
-        delete& own;
+        own.~Own();
+    }
+    
+    bool ProcessLifeCycles::onProcessConstruction() noexcept {
+        onThreadConstruction();
+        return true;
     }
     
     void ProcessLifeCycles::reconstruct() {
@@ -39,8 +47,22 @@ namespace hook::lifecycle {
         tids.forEach([&send](const pid_t tid) {
             send(tid);
         });
+        {
+            libc::signal::Disable disable;
+            constexpr auto specialSignal = signaling::constants::signal;
+            using namespace aio::signal::mask;
+            Mask mask(Init::full);
+            mask -= specialSignal;
+            Masked masked(mask, How::set);
+            for (int signal = 1; signal < _NSIG; signal++) {
+                if (signal != signaling::constants::signal) {
+                    ::signal(signal, SIG_DFL);
+                }
+            }
+        }
         tids.onNoThreadsLeft().wait();
         // now we've cleaned up all the thread_local ThreadLifeCycles
+        syscalls::forceKill();
     }
     
     void ProcessLifeCycles::onProcessReconstruction() {
@@ -51,5 +73,11 @@ namespace hook::lifecycle {
     void ProcessLifeCycles::onProcessDestruction() noexcept {
         get().destruct();
     }
+    
+}
+
+namespace {
+    
+    const bool unused = hook::lifecycle::ProcessLifeCycles::onProcessConstruction();
     
 }

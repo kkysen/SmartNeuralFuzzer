@@ -21,3 +21,9 @@ namespace llvm::pass {
     void addGlobalExtension(ExtensionPoint extensionPoint, ExtensionFunc extensionFunc);
     
 }
+
+namespace llvm::pass::register_ {
+
+
+
+}

@@ -24,6 +24,6 @@ namespace hook::libc::signal {
     
     void onWarning(int signal) noexcept;
     
-    void onHandlerChange(int signal) noexcept;
+    void onHandlerChange(int signal, const struct sigaction* oldAction) noexcept;
     
 }

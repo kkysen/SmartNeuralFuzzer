@@ -4,5 +4,10 @@
 
 #pragma once
 
-extern "C"
-int tgkill(int tgid, int tid, int sig) noexcept;
+#include <unistd.h>
+
+namespace syscalls {
+    
+    int tgkill(pid_t tgid, pid_t tid, int signal) noexcept;
+    
+}

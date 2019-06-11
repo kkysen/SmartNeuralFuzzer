@@ -6,5 +6,8 @@
 
 #include <sys/types.h>
 
-extern "C"
-pid_t gettid() noexcept;
+namespace syscalls {
+    
+    pid_t gettid() noexcept;
+    
+}

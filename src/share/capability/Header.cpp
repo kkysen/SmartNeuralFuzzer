@@ -31,11 +31,11 @@ namespace capability {
     }
     
     bool Header::get(__user_cap_data_struct* data) const noexcept {
-        return ::capget(&mut(), data) == 0;
+        return syscalls::capget(&mut(), data) == 0;
     }
     
     bool Header::set(const __user_cap_data_struct* data) const noexcept {
-        return ::capset(&mut(), data) == 0;
+        return syscalls::capset(&mut(), data) == 0;
     }
     
 }

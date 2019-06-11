@@ -12,7 +12,7 @@
 #include "src/share/hook/libc/hooksImpl/signals.h"
 #include "src/share/hook/libc/syscall/gettid.h"
 #include "src/share/hook/libc/syscall/sigqueueinfo.h"
-#include "src/share/hook/libc/syscall/tgkill.h"
+#include "src/share/hook/libc/syscall/forceKill.h"
 #include "src/share/stde/reversed.h"
 #include "src/share/common/hardAssert.h"
 
@@ -35,17 +35,17 @@ namespace aio::signal::handler {
         // doesn't need to be atomic, just volatile to prevent reordering for async signal handlers
         volatile bool currentlyRegistering = false;
         concurrent::AdaptiveMutex<> lock;
-
+    
     private:
         
         constexpr const Impl& impl() const noexcept {
             return static_cast<const Impl&>(*this);
         }
-    
+        
         constexpr Impl& mutImpl() noexcept {
             return static_cast<Impl&>(*this);
         }
-        
+    
     protected:
         
         void ownHandle(const Signal& signal) const noexcept {
@@ -75,15 +75,10 @@ namespace aio::signal::handler {
             mask += signal.signal;
             mask.process(mask::How::remove);
             const auto pid = getpid();
-            const auto tid = gettid();
-            ::rt_tgsigqueueinfo(pid, tid, signal.signal,
+            const auto tid = syscalls::gettid();
+            syscalls::rt_tgsigqueueinfo(pid, tid, signal.signal,
                                 &const_cast<siginfo_t&>(signal.info.impl()));
-            ::tgkill(pid, tid, SIGKILL);
-            
-            // convince compiler that this is noreturn
-            using namespace std::literals;
-            std::this_thread::sleep_for(10ms);
-            ::exit(signal.signal);
+            syscalls::forceKill(); // ensure we are killed
         }
     
     private:
@@ -128,7 +123,7 @@ namespace aio::signal::handler {
         static void sigAction(
                 int signal, const struct sigaction* action, struct sigaction* oldAction) noexcept {
             hook::libc::signal::Disable disable;
-            hardAssert(::sigaction(signal, action, oldAction) == 0);
+                    hardAssert(::sigaction(signal, action, oldAction) == 0);
             // only possible errors can't happen:
             // EFAULT: action or oldAction or not part of address space, but they obviously are
             // EINVAL: invalid signal specified, incl. SIGKILL and SIGSTOP,
@@ -137,8 +132,7 @@ namespace aio::signal::handler {
     
     private:
         
-        bool tryAddExisting(int signal, struct sigaction& oldAction) noexcept {
-            sigAction(signal, nullptr, &oldAction);
+        bool tryAddExisting(int signal, const struct sigaction& oldAction) noexcept {
             const auto unMasked = UnMaskedAction(oldAction);
             // don't want to add our own main handler as one of the handlers
             const bool shouldSkip = unMasked.hasAction(handle) || impl().shouldSkip(unMasked);
@@ -163,7 +157,8 @@ namespace aio::signal::handler {
             mutImpl().recordHandledSignal(signal);
         }
         
-        bool _tryRegisterFor(const disposition::Default& disposition) noexcept {
+        bool _tryRegisterFor(const disposition::Default& disposition,
+                             const struct sigaction* oldAction) noexcept {
             // if the disposition is Ign or Cont, don't need to do anything
             // even if there's a signal handler, it won't terminate b/c of it
             // only if the signal handler calls exit(), which calls destructors
@@ -174,28 +169,40 @@ namespace aio::signal::handler {
             // so instead of calling destructors, we can just flush data
             // in general, the actual signal handler can decide specifically what to do
             // based on what signal it is
-            if (!impl().shouldRegister(disposition)) {
-                return false;
-            }
             const int signal = disposition.signal;
             struct sigaction action = {}; // share action across both calls to reuse mask and flags
-            const bool shouldRegister = tryAddExisting(signal, action);
+            if (!oldAction) {
+                sigAction(signal, nullptr, &action);
+            }
+            const bool shouldRegister = tryAddExisting(signal, oldAction ? *oldAction : action);
             if (!shouldRegister) {
                 return false;
+            }
+            if (oldAction) {
+                // don't want to modify oldAction since the user could use it
+                action = *oldAction;
             }
             registerFor(signal, action, impl().extraFlags(disposition));
             return true;
         }
         
-        bool tryRegisterFor(const disposition::Default& disposition) noexcept {
+        bool tryRegisterFor(const disposition::Default& disposition,
+                            const struct sigaction* oldAction) noexcept {
+            if (!impl().shouldRegister(disposition)) {
+                return false;
+            }
             if (currentlyRegistering) {
                 return false;
             }
             currentlyRegistering = true;
             std::lock_guard guard(lock);
-            const bool retVal = _tryRegisterFor(disposition);
+            const bool retVal = _tryRegisterFor(disposition, oldAction);
             currentlyRegistering = false;
             return retVal;
+        }
+        
+        bool tryRegisterFor(const disposition::Default& disposition) noexcept {
+            return tryRegisterFor(disposition, nullptr);
         }
     
     public:
@@ -207,12 +214,16 @@ namespace aio::signal::handler {
             }
         }
         
-        bool registerFor(int signal) noexcept {
+        bool registerFor(int signal, const struct sigaction* oldAction) noexcept {
             const auto* disposition = disposition::getDefault(signal);
             if (!disposition) {
                 return false;
             }
-            return tryRegisterFor(*disposition);
+            return tryRegisterFor(*disposition, oldAction);
+        }
+        
+        bool registerFor(int signal) noexcept {
+            return registerFor(signal, nullptr);
         }
     
     protected:
@@ -228,7 +239,7 @@ namespace aio::signal::handler {
         static constexpr Impl& get() noexcept {
             return Impl::instance;
         }
-
+    
     private:
         
         static constexpr const Base& getBase() noexcept {

@@ -6,8 +6,10 @@
 
 #include <linux/capability.h>
 
-extern "C"
-int capget(__user_cap_header_struct* header, __user_cap_data_struct* data) noexcept;
-
-extern "C"
-int capset(__user_cap_header_struct* header, const __user_cap_data_struct* data) noexcept;
+namespace syscalls {
+    
+    int capget(__user_cap_header_struct* header, __user_cap_data_struct* data) noexcept;
+    
+    int capset(__user_cap_header_struct* header, const __user_cap_data_struct* data) noexcept;
+    
+}

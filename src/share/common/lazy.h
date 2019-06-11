@@ -5,6 +5,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 template <typename T>
 class LazilyConstructed {
@@ -22,17 +23,23 @@ public:
     }
     
     constexpr bool exists() const noexcept {
-        return instance;
+        return static_cast<bool>(instance);
     }
     
     explicit constexpr operator bool() const noexcept {
         return exists();
     }
     
-    void construct() const {
-        if (!instance) {
+    bool constructed() const {
+        const bool constructed = !exists();
+        if (constructed) {
             reconstruct();
         }
+        return constructed;
+    }
+    
+    void construct() const {
+        constructed();
     }
     
     void destruct() const {
@@ -56,9 +63,18 @@ public:
         return &get();
     }
     
+    template <class F>
+    auto apply(F f) noexcept(noexcept(f(T()))) -> std::optional<decltype(f(T()))> {
+        if (exists()) {
+            return f(get());
+        } else {
+            return nullptr;
+        }
+    }
+    
 };
 
-template <class F = void(*)()>
+template <class F = void (*)()>
 class RunOnce {
 
 private:

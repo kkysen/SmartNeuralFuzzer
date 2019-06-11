@@ -23,9 +23,9 @@ namespace aio::signal::mask {
         constexpr Function raw() const noexcept {
             switch (type) {
                 case process:
-                    return sigprocmask;
+                    return ::sigprocmask;
                 case thread:
-                    return pthread_sigmask;
+                    return ::pthread_sigmask;
             }
         }
     

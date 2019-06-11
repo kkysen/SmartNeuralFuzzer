@@ -51,4 +51,12 @@ namespace debug {
     Indented::~Indented() {
         indentation.unIndent();
     }
+    
+}
+
+namespace {
+    
+    const auto& unused1 = std::cout << std::boolalpha;
+    const auto& unused2 = std::cerr << std::boolalpha;
+    
 }

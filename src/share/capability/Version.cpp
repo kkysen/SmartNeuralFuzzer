@@ -21,7 +21,7 @@ namespace {
                 .version = static_cast<u32>(-1),
                 .pid = getpid(),
         };
-        if (::capget(&header, nullptr) == -1) {
+        if (syscalls::capget(&header, nullptr) == -1) {
             hardAssert(errno == EINVAL);
             errno = 0;
         }
