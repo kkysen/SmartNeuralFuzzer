@@ -47,22 +47,24 @@ namespace hook::lifecycle {
         tids.forEach([&send](const pid_t tid) {
             send(tid);
         });
-        {
-            libc::signal::Disable disable;
-            constexpr auto specialSignal = signaling::constants::signal;
-            using namespace aio::signal::mask;
-            Mask mask(Init::full);
-            mask -= specialSignal;
-            Masked masked(mask, How::set);
-            for (int signal = 1; signal < _NSIG; signal++) {
-                if (signal != signaling::constants::signal) {
-                    ::signal(signal, SIG_DFL);
-                }
-            }
-        }
-        tids.onNoThreadsLeft().wait();
+//        {
+//            libc::signal::Disable disable;
+//            constexpr auto specialSignal = signaling::constants::signal;
+//            using namespace aio::signal::mask;
+//            Mask mask(Init::full);
+//            mask -= specialSignal;
+//            Masked masked(mask, How::set);
+//            for (int signal = 1; signal < _NSIG; signal++) {
+//                if (signal != specialSignal) {
+//                    ::signal(signal, SIG_DFL);
+//                }
+//            }
+//        }
+        using namespace std::literals;
+//        tids.onNoThreadsLeft().wait();
+        // TODO wait() should work; I'm not sure why it's not
+        tids.onNoThreadsLeft().waitFor(100ms);
         // now we've cleaned up all the thread_local ThreadLifeCycles
-        syscalls::forceKill();
     }
     
     void ProcessLifeCycles::onProcessReconstruction() {

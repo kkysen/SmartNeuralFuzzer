@@ -8,6 +8,7 @@
 #include <cerrno>
 
 #include <unistd.h>
+#include <wait.h>
 
 namespace real {
     
@@ -36,6 +37,9 @@ namespace real {
     }
     output += ".bc";
     argv[2] = output.c_str();
+    if (unlink(argv[2]) == -1) {
+        errno = 0; // don't care about errors
+    }
     exec(argv);
 }
 
@@ -53,7 +57,22 @@ int main(const int argc, const char** const argv) {
             link(argv);
         }
         default: {
-            archive(argv);
+            break;
         }
     }
+    switch (fork()) {
+        case -1:
+            return errno;
+        case 0: {
+            archive(argv);
+        }
+        default: {
+            break;
+        }
+    }
+    int status1;
+    int status2;
+    wait(&status1);
+    wait(&status2);
+    return WEXITSTATUS(status1) || WEXITSTATUS(status2);
 }

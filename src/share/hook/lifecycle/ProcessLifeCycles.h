@@ -39,13 +39,13 @@ namespace hook::lifecycle {
         
         void reconstruct();
     
-        [[noreturn]] void destruct() const noexcept;
+        void destruct() const noexcept;
 
     public:
         
         static void onProcessReconstruction();
     
-        [[noreturn]] static void onProcessDestruction() noexcept;
+        static void onProcessDestruction() noexcept;
         
     };
     

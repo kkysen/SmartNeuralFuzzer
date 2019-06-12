@@ -12,7 +12,7 @@
 #include <list>
 #include <condition_variable>
 
-#include "src/share/common/debug.h" // TODO remove
+//#include "src/share/common/debug.h" // TODO remove
 
 namespace concurrent {
     
@@ -70,12 +70,13 @@ namespace concurrent {
                 return;
             }
             std::lock_guard guard(lock);
-            using namespace std::literals;
-            _dbg("erasing "s + std::to_string(*node));
+//            using namespace std::literals;
+//            _dbg("erasing "s + std::to_string(*node));
             list.erase(node);
             if (list.empty()) {
-                _dbg("notifying");
-                noThreadsLeft.notifyOne();
+//                _dbg("notifying");
+                // TODO I don't know why this isn't working
+                noThreadsLeft.notifyAll();
             }
         }
         
@@ -119,7 +120,7 @@ namespace concurrent {
         template <class F>
         void forEach(F f) const noexcept {
             std::lock_guard guard(lock);
-            _dbg(list.size());
+//            _dbg(list.size());
             pid_t localList[list.size()];
             size_t i = 0;
             for (const auto e : list) {

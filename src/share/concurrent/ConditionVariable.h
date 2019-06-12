@@ -24,25 +24,25 @@ namespace concurrent {
         template <class Repr, class Period>
         std::cv_status waitFor(const std::chrono::duration<Repr, Period>& timeout) {
             std::unique_lock lock(mutex);
-            cv.wait_for(lock, timeout);
+            return cv.wait_for(lock, timeout);
         }
         
         template <class Repr, class Period, class Predicate>
         bool waitFor(const std::chrono::duration<Repr, Period>& timeout, Predicate predicate) {
             std::unique_lock lock(mutex);
-            cv.wait_for(lock, timeout, predicate);
+            return cv.wait_for(lock, timeout, predicate);
         }
         
         template <class Clock, class Duration>
         std::cv_status waitUntil(const std::chrono::time_point<Clock, Duration>& timeout) {
             std::unique_lock lock(mutex);
-            cv.wait_until(lock, timeout);
+            return cv.wait_until(lock, timeout);
         }
         
         template <class Clock, class Duration, class Predicate>
         bool waitUntil(const std::chrono::time_point<Clock, Duration>& timeout, Predicate predicate) {
             std::unique_lock lock(mutex);
-            cv.wait_until(lock, timeout, predicate);
+            return cv.wait_until(lock, timeout, predicate);
         }
         
         void notifyOne() noexcept;

@@ -76,7 +76,7 @@ fuzz() {
     local binDir=${buildDir}/bin
     local register=${libDir}/libpass.register.so
     local block=${libDir}/libpass.coverage.block.so
-    local branch=${libDir}/libpass.coverage.block.so
+    local branch=${libDir}/libpass.coverage.branch.so
     local passes="${block} ${branch}"
     local loadPasses="-load=${block} -load=${branch}"
     local runtimes=${libDir}/libruntime.coverage.bc
