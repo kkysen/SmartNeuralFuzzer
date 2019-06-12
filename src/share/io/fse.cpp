@@ -6,7 +6,9 @@
 
 #include "src/share/common/hardAssert.h"
 
+#ifndef __EXCEPTIONS
 #include "llvm/Support/ErrorHandling.h"
+#endif
 
 namespace fse {
     
@@ -45,7 +47,7 @@ namespace fse {
     }
     
     void fakeThrow(const std::exception& exception) {
-        #ifndef NDEBUG
+        #ifndef __EXCEPTIONS
         llvm_unreachable(exception.what());
         #else
         __assert_fail(exception.what(), __FILE__, __LINE__, __ASSERT_FUNCTION);

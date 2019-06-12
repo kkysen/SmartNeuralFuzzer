@@ -7,8 +7,10 @@
 #include "src/share/stde/getline.h"
 #include "src/share/common/deleteCopy.h"
 
-#include <cstdio>
 #include <string>
+#include <atomic>
+
+#include <cstdio>
 
 namespace io {
     
@@ -16,7 +18,7 @@ namespace io {
     
     private:
         
-        FILE* _file;
+        std::atomic<FILE*> _file;
     
     public:
         
@@ -30,18 +32,20 @@ namespace io {
         
         explicit Popen(const std::string& string, const char* mode = defaultMode);
         
+        void close() noexcept;
+        
         ~Popen();
     
         deleteCopy(Popen);
         
-        constexpr Popen(Popen&& other) noexcept : _file(other._file) {
-            other._file = nullptr;
-        }
+        constexpr Popen(Popen&& other) noexcept : _file(other._file.exchange(nullptr)) {}
         
         template <class F>
         bool forEachLine(F f, char delimiter = '\n') {
             return stde::forEachLine(f, file(), delimiter);
         }
+        
+        std::string read();
         
     };
     

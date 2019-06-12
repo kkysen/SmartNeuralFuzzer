@@ -3,9 +3,3 @@
 //
 
 #include "src/share/stde/getline.h"
-
-namespace stde {
-
-
-    
-}

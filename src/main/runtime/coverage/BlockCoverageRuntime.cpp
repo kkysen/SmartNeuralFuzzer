@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/coverage/block/BlockCoverageRuntime.h"
+#include "BlockCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 
@@ -34,7 +34,5 @@ namespace {
 
 API_BlockCoverage(onBlock)(u64 blockNum) noexcept {
 //    printf("BlockCoverage: onBlock: %ld\n", blockNum);
-    if (rt) {
-        rt().onBlock(blockNum);
-    }
+    API_rt().onBlock(blockNum);
 }

@@ -79,17 +79,19 @@ fuzz() {
     local branch=${libDir}/libpass.coverage.block.so
     local passes="${block} ${branch}"
     local loadPasses="-load=${block} -load=${branch}"
-    local runtimes="${libDir}/libruntime.coverage.block.a ${libDir}/libruntime.coverage.branch.a"
+    local runtimes=${libDir}/libruntime.coverage.bc
     local src=${target}.0.5.precodegen.bc
     local dependencies="${src} ${passes}"
     local bc=${target}.0.6.coverage.bc
+    local all=${target}.coverage.bc
     local obj=${target}.coverage.o
     local exe=${target}.coverage
     local libraries="-lstdc++ -lstdc++fs -pthread -ldl -L${CLANG_HOME}/lib -lLLVMSupport"
     local opt=${binDir}/opt-9
-    local optArgs="-O3 ${loadPasses} ${src}"
-    local linkDependencies=${runtimes}
-    local linkArgs="${flto} ${obj} ${linkDependencies} ${libraries} ${originalLDFLAGS}"
+    local link=llvm-link
+    local optLevel=-O3
+    local optArgs="${loadPasses} ${src}"
+    local linkArgs="${flto} ${obj} ${libraries} ${originalLDFLAGS}"
 
 	local dir=$(dirname "${0}")
 	ninja -C ${dir}/build main
@@ -99,13 +101,14 @@ fuzz() {
 
     # I put these commands in a Makefile instead to cache things.
 #    ${opt} ${optArgs} -o ${bc}
-#    ${cc} ${bc} -c -o ${obj}
+#    ${cc} ${bc} ${runtimes} -c -o ${obj}
 #    ${cc} ${linkArgs} -o ${exe}
 
-	bc=${bc} obj=${obj} exe=${exe} \
-	cc=${cc} opt=${opt} \
-	dependencies=${dependencies} linkDependencies=${linkDependencies} \
-	optArgs=${optArgs} linkArgs=${linkArgs} \
+	bc=${bc} all=${all} obj=${obj} exe=${exe} \
+	cc=${cc} opt=${opt} link=${link} \
+	dependencies=${dependencies} \
+	optLevel=${optLevel} optArgs=${optArgs} \
+	runtimes=${runtimes} linkArgs=${linkArgs} \
 	make -f ${dir}/AutotoolsMakefile
 
 }

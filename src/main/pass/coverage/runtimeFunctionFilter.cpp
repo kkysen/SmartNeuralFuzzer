@@ -19,7 +19,7 @@ namespace llvm::pass::coverage {
         if (initialized.exchange(true)) {
             return filter;
         }
-        constexpr std::string_view paths[] = {BIN_PATH_RUNTIME_COVERAGE_BLOCK, BIN_PATH_RUNTIME_COVERAGE_BRANCH};
+        constexpr std::string_view paths[] = {BIN_PATH_RUNTIME_COVERAGE};
         for (const auto path : paths) {
             filter.add(fs::path(path));
         }

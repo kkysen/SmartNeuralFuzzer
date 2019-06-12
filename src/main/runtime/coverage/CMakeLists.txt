@@ -4,13 +4,16 @@ files(runtime.coverage
         CoverageOutput.h
         CoverageOutput.cpp
         include.h
+        BlockCoverageRuntime.h
+        BlockCoverageRuntime.cpp
+        BranchCoverageRuntime.h
+        BranchCoverageRuntime.cpp
         )
 
-set(files.share
+set(files
         ${files.share.common}
         ${files.share.time}
         ${files.share.io}
-        ${files.share.aio}
         ${files.share.aio.signal}
         ${files.share.concurrent}
         ${files.share.hook}
@@ -19,7 +22,8 @@ set(files.share
         ${files.runtime.coverage}
         )
 
-add_subdirectory(branch)
-add_subdirectory(block)
+set(target runtime.coverage)
+add_library(${target} STATIC ${files})
+copyLibraryBC(${target})
+add_dependencies(${target} tool.ar.override.run)
 
-add_custom_target(runtime.coverage DEPENDS runtime.coverage.branch runtime.coverage.block)

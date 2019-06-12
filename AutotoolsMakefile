@@ -1,10 +1,13 @@
 all: $(exe)
 
 $(bc): $(dependencies)
-	$(opt) $(optArgs) -o $(bc)
+	$(opt) $(optLevel) $(optArgs) -o $(bc)
 
-$(obj): $(bc)
-	$(cc) $(bc) -c -o $(obj)
+$(all): $(bc) $(runtimes)
+	$(link) $(bc) $(runtimes) -o $(all)
 
-$(exe): $(obj) $(linkDependencies)
+$(obj): $(all)
+	$(cc) $(optLevel) $(all) -c -o $(obj)
+
+$(exe): $(obj)
 	$(cc) $(linkArgs) -o $(exe)

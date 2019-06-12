@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/coverage/branch/BranchCoverageRuntime.h"
+#include "BranchCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 
@@ -247,21 +247,15 @@ namespace {
 
 API_BranchCoverage(onSingleBranch)(bool value) noexcept {
 //    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
-    if (rt) {
-        rt().onSingleBranch(value);
-    }
+    API_rt().onSingleBranch(value);
 }
 
 API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept {
 //    printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
-    if (rt) {
-        rt().onMultiBranch(branchNum, numBranches);
-    }
+    API_rt().onMultiBranch(branchNum, numBranches);
 }
 
 API_BranchCoverage(onInfiniteBranch)(void* address) noexcept {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
-    if (rt) {
-        rt().onInfiniteBranch(address);
-    }
+    API_rt().onInfiniteBranch(address);
 }

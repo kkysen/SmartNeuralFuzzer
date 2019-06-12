@@ -18,8 +18,7 @@ set(files.share
         ${files.pass.coverage}
         )
 
-add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE_BLOCK=\"${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:runtime.coverage.block>\")
-add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE_BRANCH=\"${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:runtime.coverage.branch>\")
+add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE=\"${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:runtime.coverage>\")
 
 add_subdirectory(block)
 add_subdirectory(branch)

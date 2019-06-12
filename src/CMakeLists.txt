@@ -33,6 +33,8 @@ files(share.stde
         share/stde/reversed.cpp
         share/stde/split.h
         share/stde/split.cpp
+        share/stde/addStrings.h
+        share/stde/addStrings.cpp
         )
 
 files(share.time
@@ -294,10 +296,13 @@ endfunction()
 
 function(copyLibraryBC target)
     copyLibrary(${target})
+    set(binDir lib)
+    set(bc "lib${target}.bc")
     add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND "${CMAKE_SOURCE_DIR}/src/main/tools/ar2bc.sh" ${target}
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-            COMMENT "Linking ${target} as LLVM bitcode"
+            COMMAND "${CMAKE_COMMAND}" -E copy
+            "$<TARGET_FILE_DIR:${target}>/${bc}"
+            "${CMAKE_BINARY_DIR}/${binDir}/${bc}"
+            COMMENT "Copying ${bc} to ${CMAKE_BINARY_DIR}/${binDir}"
             )
 endfunction()
 

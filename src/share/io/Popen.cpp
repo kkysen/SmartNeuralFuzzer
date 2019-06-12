@@ -6,26 +6,41 @@
 
 #include "src/share/io/fse.h"
 
-#include <iostream> // TODO remove
+#include <sstream>
+
+//#include <iostream> // TODO remove
 
 namespace io {
     
-    Popen::Popen(const char* command, const char* mode) : _file(popen(command, mode)) {
+    Popen::Popen(const char* command, const char* mode) : _file(::popen(command, mode)) {
         if (!_file) {
             using namespace std::string_literals;
             fse::_throw(fse::error(""s + "command: '" + command + "', mode = '" + mode + "'"));
         }
-        std::cerr << command << std::endl; // TODO remove
-        std::cerr << WEXITSTATUS(system("touch world")) << std::endl;
+//        std::cout << command << std::endl;
     }
     
     Popen::Popen(const std::string& string, const char* mode) : Popen(string.c_str(), mode) {}
     
-    Popen::~Popen() {
-        if (_file) {
-            std::cerr << WEXITSTATUS(pclose(_file)) << std::endl;
-//            pclose(_file);
+    void Popen::close() noexcept {
+        if (const auto file = _file.exchange(nullptr)) {
+            ::pclose(file);
         }
+    }
+    
+    Popen::~Popen() {
+        close();
+    }
+    
+    std::string Popen::read() {
+        std::ostringstream ss;
+        char buffer[fse::page::dynamicSize];
+        size_t n;
+        do {
+            n = ::fread(buffer, 1, sizeof(buffer), _file);
+            ss.write(buffer, n);
+        } while (n == sizeof(buffer));
+        return ss.str();
     }
     
 }

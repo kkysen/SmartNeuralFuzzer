@@ -12,22 +12,37 @@ class LazilyConstructed {
 
 private:
     
-    mutable std::unique_ptr<T> instance = nullptr;
+    static constexpr T* notCreated = nullptr;
+    static T* destructed;
+    
+    mutable T* instance = notCreated;
 
 public:
     
     constexpr LazilyConstructed() noexcept = default;
     
-    void reconstruct() const {
-        instance = std::make_unique<T>();
+    constexpr bool exists() const noexcept {
+        return instance > destructed;
     }
     
-    constexpr bool exists() const noexcept {
-        return static_cast<bool>(instance);
+    constexpr bool isDestructed() const noexcept {
+        return instance == destructed;
     }
     
     explicit constexpr operator bool() const noexcept {
         return exists();
+    }
+    
+    void destruct() const {
+        delete instance;
+        instance = destructed;
+    }
+    
+    void reconstruct() const {
+        if (exists()) {
+            destruct();
+        }
+        instance = new T();
     }
     
     bool constructed() const {
@@ -40,10 +55,6 @@ public:
     
     void construct() const {
         constructed();
-    }
-    
-    void destruct() const {
-        instance = nullptr;
     }
     
     T& get() const {
@@ -73,6 +84,9 @@ public:
     }
     
 };
+
+template <typename T>
+T* LazilyConstructed<T>::destructed = reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(nullptr) + 1);
 
 template <class F = void (*)()>
 class RunOnce {
