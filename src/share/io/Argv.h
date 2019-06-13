@@ -17,6 +17,7 @@ namespace io {
         
         std::string raw;
         std::vector<std::string_view> args;
+        std::string_view _programName;
     
     private:
         
@@ -40,6 +41,10 @@ namespace io {
         
         constexpr std::string_view operator[](size_t i) const noexcept {
             return args[i];
+        }
+        
+        constexpr std::string_view programName() const noexcept {
+            return _programName;
         }
         
     };

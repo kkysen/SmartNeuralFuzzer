@@ -11,19 +11,12 @@
 
 namespace {
     
-    std::string_view getProgramName() {
-        const auto fullProgramName = io::Argv::get()[0];
-        const auto i = fullProgramName.find_last_of('/');
-        const auto j = i == std::string_view::npos ? 0 : i + 1;
-        return fullProgramName.substr(j);
-    }
-    
     fse::Dir getDir(std::string_view name) {
         using namespace std::string_literals;
         using stde::string::operator+;
         return fse::Dir()
                 .dir(name + ".out.dir"s)
-                .dir(std::string(getProgramName()))
+                .dir(std::string(io::Argv::get().programName()))
                 .dir(std::to_string(syscalls::getpid()))
                 .dir(std::to_string(syscalls::gettid()));
     }

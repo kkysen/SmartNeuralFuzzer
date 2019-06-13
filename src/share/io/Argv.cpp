@@ -17,6 +17,12 @@ namespace {
     
     using namespace io;
     
+    std::string_view getProgramName(std::string_view fullProgramName) {
+        const auto i = fullProgramName.find_last_of('/');
+        const auto j = i == std::string_view::npos ? 0 : i + 1;
+        return fullProgramName.substr(j);
+    }
+    
     std::string makeRaw(ArrayView<std::string_view> args) {
         size_t n = 0;
         for (const auto arg : args) {
@@ -63,6 +69,7 @@ namespace io {
         stde::split(std::string_view(raw), '\0', [this](const std::string_view arg) {
             args.push_back(arg);
         });
+        _programName = getProgramName(args[0]);
     }
     
     Argv::Argv(std::string raw, Argv::Key) : Argv(std::move(raw), 0) {}
