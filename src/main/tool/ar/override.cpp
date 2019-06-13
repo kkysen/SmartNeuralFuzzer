@@ -25,7 +25,7 @@ std::string escape(std::string_view unescaped) {
 
 void run(bool reset) {
     using namespace std::literals;
-    using stde::strings::operator+;
+    using stde::string::operator+;
     using io::Popen;
     
     // don't need to run repeatedly, just once every time cmake is re-run

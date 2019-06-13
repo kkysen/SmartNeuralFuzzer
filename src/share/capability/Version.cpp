@@ -5,12 +5,11 @@
 #include "src/share/capability/Version.h"
 
 #include "src/share/hook/libc/syscall/cap.h"
+#include "src/share/hook/libc/syscall/getpid.h"
 #include "src/share/common/hardAssert.h"
 
 #include <cerrno>
 #include <cstdio>
-
-#include <unistd.h>
 
 namespace {
     
@@ -19,7 +18,7 @@ namespace {
     Version getPreferredVersion() noexcept {
         __user_cap_header_struct header = {
                 .version = static_cast<u32>(-1),
-                .pid = getpid(),
+                .pid = syscalls::getpid(),
         };
         if (syscalls::capget(&header, nullptr) == -1) {
             hardAssert(errno == EINVAL);

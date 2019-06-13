@@ -5,8 +5,8 @@
 #include "src/share/hook/lifecycle/signaling/Receiver.h"
 
 #include "src/share/hook/lifecycle/ProcessLifeCycles.h"
-
-#include <unistd.h>
+#include "src/share/hook/libc/syscall/getpid.h"
+#include "src/share/hook/libc/syscall/getuid.h"
 
 namespace hook::lifecycle::signaling {
     
@@ -18,8 +18,8 @@ namespace hook::lifecycle::signaling {
         return info.signal == constants::signal
                && info.code == constants::code
                && info.rt.value == constants::magicNumber
-               && info.rt.pid == getpid()
-               && info.rt.uid == getuid();
+               && info.rt.pid == syscalls::getpid()
+               && info.rt.uid == syscalls::getuid();
     }
     
     bool Receiver::operator()(const Signal& signal) const noexcept {

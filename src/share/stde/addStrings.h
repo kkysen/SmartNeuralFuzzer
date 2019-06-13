@@ -6,11 +6,11 @@
 
 #include <string>
 
-namespace stde::strings {
+namespace stde::string {
     
     template <typename T, class Traits = std::char_traits<T>, class Allocator = std::allocator<T>>
     std::basic_string<T, Traits, Allocator> operator+(std::basic_string<T, Traits, Allocator>&& lhs, std::basic_string_view<T, Traits> rhs) {
-        return std::move(lhs.append(rhs.data(), rhs.size()));
+        return std::move(lhs += rhs);
     }
     
     template <typename T, class Traits = std::char_traits<T>, class Allocator = std::allocator<T>>
@@ -22,8 +22,8 @@ namespace stde::strings {
     std::basic_string<T, Traits, Allocator> operator+(const std::basic_string<T, Traits, Allocator>& lhs, std::basic_string_view<T, Traits> rhs) {
         std::basic_string<T, Traits, Allocator> s;
         s.reserve(lhs.size() + rhs.size());
-        s.append(lhs);
-        s.append(rhs.data(), rhs.size());
+        s += lhs;
+        s += rhs;
         return s;
     }
     
@@ -31,8 +31,8 @@ namespace stde::strings {
     std::basic_string<T, Traits, Allocator>& operator+(std::basic_string_view<T, Traits> lhs, const std::basic_string<T, Traits, Allocator>& rhs) {
         std::basic_string<T, Traits, Allocator> s;
         s.reserve(lhs.size() + rhs.size());
-        s.append(lhs.data(), lhs.size());
-        s.append(rhs);
+        s += lhs;
+        s += rhs;
         return s;
     }
     

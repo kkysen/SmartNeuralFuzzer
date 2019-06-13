@@ -5,6 +5,7 @@
 #pragma once
 
 #include "src/share/common/numbers.h"
+#include "src/share/hook/libc/syscall/getpid.h"
 #include "src/share/hook/libc/syscall/gettid.h"
 
 #include <string_view>
@@ -15,8 +16,6 @@
 
 #include <csignal>
 #include <cstring>
-
-#include <unistd.h>
 
 namespace debug {
     
@@ -126,7 +125,7 @@ namespace debug {
                 info(info),
                 mode(mode),
                 threadId(!mode ? 0 : syscalls::gettid()),
-                processId(!mode ? 0 : getpid()) {}
+                processId(!mode ? 0 : syscalls::getpid()) {}
     
     private:
         

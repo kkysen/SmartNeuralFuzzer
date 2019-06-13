@@ -10,6 +10,7 @@
 #include "src/share/aio/signal/mask/Mask.h"
 #include "src/share/concurrent/lock/AdaptiveMutex.h"
 #include "src/share/hook/libc/hooksImpl/signals.h"
+#include "src/share/hook/libc/syscall/getpid.h"
 #include "src/share/hook/libc/syscall/gettid.h"
 #include "src/share/hook/libc/syscall/sigqueueinfo.h"
 #include "src/share/hook/libc/syscall/forceKill.h"
@@ -74,7 +75,7 @@ namespace aio::signal::handler {
             mask::Mask mask;
             mask += signal.signal;
             mask.process(mask::How::remove);
-            const auto pid = getpid();
+            const auto pid = syscalls::getpid();
             const auto tid = syscalls::gettid();
             syscalls::rt_tgsigqueueinfo(pid, tid, signal.signal,
                                 &const_cast<siginfo_t&>(signal.info.impl()));

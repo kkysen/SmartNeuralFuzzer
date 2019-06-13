@@ -4,6 +4,8 @@
 
 #include "src/share/io/EnvironmentOutputPath.h"
 
+#include "src/share/hook/libc/syscall/getpid.h"
+
 namespace env::path::output {
     
     fs::path get(DefaultOutputPath defaultOutputPath, const std::string& environmentVariableName) {
@@ -11,7 +13,7 @@ namespace env::path::output {
         if (outputPath) {
             return outputPath;
         } else {
-            return defaultOutputPath(environmentVariableName, getpid());
+            return defaultOutputPath(environmentVariableName, syscalls::getpid());
         }
     }
     

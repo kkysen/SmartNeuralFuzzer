@@ -4,6 +4,8 @@
 
 #include "src/share/hook/libc/hooksImpl/include.h"
 
+#include "src/share/hook/libc/syscall/getpid.h"
+
 extern "C"
 int raise(int signal) noexcept {
     trace();
@@ -17,7 +19,7 @@ int kill(pid_t pid, int signal) noexcept {
     pid_t own;
     if (signal != 0 &&
         (pid == 0 /*|| pid == -1*/
-         || (pid > 0 && pid == (own = getpid()))
+         || (pid > 0 && pid == (own = syscalls::getpid()))
          || (pid < -1 && -pid == own))) {
         signal::onWarning(signal);
     }

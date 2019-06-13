@@ -26,7 +26,7 @@ char* getCommand(char* linkedCommand) {
 }
 
 int main(int argc, char** argv) {
-    printCommand(argc, argv);
+//    printCommand(argc, argv);
     hardAssert(argc >= 1);
     
     env::path::LdPreload ldPreload;

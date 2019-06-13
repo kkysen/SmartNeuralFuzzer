@@ -4,7 +4,7 @@ include(cmake/llvmVersion.cmake)
 include(cmake/llvmImport.cmake)
 include(cmake/copy.cmake)
 
-set(files.lib /mnt/c/Users/Khyber/workspace/C++)
+set(files.lib.C++ /mnt/c/Users/Khyber/workspace/C++)
 
 files(share.common
         share/common/numbers.h
@@ -62,6 +62,10 @@ files(share.io
         share/io/Popen.cpp
         share/io/LdPreload.h
         share/io/LdPreload.cpp
+        share/io/readAll.h
+        share/io/readAll.cpp
+        share/io/Argv.h
+        share/io/Argv.cpp
         )
 
 files(share.aio
@@ -156,6 +160,10 @@ set(share.hook.libc.syscall
         share/hook/libc/syscall/kill.cpp
         share/hook/libc/syscall/forceKill.h
         share/hook/libc/syscall/forceKill.cpp
+        share/hook/libc/syscall/getpid.h
+        share/hook/libc/syscall/getpid.cpp
+        share/hook/libc/syscall/getuid.h
+        share/hook/libc/syscall/getuid.cpp
         )
 
 files(share.hook.libc.syscall

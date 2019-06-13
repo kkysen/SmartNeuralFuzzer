@@ -9,9 +9,9 @@
 namespace syscalls {
     
     // very new in glibc 2.30, 8/2019
+    // skip syscall hook, like it will in glibc
+    // no reason to hook it either
     pid_t gettid() noexcept {
-        // skip syscall hook, like it will in glibc
-        // no reason to hook it either
         return raw(SYS_gettid);
     }
     

@@ -20,7 +20,7 @@ namespace io {
     
     public:
         
-        enum {
+        enum Raw {
             none = 0,
             notFound = -1,
             regular = 1,
@@ -39,9 +39,9 @@ namespace io {
             
             friend class FileType;
             
-            i8 value;
+            Raw value;
             
-            /*implicit*/ constexpr Is(i8 value) noexcept : value(value) {}
+            /*implicit*/ constexpr Is(Raw value) noexcept : value(value) {}
         
         public:
             
@@ -76,16 +76,37 @@ namespace io {
         
         Is is;
         
-        /*implicit*/ constexpr FileType(i8 value) noexcept : is(value) {}
+        /*implicit*/ constexpr FileType(Raw value) noexcept : is(value) {}
         
-        /*implicit*/ constexpr FileType(fs::file_type type) noexcept : FileType(static_cast<i8>(type)) {}
+        /*implicit*/ constexpr FileType(fs::file_type type) noexcept : FileType(static_cast<Raw>(type)) {}
         
-        /*implicit*/ constexpr operator i8() noexcept {
+        constexpr Raw raw() const noexcept {
             return is.value;
         }
         
-        /*implicit*/ constexpr operator fs::file_type() noexcept {
+        /*implicit*/ constexpr operator Raw() const noexcept {
+            return raw();
+        }
+        
+        /*implicit*/ constexpr operator fs::file_type() const noexcept {
             return static_cast<fs::file_type>(is.value);
+        }
+        
+        constexpr std::string_view toString() const noexcept {
+            #define _(type) case FileType::type: return ""#type
+            switch (raw()) {
+                _(none);
+                _(notFound);
+                _(regular);
+                _(directory);
+                _(symlink);
+                _(block);
+                _(character);
+                _(fifo);
+                _(socket);
+                _(unknown);
+            }
+            #undef _
         }
         
         static constexpr FileType fromMode(mode_t mode) noexcept {

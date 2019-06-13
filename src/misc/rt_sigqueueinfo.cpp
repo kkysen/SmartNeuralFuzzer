@@ -2,6 +2,9 @@
 // Created by Khyber on 6/2/2019.
 //
 
+#include "src/share/hook/libc/syscall/getpid.h"
+#include "src/share/hook/libc/syscall/getuid.h"
+
 #include <string_view>
 
 #include <csignal>

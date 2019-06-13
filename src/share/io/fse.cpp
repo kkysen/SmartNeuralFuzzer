@@ -13,7 +13,7 @@
 namespace fse {
     
     fs::filesystem_error error(const std::string& what) {
-        return fs::filesystem_error(what, std::error_code());
+        return fs::filesystem_error(what, std::error_code(errno, std::system_category()));
     }
     
     fs::filesystem_error error(const std::string& what, const fs::path& path1) {

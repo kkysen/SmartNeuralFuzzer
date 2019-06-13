@@ -15,6 +15,6 @@ add_executable(pass.coverage.test
         ${files.share.io}
         ${files.share.llvm.lib}
         ${files.pass.coverage}
-        ../../../../share/hook/libc/syscall/gettid.h
+        ../../../../share/hook/libc/syscall/getpid.cpp
         ../../../../share/hook/libc/syscall/gettid.cpp
         )

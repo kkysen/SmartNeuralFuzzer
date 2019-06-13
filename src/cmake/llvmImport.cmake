@@ -1,30 +1,30 @@
 function(llvmImport asLibrary)
     if (${llvmVersionMajorIsNewest})
-        llvmConfig(includedir llvmIncludes)
-        include_directories(SYSTEM "${llvmIncludes}")
-        llvmConfig(prefix llvmPrefix)
-        include_directories(SYSTEM "${llvmPrefix}/include")
+        llvmConfig(includedir llvm.includes)
+        include_directories(SYSTEM "${llvm.includes}")
+        llvmConfig(prefix llvm.prefix)
+        include_directories(SYSTEM "${llvm.prefix}/include")
         
-        llvmConfig(cxxflags llvmFlags)
-        string(REGEX REPLACE "-std=[^ ]*" "" llvmFlags "${llvmFlags}")
+        llvmConfig(cxxflags llvm.flags)
+        string(REGEX REPLACE "-std=[^ ]*" "" llvm.flags "${llvm.flags}")
     else ()
-        include_directories(SYSTEM "${CXX_LIBS}/llvm-project/llvm/include/")
-        include_directories(SYSTEM "${CXX_LIBS}/llvm-project/build/clang/fewTargets/Release/include/")
+        include_directories(SYSTEM "${files.lib.C++}/llvm-project/llvm/include/")
+        include_directories(SYSTEM "${files.lib.C++}/llvm-project/build/clang/fewTargets/Release/include/")
         
-        set(llvmMacros "-D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
-        set(llvmExceptions "-fno-exceptions -fno-rtti")
-        set(llvmFlags "${llvmExceptions} ${llvmMacros}")
+        set(llvm.macros "-D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
+        set(llvm.exceptions "-fno-exceptions -fno-rtti")
+        set(llvm.flags "${llvm.exceptions} ${llvm.macros}")
     endif ()
     
     if (${asLibrary})
-        string(REPLACE "-fno-exceptions" "" llvmFlags "${llvmFlags}")
-        string(REPLACE "-fno-rtti" "" llvmFlags "${llvmFlags}")
+        string(REPLACE "-fno-exceptions" "" llvm.flags "${llvm.flags}")
+        string(REPLACE "-fno-rtti" "" llvm.flags "${llvm.flags}")
     endif ()
     
-#    message("${llvmFlags}")
+    #    message("${llvm.flags}")
     
-    #add_compile_options(${llvmFlags})  # doesn't keep -fno-rtti so typeinfo methods are created
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${llvmFlags}" PARENT_SCOPE)
+    #add_compile_options(${llvm.flags})  # doesn't keep -fno-rtti so typeinfo methods are created
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${llvm.flags}" PARENT_SCOPE)
 endfunction()
 
 function(llvmImportAsLibrary)

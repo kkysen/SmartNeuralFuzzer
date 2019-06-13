@@ -5,13 +5,14 @@
 #include "src/share/hook/libc/syscall/forceKill.h"
 
 #include "src/share/hook/libc/syscall/kill.h"
+#include "src/share/hook/libc/syscall/getpid.h"
 
 #include <csignal>
 
 namespace syscalls {
     
     [[noreturn]] void forceKill() {
-        kill(getpid(), SIGKILL);
+        kill(syscalls::getpid(), SIGKILL);
         for(;;);
     }
     

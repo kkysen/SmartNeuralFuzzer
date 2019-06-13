@@ -5,6 +5,7 @@
 #include "src/share/capability/Header.h"
 
 #include "src/share/hook/libc/syscall/cap.h"
+#include "src/share/hook/libc/syscall/getpid.h"
 
 namespace capability {
     
@@ -24,7 +25,7 @@ namespace capability {
         return impl();
     }
     
-    Header::Header() noexcept : Header(getpid()) {}
+    Header::Header() noexcept : Header(syscalls::getpid()) {}
     
     Header::Impl& Header::mut() const noexcept {
         return const_cast<Impl&>(impl());

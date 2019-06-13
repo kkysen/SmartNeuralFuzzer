@@ -4,7 +4,8 @@
 
 #include "src/share/aio/signal/Info.h"
 
-#include <unistd.h>
+#include "src/share/hook/libc/syscall/getpid.h"
+#include "src/share/hook/libc/syscall/getuid.h"
 
 namespace aio::signal {
     
@@ -36,8 +37,8 @@ namespace aio::signal {
         return {
                 .code = code,
                 .rt = {
-                        .pid = getpid(),
-                        .uid = getuid(),
+                        .pid = syscalls::getpid(),
+                        .uid = syscalls::getuid(),
                         .value = value,
                 },
         };
