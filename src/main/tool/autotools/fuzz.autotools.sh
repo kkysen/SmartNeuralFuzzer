@@ -108,6 +108,12 @@ fuzz() {
 	runtimes=${runtimes} linkArgs=${linkArgs} \
 	make -f ${srcDir}/FuzzMakefile
 
+	local sourceMapExt=blocks.map
+	local tempBlocksSourceMap=ld-temp.o.${sourceMapExt}
+	if [[ -f "${tempBlocksSourceMap}" ]]; then
+    	mv ${tempBlocksSourceMap} ${target}.${sourceMapExt}
+	fi
+
 }
 
 fuzz "$@"
