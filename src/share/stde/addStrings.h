@@ -14,7 +14,7 @@ namespace stde::strings {
     }
     
     template <typename T, class Traits = std::char_traits<T>, class Allocator = std::allocator<T>>
-    std::basic_string<T, Traits, Allocator>& operator+(std::basic_string_view<T, Traits> lhs, std::basic_string<T, Traits, Allocator>&& rhs) {
+    std::basic_string<T, Traits, Allocator> operator+(std::basic_string_view<T, Traits> lhs, std::basic_string<T, Traits, Allocator>&& rhs) {
         return std::move(rhs.insert(0, lhs.data(), lhs.size()));
     }
     

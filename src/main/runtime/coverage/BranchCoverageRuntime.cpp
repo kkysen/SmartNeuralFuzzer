@@ -43,7 +43,6 @@ namespace runtime::coverage::branch {
             deleteCopy(Counts);
             
             ~Counts() noexcept {
-                printf("numBranches: %lu, %lu, %lu\n", branches.single, branches.multi, branches.infinite);
                 flush();
             }
             
@@ -126,7 +125,6 @@ namespace runtime::coverage::branch {
             }
             
             void finalFlush() noexcept {
-                printf("%s\n", __func__);
                 writeBuffer(math::minBytesForBits(bitIndex));
                 const u8 bitsInLastBytes = byteBitIndex();
                 write(&bitsInLastBytes, sizeof(bitsInLastBytes));

@@ -4,14 +4,25 @@
 
 #include "src/main/runtime/RuntimeOutput.h"
 
-namespace runtime {
+#include "src/share/stde/addStrings.h"
+#include "src/share/hook/libc/syscall/gettid.h"
+
+namespace {
     
-    std::string RuntimeOutput::getDirName(std::string_view name) {
+    fse::Dir getDir(std::string_view name) {
         using namespace std::string_literals;
-        return (((""s += name) += ".out.") += std::to_string(getpid())) += ".dir";
+        using stde::strings::operator+;
+        return fse::Dir()
+                .dir(name + ".out.dir"s)
+                .dir(std::to_string(getpid()))
+                .dir(std::to_string(syscalls::gettid()));
     }
     
+}
+
+namespace runtime {
+    
     RuntimeOutput::RuntimeOutput(std::string_view name) noexcept
-            : name(name), dir(fse::Dir().dir(getDirName(name))) {}
+            : name(name), dir(getDir(name)) {}
     
 }

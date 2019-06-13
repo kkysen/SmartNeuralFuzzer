@@ -24,9 +24,11 @@ clean() {
 }
 
 fuzz() {
+	local buildDir=${__buildDir}
+	local srcDir=${__srcDir}
 
     if [[ $# == 0 ]]; then
-        echo "usage: ${0} <target executable>"
+        echo "usage: ${0} <target executable> [-clean [coverage | all]]"
         return 1
     fi
     local target=${1}
@@ -68,10 +70,6 @@ fuzz() {
 
     make -j$(getconf _NPROCESSORS_ONLN)
 
-    # TODO runtimes should use flto, so they should be LLVM bitcode, not object files
-
-    local projectDir=~/workspace/sync/SmartNeuralFuzzer
-    local buildDir=${projectDir}/build
     local libDir=${buildDir}/lib
     local binDir=${buildDir}/bin
     local register=${libDir}/libpass.register.so
@@ -93,8 +91,7 @@ fuzz() {
     local optArgs="${loadPasses} ${src}"
     local linkArgs="${flto} ${obj} ${libraries} ${originalLDFLAGS}"
 
-	local dir=$(dirname "${0}")
-	ninja -C ${dir}/build main
+	ninja -C ${buildDir} main
 
     # optimize (instrument), compile bc to obj, and then link everything
     # TODO this shouldn't have to be -O3
@@ -109,7 +106,7 @@ fuzz() {
 	dependencies=${dependencies} \
 	optLevel=${optLevel} optArgs=${optArgs} \
 	runtimes=${runtimes} linkArgs=${linkArgs} \
-	make -f ${dir}/AutotoolsMakefile
+	make -f ${srcDir}/FuzzMakefile
 
 }
 

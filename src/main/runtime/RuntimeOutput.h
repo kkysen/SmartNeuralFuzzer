@@ -16,10 +16,6 @@ namespace runtime {
     
     class RuntimeOutput {
     
-    private:
-        
-        static std::string getDirName(std::string_view name);
-    
     public:
         
         const std::string_view name;

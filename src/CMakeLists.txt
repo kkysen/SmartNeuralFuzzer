@@ -1,11 +1,10 @@
-add_compile_options(-fcolor-diagnostics)
-
-set(CXX_LIBS /mnt/c/Users/Khyber/workspace/C++)
-
 include(cmake/files.cmake)
 include(cmake/Xclang.cmake)
 include(cmake/llvmVersion.cmake)
 include(cmake/llvmImport.cmake)
+include(cmake/copy.cmake)
+
+set(files.lib /mnt/c/Users/Khyber/workspace/C++)
 
 files(share.common
         share/common/numbers.h
@@ -277,34 +276,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_compile_options(-Wall -Werror -Wextra -Wno-error=unused-parameter)
 
-function(copyTargetTo target binDir)
-    add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy
-            "$<TARGET_FILE:${target}>"
-            "${CMAKE_BINARY_DIR}/${binDir}/$<TARGET_FILE_NAME:${target}>"
-            COMMENT "Copying $<TARGET_FILE_NAME:${target}> to ${CMAKE_BINARY_DIR}/${binDir}"
-            )
-endfunction()
-
-function(copyLibrary target)
-    copyTargetTo(${target} lib)
-endfunction()
-
-function(copyExecutable target)
-    copyTargetTo(${target} bin)
-endfunction()
-
-function(copyLibraryBC target)
-    copyLibrary(${target})
-    set(binDir lib)
-    set(bc "lib${target}.bc")
-    add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy
-            "$<TARGET_FILE_DIR:${target}>/${bc}"
-            "${CMAKE_BINARY_DIR}/${binDir}/${bc}"
-            COMMENT "Copying ${bc} to ${CMAKE_BINARY_DIR}/${binDir}"
-            )
-endfunction()
+add_compile_options(-fcolor-diagnostics)
 
 add_subdirectory(main)
 add_subdirectory(test)

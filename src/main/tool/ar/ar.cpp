@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <array>
 
 #include <cstdlib>
 #include <cerrno>
@@ -50,29 +51,30 @@ int main(const int argc, const char** const argv) {
     if (argc < 3) {
         archive(argv);
     }
-    switch (fork()) {
-        case -1:
-            return errno;
-        case 0: {
-            link(argv);
-        }
-        default: {
-            break;
-        }
-    }
-    switch (fork()) {
-        case -1:
-            return errno;
-        case 0: {
-            archive(argv);
-        }
-        default: {
-            break;
+    
+    using Run = void (*)(const char** const);
+    constexpr std::array<Run, 2> programs = {link, archive};
+    std::array<int, programs.size()> statuses = {};
+    #define forEach() for (size_t i = 0; i < programs.size(); i++)
+    forEach() {
+        switch (fork()) {
+            case -1: {
+                statuses[i] = errno;
+                break;
+            }
+            case 0: programs[i](argv);
+            default: break;
         }
     }
-    int status1;
-    int status2;
-    wait(&status1);
-    wait(&status2);
-    return WEXITSTATUS(status1) || WEXITSTATUS(status2);
+    forEach() {
+        if (statuses[i] == 0) {
+            wait(&statuses[i]);
+        }
+    }
+    forEach() {
+        if (statuses[i]) {
+            return statuses[i];
+        }
+    }
+    #undef forEach
 }

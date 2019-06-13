@@ -20,7 +20,7 @@ namespace runtime::coverage::block {
             buffer.on(blockNum);
         }
         
-        BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir, "blocks")) {}
+        BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir.dir("block"), "blocks")) {}
         
     };
     

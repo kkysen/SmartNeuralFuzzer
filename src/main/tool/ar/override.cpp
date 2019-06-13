@@ -46,13 +46,14 @@ void run(bool reset) {
         ar.pop_back(); // remove trailing '\n'
     }
     
-    const std::string find = !reset ? std::move(ar) : BIN_PATH_AR;
-    const std::string replace = !reset ? BIN_PATH_AR : std::move(ar);
+    const auto[find, replace] = !reset
+                                ? std::pair(std::move(ar), BIN_PATH_AR ""s)
+                                : std::pair(BIN_PATH_AR ""s, std::move(ar));
     
     const auto replaceCommand = "sed -i -e 's/"s + escape(find) + "/"sv + escape(replace) + "/g' "sv;
     std::vector<Popen> replacers; // delay closing so they can run in parallel
     if (!reset) {
-        Popen("grep -iRl \""s + find + "\" " BIN_PATH""sv)
+        Popen("grep -irl \""s + find + "\" " BIN_PATH""sv)
                 .forEachLine([&](const std::string_view line) {
                     if (line.find("CMake") != std::string_view::npos) {
                         return;
