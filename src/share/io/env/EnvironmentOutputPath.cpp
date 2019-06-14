@@ -2,7 +2,7 @@
 // Created by Khyber on 3/22/2019.
 //
 
-#include "src/share/io/EnvironmentOutputPath.h"
+#include "src/share/io/env/EnvironmentOutputPath.h"
 
 #include "src/share/hook/libc/syscall/getpid.h"
 
