@@ -63,8 +63,9 @@ namespace io {
             tryFlush();
         }
         
-        void operator()(const T& t) noexcept {
+        WriteBuffer& operator<<(const T& t) noexcept {
             on(t);
+            return *this;
         }
         
     };

@@ -1,26 +1,57 @@
-Write parsers for the output.
-I'm not sure if this should be in C++ or Python.
-Maybe a C++ parser with CPython bindings will work.
+Next
+	Make fuzz.autotools.sh more robust to handle binutils.
+	Specifically, it should handle originalLDFLAGS.txt better,
+	it should search for multiple targets that were generated,
+	and then compile all of them in parallel.
 
-Test the passes and runtimes on larger programs.
+Compression
+	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",
+	which generated 24 GB of coverage output for cxxfilt along (opt-9 is 1.25 GB),
+	I realized I really need to compress the output in some way,
+	especially since running normal compression tools on the resulting output
+	drastically compresses them:
+		blocks.bin: 400x smaller
+		nonSingle.bin: 540x smaller
+		single.bin: 4800x smaller
 
-Figure out how to best integrate the runtimes with AFL.
-Since AFL repeatedly runs the programs by forking,
-I might need a way to re-initialize the runtimes on each fork.
+	For onBlock, most sequentially executed blocks are near each other,
+	so if I use the difference between adjacent blocks, they'll be all mostly small.
+	Therefore, I can use a varint encoding, such as signed LEB128.
 
-Compile what I already have with full optimizations.
+	For onInfiniteBranch, there's no pattern, but varint encoding might still help.
 
-Make all the writes in the runtimes async.
-This will dramatically reduce their overhead in the worst case.
-This is trivial for the counts in BranchCoverageRuntime, 
-b/c it doesn't matter if the data is updated before the write actually happens,
-but for the other buffers, they have to keep recording new values
-before the write actually happens, which will erase values in between.
-I could potentially get around this by maintaining a pool of buffers 
-(this requires memory, but still as statically-allocated),
-so I can switch to the next buffer while the last is written to disk.
-If the buffers all become full, though, then I'll have to either block or allocate more.
-Allocating more is not much more efficient than writing I think,
-so it'd be better to just block in that case, which should be very rare.
-How many buffers should I have though?
-When I test, maybe I should see how many buffers are usually used.
+	For onMultiBranch, the numbers are likely very low, so varint encoding will definitely help.
+
+	For onSingleBranch, varint encoding won't work since they're just single bits already,
+	but obviously a 5000x compression is insane, so there's a huge amount of redundancy.
+	I'll have to investigate the file itself to find patterns,
+	but it might be that there are long strings of 0s and then long strings of 1s (maybe from loops),
+	in which case I can record the value (0 or 1) and the number of repetitions
+	each time they switch, which can potentially drastically compress.
+
+	On top of this, it's also possible to run a generic compression algorithm
+	like xz, bzip2, or gzip, although I'll have to be careful to make sure
+	it compresses fast enough to not hold up the program.
+	Single-threaded (which it will be if embedded) xz can't compress a 13 GB blocks.bin
+	in any reasonable amount of time (definitely longer than how long the program took),
+	so certainly for blocks.bin xz is too slow and maybe the faster gzip is better.
+	There will always be more blocks than branches, since each branch is in it's own block,
+	so blocks.bin will need the fastest compressor.
+	Something like single.bin, though, could use a slower compressor like xz since it's smaller.
+
+Parser
+	I need to write a parser for all the coverage output generated,
+	especially once I apply the compression above.
+	The question, though, is how it should be designed.
+	Should it be as a C++ library, maybe with CPython bindings?
+	Or should it just output to plain text (although this could be huge)?
+
+	I should also integrate the blocks source maps for blocks.bin.
+	I could also make the blocks source map binary encoded,
+	perhaps using varint encoding as well,
+	and then embed it in the executable itself as a raw text symbol during the LLVM pass.
+	Or maybe the source map should be placed in coverage.out.dir/<program name>.
+
+Others
+	Make Mask constexpr, will be much faster in critical sections
+

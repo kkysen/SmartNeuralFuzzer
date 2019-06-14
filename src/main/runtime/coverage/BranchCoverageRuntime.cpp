@@ -147,6 +147,11 @@ namespace runtime::coverage::branch {
                 tryFlush();
             }
             
+            SingleBranches& operator<<(bool value) noexcept {
+                on(value);
+                return *this;
+            }
+            
         };
         
         class NonSingleBranches {
@@ -162,7 +167,7 @@ namespace runtime::coverage::branch {
             io::WriteBuffer<Record> buffer;
             
             void onRecord(Record record) noexcept {
-                buffer.on(record);
+                buffer << record;
             }
         
         public:
@@ -207,7 +212,7 @@ namespace runtime::coverage::branch {
         
         void onSingleBranch(bool value) noexcept {
             count.branches.single++;
-            branches.single.on(value);
+            branches.single << value;
         }
         
         void onMultiBranch(u32 branchNum, u32 numBranches) noexcept {

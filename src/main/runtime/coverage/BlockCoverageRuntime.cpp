@@ -21,7 +21,7 @@ namespace runtime::coverage::block {
         void onBlock(u64 blockNum) noexcept {
             const u64 delta = math::difference(lastBlockNum, blockNum);
             lastBlockNum = blockNum;
-            buffer.on(delta);
+            buffer << delta;
         }
         
         BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir.dir("block"), "blocks")) {}

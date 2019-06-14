@@ -1,0 +1,48 @@
+To start, run `git clone https://github.com/kkysen/SmartNeuralFuzzer.git`.
+
+You need CMake >3.14 and Ninja installed.
+To build, run `make cmake && cd build && ninja main`.
+To install fuzz.autotools, add SmartNeuralFuzzer/bin to $PATH.
+
+If you want to make a Release instead of Debug build,
+change buildType in Makefile to Release.
+
+To run, you need clang installed (I'm using v8.0.0, but any recent version should suffice),
+and then clang 9.0.0 installed, with its opt in $PATH as opt-9.
+
+To run on an autotools project, cd to that project and run `fuzz.autotools`.
+This has been tested on ccache and GNU binutils.
+
+Right now, running fuzz.autotools on a single-target autotools project
+like ccache works seamlessly.  Just run `fuzz.autotools ${target}`
+
+Right now, running fuzz.autotools on a multi-target autotools project
+like GNU binutils doesn't quite work seamlessly yet.
+It will crash, you will have to create the file originalLDFLAGS.txt containing that
+in each of the subdirectories containing the targets,
+and then run `fuzz.autotools ${target}` for each target.
+
+I'm working on making `fuzz.autotools` work on all autotools projects,
+and this should be done very soon (also see TODO.txt).
+
+If fuzz.autotools runs successfully, it will generate a ${target}.coverage executable,
+the normal, non-instrumented executable, as well as the intermediate LLVM bitcode files.
+${target}.blocks.map is also generated, which is a source map of the block numbers outputted
+with their containing function and line and column number (if the target was compiled with debug info).
+
+Running ${target}.coverage runs exactly the same as ${target},
+except some intercepted libc syscalls functions are printed to stdout,
+and then coverage.out.dir is generated, with the following format:
+
+coverage.out.dir/
+	${program name as invoked}/
+		${process ID}/
+			${thread ID}/
+				block/
+					blocks.bin
+				branch/
+					counts.bin
+					single.bin
+					nonSingle.bin
+
+I'm still working on writing parsers for this binary output.
