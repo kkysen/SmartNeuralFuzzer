@@ -46,3 +46,43 @@ coverage.out.dir/
 					nonSingle.bin
 
 I'm still working on writing parsers for this binary output.
+
+
+Caveats:
+	The instrumented program shouldn't make raw syscalls (libc wrapper or direct) to:
+		fork
+		vfork
+		clone
+		clone2
+		execve
+		execveat
+		exit
+		exit_group
+		fork
+		kill (when SIGKILL/SIGSTOPing yourself)
+		reboot
+		rt_sigaction (for SIGILL)
+		rt_sigprocmask (when masking SIGILL)
+		rt_sigqueueinfo (when sending SIGKILL/SIGSTOP to yourself)
+		rt_tgsigqueueinfo (when sending SIGKILL/SIGSTOP to yourself)
+		sigaction (for SIGILL)
+		signal (for SIGILL)
+		sigprocmask (when masking SIGILL)
+		tgkill (when SIGKILL/SIGSTOPing yourself)
+		tkill (when SIGKILL/SIGSTOPing yourself)
+		vfork
+	and shouldn't call the libc clone() directly.
+	kill -9 (SIGKILL) also shouldn't be used on the program.
+
+	The runtime needs to flush data to disk before terminating,
+	and it needs to duplicate itself and restart when cloned.
+	Therefore, calls to clone()-like functions need to be intercepted,
+	and program termination (exit(), kill(), exec...()) need to be intercepted.
+
+	The runtime also uses SIGILL to communicate between threads to cleanup,
+	so the program can't depend on receiving and handling a non-hardware-generated SIGILL.
+	This is why sigaction and sigprocmask can't be directly used with SIGILL.
+
+	Circumventing these interceptions for signals and termination
+	will cause coverage data loss, and circumventing these interceptions for clone()
+	will cause undefined behavior and likely a SIGSEGV or some other error.
