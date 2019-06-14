@@ -50,6 +50,11 @@ namespace math {
         return t < 0 ? -t : t;
     }
     
+    template <typename T>
+    constexpr T difference(T a, T b) noexcept {
+        return a < b ? b - a : a - b;
+    }
+    
     template <typename A, typename B>
     constexpr std::common_type_t<A, B> gcd(A a, B b) noexcept {
         return a == 0 ? abs(b) : b == 0 ? abs(a) : gcd(b, a % b);

@@ -29,4 +29,13 @@ namespace io {
         return Stat(statBuf, error);
     }
     
+    Stat Stat::linked(int _fd) {
+        const auto stats = fd(_fd);
+        if (!stats.type.is.symlink()) {
+            return stats;
+        }
+        using namespace std::literals;
+        return file("/proc/self/fd/"s + std::to_string(_fd));
+    }
+    
 }

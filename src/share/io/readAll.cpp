@@ -20,17 +20,33 @@ namespace {
         
         const int fd;
         const Stat stats;
-        const std::string_view path; // just for error messages
+        const char* path;
     
     public:
         
-        explicit Reader(int fd, std::string_view path) noexcept
-                : fd(fd), stats(Stat::fd(fd)), path(path) {}
+        explicit Reader(int fd, const char* path = nullptr) noexcept
+                : fd(fd),
+                  stats(path ? Stat::file(path) : Stat::linked(fd)),
+                  path(path) {}
     
     private:
         
+        std::string getPath() const {
+            if (path) {
+                return path;
+            }
+            const auto linkPath = "/proc/self/fd/"s + std::to_string(fd);
+            const auto linkStats = Stat::link(linkPath);
+            char link[linkStats.size()];
+            const ssize_t n = ::readlink(linkPath.c_str(), link, sizeof(link));
+            if (n == -1) {
+                fse::_throw(fse::error("readlink"));
+            }
+            return std::string(link, static_cast<size_t>(n));
+        }
+        
         void error(const std::string& what) const {
-            fse::_throw(fse::error(what, path));
+            fse::_throw(fse::error(what, getPath()));
         }
         
         void invalidFileType() const {
@@ -42,6 +58,10 @@ namespace {
         }
         
         std::string allAtOnce() const {
+            if (stats.id.device.isProc()) {
+                // /proc/ files appear empty but aren't
+                return buffered();
+            }
             std::string s;
             s.reserve(stats.size());
             const ssize_t n = ::read(fd, s.data(), stats.size());
@@ -50,8 +70,6 @@ namespace {
             }
             return s;
         }
-
-    public:
         
         std::string buffered() const {
             std::ostringstream ss;
@@ -65,12 +83,6 @@ namespace {
                 ss.write(buffer, n);
             } while (n != 0);
             return ss.str();
-        }
-
-    private:
-        
-        std::string linked() const {
-            return io::readAll(allAtOnce());
         }
     
     public:
@@ -86,13 +98,15 @@ namespace {
                 case FileType::directory: {
                     invalidFileType();
                 }
+                case FileType::symlink: {
+                    // symlink is impossible here b/c we specifically skipped it
+                    invalidFileType();
+                }
                 case FileType::regular:
                     return allAtOnce();
                 case FileType::fifo:
                 case FileType::socket:
                     return buffered();
-                case FileType::symlink:
-                    return linked();
             }
         }
         
@@ -105,8 +119,7 @@ namespace {
 namespace io {
     
     std::string readAll(int fd) {
-        const std::string pathLike = "[fd="s + std::to_string(fd) + "]"sv;
-        return Reader(fd, pathLike).all();
+        return Reader(fd).all();
     }
     
     std::string readAll(const char* path) {
@@ -114,11 +127,7 @@ namespace io {
         if (fd == -1) {
             fse::_throw(fse::error("open", path));
         }
-        const auto reader = Reader(fd, path);
-        const std::string looksEmptyDir = "/proc/";
-        const bool looksEmpty = ::strncmp(path, looksEmptyDir.data(), looksEmptyDir.size()) == 0;
-        // buffered will always read all of it
-        const auto all = looksEmpty ? reader.buffered() : reader.all();
+        const auto all = Reader(fd, path).all();
         close(fd);
         return all;
     }

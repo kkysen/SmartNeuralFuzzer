@@ -7,6 +7,7 @@ add_executable(misc.stdListIteratorInvalidation stdListIteratorInvalidation.cpp)
 add_executable(misc.reboot reboot.cpp ${files.share.capability})
 add_executable(misc.prctlReturnErrno prctlReturnErrno.cpp)
 add_executable(misc.signalOrder signalOrder.cpp)
+add_executable(misc.deltaVarintEncoding deltaVarintEncoding.cpp ${files.share.io})
 
 add_custom_target(misc DEPENDS
         misc.aio
@@ -15,4 +16,7 @@ add_custom_target(misc DEPENDS
         misc.tid
         misc.stdListIteratorInvalidation
         misc.reboot
+        misc.prctlReturnErrno
+        misc.signalOrder
+        misc.deltaVarintEncoding
         )

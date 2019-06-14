@@ -210,9 +210,34 @@ namespace io {
     
     struct Stat {
         
+        struct Device {
+            
+            union {
+                dev_t id;
+                struct {
+                    // assume little endian
+                    u8 minor;
+                    u8 major;
+                };
+            };
+            
+            /*implicit*/ constexpr Device(dev_t id) noexcept : id(id) {}
+            
+            // these seem to be the case on the Linux machines I've tested
+    
+            constexpr bool isProc() const noexcept {
+                return major == 0 && minor == 4;
+            }
+            
+            constexpr bool isDev() const noexcept {
+                return major == 0 && minor == 6;
+            }
+            
+        };
+        
         struct Ids {
-            dev_t containingDevice;
-            dev_t device;
+            Device device;
+            Device deviceType;
             gid_t group;
             uid_t user;
         };
@@ -262,8 +287,8 @@ namespace io {
         /*implicit*/ constexpr Stat(struct stat stat, int error = 0) noexcept : Stat(Args {
                 .error = error,
                 .id = {
-                        .containingDevice = stat.st_dev,
-                        .device = stat.st_rdev,
+                        .device = stat.st_dev,
+                        .deviceType = stat.st_rdev,
                         .group = stat.st_gid,
                         .user = stat.st_uid,
                 },
@@ -321,6 +346,9 @@ namespace io {
         
         static Stat at(int dirFd, const char* pathName, int flags);
         
+        // if symlink, stat actual file
+        static Stat linked(int fd);
+        
         
         template <class String>
         static Stat file(const String& string) {
@@ -329,7 +357,7 @@ namespace io {
         
         template <class String>
         static Stat link(const String& string) {
-            return link(string.c_str());
+            return linked(string.c_str());
         }
         
         template <class String>

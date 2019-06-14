@@ -13,11 +13,15 @@ namespace runtime::coverage::block {
     private:
         
         io::WriteBuffer<u64> buffer;
+        
+        u64 lastBlockNum = 0;
     
     public:
         
         void onBlock(u64 blockNum) noexcept {
-            buffer.on(blockNum);
+            const u64 delta = math::difference(lastBlockNum, blockNum);
+            lastBlockNum = blockNum;
+            buffer.on(delta);
         }
         
         BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir.dir("block"), "blocks")) {}
