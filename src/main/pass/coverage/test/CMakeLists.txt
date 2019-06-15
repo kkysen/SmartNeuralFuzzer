@@ -1,10 +1,5 @@
 add_link_options(-lstdc++fs)
-
-add_link_options(-L${llvm.lib.dir} -lLLVMSupport)
-add_link_options(-L${llvm.lib.dir} -lLLVMCore)
-
-add_link_options(-pthread)
-add_link_options(-ltinfo)
+llvmLinkLibrary()
 
 add_executable(pass.coverage.test
         testBinaryFunctionFilter.cpp

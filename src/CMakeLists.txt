@@ -34,6 +34,8 @@ files(share.stde
         share/stde/split.cpp
         share/stde/addStrings.h
         share/stde/addStrings.cpp
+        share/stde/compareEnds.h
+        share/stde/compareEnds.cpp
         )
 
 files(share.time
@@ -275,7 +277,7 @@ files(share.llvm
         share/llvm/FilteredFunctions.cpp
         )
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)

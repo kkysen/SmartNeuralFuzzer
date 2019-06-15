@@ -52,6 +52,14 @@ Parser
 	and then embed it in the executable itself as a raw text symbol during the LLVM pass.
 	Or maybe the source map should be placed in coverage.out.dir/<program name>.
 
+	Decision:
+	I should keep creating a separate text blocks source map.
+	But I should also create a binary blocks source map at compile time
+	that I embed in the executable itself.
+	At runtime, this embedded source map is written to a file in coverage.out.dir.
+	This way the source map data needed for reading the coverage data
+	is always right there with the coverage data.
+
 Others
 	Make Mask constexpr, will be much faster in critical sections
 

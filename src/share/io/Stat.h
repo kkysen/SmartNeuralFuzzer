@@ -357,7 +357,7 @@ namespace io {
         
         template <class String>
         static Stat link(const String& string) {
-            return linked(string.c_str());
+            return link(string.c_str());
         }
         
         template <class String>

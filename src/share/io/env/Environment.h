@@ -5,6 +5,7 @@
 #pragma once
 
 #include "src/share/llvm/lib/conversions.h"
+#include "src/share/io/fse.h"
 
 #include "llvm/ADT/StringMap.h"
 
@@ -34,7 +35,7 @@ namespace env {
         
         template <class StringArg>
         void insert(StringArg&& varValueToAdd, size_t varSize, bool bulkInsertion = false) {
-            store.emplace_back(std::forward(varValueToAdd));
+            store.emplace_back(std::forward<StringArg>(varValueToAdd));
             const std::string& varValueStore = store.back();
             const std::string_view varValue = varValueStore; // stable pointer
             const auto var = varValue.substr(0, varSize);
@@ -94,9 +95,9 @@ namespace env {
         // call modify(std::string& oldValue)
         // if there's no old value, then "" is used
         template <class F>
-        bool modify(std::string_view var, F modify) {
+        bool modify(std::string_view var, F f) {
             const bool override = has(var);
-            modify(var, override, modify);
+            modify(var, override, f);
             return override;
         }
         
@@ -107,6 +108,21 @@ namespace env {
         bool unSet(std::string_view var);
         
         bool append(std::string_view var, std::string_view addition, std::string_view delimiter);
+        
+        template <typename... Args>
+        static void exec(Environ environ, const char* file, Args... rest) {
+            const char* const argv[] = {file, rest..., nullptr};
+            const auto _argv = const_cast<char* const*>(argv);
+            const auto _envp = const_cast<char* const*>(environ);
+            if (::execvpe(file, _argv, _envp) == -1) {
+                fse::_throw(fse::error("execvpe", file));
+            }
+        }
+        
+        template <typename... Args>
+        void exec(const char* file, Args... rest) const {
+            return exec(asEnviron(), file, rest...);
+        }
         
     };
     
