@@ -37,9 +37,13 @@ function(llvmImportAsLibrary)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
 endfunction()
 
+set(llvm.link.libs
+        -L${llvm.lib.dir} -lLLVMSupport
+        -L${llvm.lib.dir} -lLLVMCore
+        -pthread -ltinfo
+        )
+
 function(llvmLinkLibrary)
     llvmImportAsLibrary()
-    add_link_options(-L${llvm.lib.dir} -lLLVMSupport)
-    add_link_options(-L${llvm.lib.dir} -lLLVMCore)
-    add_link_options(-pthread -ltinfo)
+    add_link_options(${llvm.link.libs})
 endfunction()
