@@ -21,11 +21,12 @@ namespace env {
         
         static constexpr std::string_view delimiter = "=";
         
+        Environ unmodified;
         llvm::StringMap<std::pair<size_t, std::string_view>> vars;
         llvm::SmallVector<std::string, 0> store;
         llvm::SmallVector<const char*, 0> environ;
         
-        constexpr size_t findDelimiter(std::string_view varValue) noexcept {
+        static constexpr size_t findDelimiter(std::string_view varValue) noexcept {
             if constexpr (delimiter.size() == 1) {
                 return varValue.find(delimiter[0]);
             } else {
@@ -52,19 +53,27 @@ namespace env {
             environ.insert(insertionPoint, varValueStore.c_str());
         }
     
+        void init(Environ environ);
+        
+        void init() const;
+        
     public:
         
         explicit Environment(Environ _environ = ::environ);
+        
+        static Environment empty();
         
         constexpr Environ asEnviron() const noexcept {
             return environ.data();
         }
         
         /*implicit*/ constexpr operator Environ() const noexcept {
-            return asEnviron();
+            return unmodified ? unmodified : asEnviron();
         }
         
         bool has(std::string_view var) const noexcept;
+    
+        std::string_view get(std::string_view var, std::string_view defaultValue) const noexcept;
         
         std::string_view get(std::string_view var) const noexcept;
         
@@ -109,20 +118,7 @@ namespace env {
         
         bool append(std::string_view var, std::string_view addition, std::string_view delimiter);
         
-        template <typename... Args>
-        static void exec(Environ environ, const char* file, Args... rest) {
-            const char* const argv[] = {file, rest..., nullptr};
-            const auto _argv = const_cast<char* const*>(argv);
-            const auto _envp = const_cast<char* const*>(environ);
-            if (::execvpe(file, _argv, _envp) == -1) {
-                fse::_throw(fse::error("execvpe", file));
-            }
-        }
-        
-        template <typename... Args>
-        void exec(const char* file, Args... rest) const {
-            return exec(asEnviron(), file, rest...);
-        }
+        std::string toString() const;
         
     };
     

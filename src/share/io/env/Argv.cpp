@@ -13,7 +13,7 @@
 
 namespace {
     
-    using namespace io;
+    using namespace env;
     
     std::string_view getProgramName(std::string_view fullProgramName) {
         const auto i = fullProgramName.find_last_of('/');
@@ -47,7 +47,7 @@ namespace {
     }
     
     std::string readArgv() {
-        std::string raw = readAll("/proc/self/cmdline");
+        std::string raw = io::readAll("/proc/self/cmdline");
         for (auto& c : raw) {
             if (c == ' ') {
                 c = '\0';
@@ -60,7 +60,7 @@ namespace {
     
 }
 
-namespace io {
+namespace env {
     
     Argv::Argv(std::string _raw, size_t argc) : raw(std::move(_raw)) {
         args.reserve(argc);

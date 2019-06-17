@@ -70,6 +70,8 @@ files(share.io
         share/io/env/Argv.cpp
         share/io/env/Environment.h
         share/io/env/Environment.cpp
+        share/io/env/Exec.h
+        share/io/env/Exec.cpp
         )
 
 files(share.aio

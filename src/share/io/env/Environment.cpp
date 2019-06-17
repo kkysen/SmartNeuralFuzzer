@@ -6,8 +6,6 @@
 
 #include "src/share/stde/addStrings.h"
 
-#include "llvm/ADT/Twine.h"
-
 namespace {
     
     using llvm::convert::ref;
@@ -19,7 +17,7 @@ namespace {
 
 namespace env {
     
-    Environment::Environment(const char* const* _environ) {
+    void Environment::init(Environ _environ) {
         const char* rawVarValue;
         while ((rawVarValue = *_environ++)) {
             const std::string_view varValueView = rawVarValue;
@@ -32,16 +30,42 @@ namespace env {
         environ.push_back(nullptr); // environ must be null-terminated
     }
     
+    void Environment::init() const {
+        auto& mut = const_cast<Environment&>(*this);
+        if (unmodified) {
+            mut.init(unmodified);
+            mut.unmodified = nullptr;
+        }
+    }
+    
+    Environment::Environment(Environ _environ)
+            : unmodified(_environ != ::environ ? nullptr : _environ) {
+        if (!unmodified) {
+            init(_environ);
+        }
+    }
+    
+    Environment Environment::empty() {
+        const char* environ[] = {nullptr};
+        return Environment(environ);
+    }
+    
     bool Environment::has(std::string_view var) const noexcept {
+        init();
         return vars.count(ref(var)) > 0;
     }
     
-    std::string_view Environment::get(std::string_view var) const noexcept {
+    std::string_view Environment::get(std::string_view var, std::string_view defaultValue) const noexcept {
+        init();
         const auto it = vars.find(ref(var));
         if (it == vars.end()) {
-            return {};
+            return defaultValue;
         }
         return it->second.second;
+    }
+    
+    std::string_view Environment::get(std::string_view var) const noexcept {
+        return get(var, {});
     }
     
     std::string_view Environment::operator[](std::string_view var) const noexcept {
@@ -49,6 +73,7 @@ namespace env {
     }
     
     void Environment::setHard(std::string_view var, std::string_view value) {
+        init();
         insert(""s + var + delimiter + value, var.size());
     }
     
@@ -73,10 +98,11 @@ namespace env {
     }
     
     bool Environment::unSet(std::string_view var) {
+        init();
         const auto it = vars.find(ref(var));
         const bool unSet = it != vars.end();
         if (unSet) {
-            const auto [i, _] = it->second;
+            const auto[i, _] = it->second;
             vars.erase(it);
             store.erase(store.begin() + i);
             environ.erase(environ.begin() + i);
@@ -95,6 +121,14 @@ namespace env {
             setHard(var, addition);
         }
         return override;
+    }
+    
+    std::string Environment::toString() const {
+        std::stringstream ss;
+        for (const auto& var : store) {
+            ss << var << " ";
+        }
+        return ss.str();
     }
     
 }

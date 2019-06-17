@@ -6,6 +6,7 @@
 
 #include "src/share/stde/getline.h"
 #include "src/share/common/deleteCopy.h"
+#include "src/share/io/env/Environment.h"
 
 #include <string>
 #include <atomic>
@@ -32,14 +33,27 @@ namespace io {
         
         explicit Popen(const std::string& string, const char* mode = defaultMode);
         
+        Popen(const std::string& string, const env::Environment& env, const char* mode = defaultMode);
+        
         void close() noexcept;
         
         ~Popen();
-    
-        deleteCopy(Popen);
         
         constexpr Popen(Popen&& other) noexcept : _file(other._file.exchange(nullptr)) {}
         
+        constexpr Popen& operator=(Popen&& other) noexcept {
+            if (&other == this) {
+                return *this;
+            }
+            close();
+            _file = other._file.exchange(nullptr);
+            return *this;
+        }
+        
+//        deleteCopy(Popen);
+        Popen(const Popen&) = delete;
+        Popen& operator=(const Popen&) = delete;
+
         template <class F>
         bool forEachLine(F f, char delimiter = '\n') {
             return stde::forEachLine(f, file(), delimiter);

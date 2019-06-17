@@ -22,6 +22,9 @@ namespace io {
     
     Popen::Popen(const std::string& string, const char* mode) : Popen(string.c_str(), mode) {}
     
+    Popen::Popen(const std::string& string, const env::Environment& env, const char* mode)
+            : Popen(env.toString() + string, mode) {}
+    
     void Popen::close() noexcept {
         if (const auto file = _file.exchange(nullptr)) {
             ::pclose(file);

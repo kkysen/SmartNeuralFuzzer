@@ -10,6 +10,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #endif
 
+#include <iostream>
+
 namespace fse {
     
     fs::filesystem_error error(const std::string& what) {
@@ -55,6 +57,7 @@ namespace fse {
     }
     
     void _throw(const std::exception& exception) {
+        std::cerr << exception.what() << std::endl;
         #ifdef __EXCEPTIONS
         throw exception;
         #else

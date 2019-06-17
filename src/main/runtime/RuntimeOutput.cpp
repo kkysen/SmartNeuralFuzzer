@@ -16,7 +16,7 @@ namespace {
         using stde::string::operator+;
         return fse::Dir()
                 .dir(name + ".out.dir"s)
-                .dir(std::string(io::Argv::get().programName()))
+                .dir(std::string(env::Argv::get().programName()))
                 .dir(std::to_string(syscalls::getpid()))
                 .dir(std::to_string(syscalls::gettid()));
     }

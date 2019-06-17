@@ -1,3 +1,5 @@
+llvmImportAsLibrary()
+
 set(target tool.ar)
 add_executable(${target} ar.cpp)
 copyExecutable(${target})

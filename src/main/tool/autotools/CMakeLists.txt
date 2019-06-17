@@ -5,6 +5,7 @@ add_compile_definitions(BIN_PATH_FUZZ_AUTOTOOLS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR
 
 set(files.share
         ../../../share/io/env/Environment.cpp
+        ../../../share/io/env/Exec.cpp
         ../../../share/io/Popen.cpp
         ../../../share/io/fse.cpp
         ../../../share/concurrent/numVirtualCores.cpp
