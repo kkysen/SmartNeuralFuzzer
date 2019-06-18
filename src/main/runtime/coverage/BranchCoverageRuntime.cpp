@@ -159,7 +159,8 @@ namespace runtime::coverage::branch {
         private:
             
             struct Record {
-                u32 bitIndexDiff: 31, isMultiple: 1;
+                u32 bitIndexDiff: 31;
+                bool isMultiple: 1;
                 u32 low;
                 u32 high;
             };

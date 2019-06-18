@@ -62,6 +62,8 @@ files(share.io
         share/io/Popen.cpp
         share/io/readAll.h
         share/io/readAll.cpp
+        share/io/LEB128WriteBuffer.h
+        share/io/LEB128WriteBuffer.cpp
         )
 
 files(share.io.env

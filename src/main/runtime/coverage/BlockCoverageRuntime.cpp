@@ -6,16 +6,20 @@
 
 #include "src/main/runtime/coverage/include.h"
 
+#include <iostream>
+
 namespace runtime::coverage::block {
     
     class BlockCoverageRuntime {
     
     private:
         
-        struct Buffer {
+        class Buffer {
             
-            io::WriteBuffer<i64> buffer;
+            io::LEB128WriteBuffer buffer;
             u64 lastIndex = 0;
+
+        public:
             
             void on(u64 index) noexcept {
                 const i64 delta = index - lastIndex;
@@ -49,7 +53,7 @@ namespace runtime::coverage::block {
     private:
         
         explicit BlockCoverageRuntime(const fse::Dir& dir) noexcept(false)
-        : function(dir, "functions"), block(dir, "blocks") {}
+                : function(dir, "functions"), block(dir, "blocks") {}
     
     public:
         
