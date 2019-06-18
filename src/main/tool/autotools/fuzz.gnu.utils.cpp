@@ -25,6 +25,7 @@ int main(int, char* const* argv) {
     #define _(var) setenv("__"#var, var, true)
     const auto name = getName(argv);
     _(buildDir);
+    _(srcDir);
     _(name);
     return execve(srcDir "/fuzz.gnu.utils.sh", argv, environ);
 }

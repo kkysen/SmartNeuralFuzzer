@@ -160,7 +160,7 @@ fuzz() {
 
 	runMake
 
-	compileAllTargets ${originalLDFlags}
+	compileAllTargets "${originalLDFlags}"
 }
 
 fuzz "$@"

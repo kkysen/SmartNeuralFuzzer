@@ -1,5 +1,11 @@
 # Smart Neural Fuzzer
 
+## Intro
+
+
+## Motivation
+
+
 ## Research Proposal
 Fuzzing is one of the main techniques for automated software testing. 
 A fuzzer generates semi-random inputs to the program that is being tested, 
@@ -52,7 +58,9 @@ that will be an enormous success, allowing us to discover critical bugs
 in programs we use every day at an unprecedented rate. 
 First, though, we will want to get our smart fuzzer to expose contrived bugs in sample programs.
 
+
 ## Instructions
 
 
 ## TODO
+

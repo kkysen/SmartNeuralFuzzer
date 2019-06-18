@@ -6,7 +6,8 @@ buildSystemGenerated := Ninja
 else
 buildSystemGenerated := Unix Makefiles
 endif
-buildType := Debug
+buildType := Release
+#Debug
 
 cmakeFiles := $(shell find src/cmake -name "*.cmake")
 
