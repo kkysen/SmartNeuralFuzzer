@@ -46,8 +46,6 @@ files(share.time
         )
 
 files(share.io
-        share/io/env/EnvironmentOutputPath.h
-        share/io/env/EnvironmentOutputPath.cpp
         share/io/fs.h
         share/io/fse.h
         share/io/fse.cpp
@@ -62,10 +60,15 @@ files(share.io
         share/io/ReadOnlyMappedMemory.cpp
         share/io/Popen.h
         share/io/Popen.cpp
-        share/io/env/LdPreload.h
-        share/io/env/LdPreload.cpp
         share/io/readAll.h
         share/io/readAll.cpp
+        )
+
+files(share.io.env
+        share/io/env/EnvironmentOutputPath.h
+        share/io/env/EnvironmentOutputPath.cpp
+        share/io/env/LdPreload.h
+        share/io/env/LdPreload.cpp
         share/io/env/Argv.h
         share/io/env/Argv.cpp
         share/io/env/Environment.h

@@ -63,7 +63,7 @@ namespace {
                 return buffered();
             }
             std::string s;
-            s.reserve(stats.size());
+            s.resize(stats.size());
             const ssize_t n = ::read(fd, s.data(), stats.size());
             if (n == -1 || static_cast<size_t>(n) != stats.size()) {
                 error();

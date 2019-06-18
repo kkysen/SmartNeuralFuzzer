@@ -37,9 +37,9 @@ void aioTest(llvm::ArrayRef<std::string> ss) {
     
     for (const auto& s : ss) {
         for (const auto c : s) {
-            buffer(c);
+            buffer << c;
         }
-        buffer('\n');
+        buffer << '\n';
     }
     
 //    char* data = new char[1000000];
@@ -68,9 +68,9 @@ void ioTest(llvm::ArrayRef<std::string> ss) {
         size_t n = s.size();
         for (size_t i = 0; i < n; i++) {
             const char c = s[i];
-            buffer(c);
+            buffer << c;
         }
-        buffer('\n');
+        buffer << '\n';
     }
     
 }

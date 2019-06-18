@@ -1,8 +1,15 @@
-Next
+Finished
 	Make fuzz.autotools.sh more robust to handle binutils.
 	Specifically, it should handle originalLDFLAGS.txt better,
 	it should search for multiple targets that were generated,
 	and then compile all of them in parallel.
+
+Next
+	Add a FunctionCoveragePass, which does the exact same thing as BlockCoveragePass,
+	except it traces just functions, not whole blocks.
+	This will be useful for when the user wants to examine the output trace themselves,
+	and it will help reduce the output size since there are less functions than blocks,
+	especially when heavily inlined.
 
 Compression
 	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",

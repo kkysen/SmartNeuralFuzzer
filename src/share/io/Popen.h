@@ -6,7 +6,6 @@
 
 #include "src/share/stde/getline.h"
 #include "src/share/common/deleteCopy.h"
-#include "src/share/io/env/Environment.h"
 
 #include <string>
 #include <atomic>
@@ -32,8 +31,6 @@ namespace io {
         explicit Popen(const char* command, const char* mode = defaultMode);
         
         explicit Popen(const std::string& string, const char* mode = defaultMode);
-        
-        Popen(const std::string& string, const env::Environment& env, const char* mode = defaultMode);
         
         void close() noexcept;
         

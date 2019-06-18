@@ -52,3 +52,7 @@ that will be an enormous success, allowing us to discover critical bugs
 in programs we use every day at an unprecedented rate. 
 First, though, we will want to get our smart fuzzer to expose contrived bugs in sample programs.
 
+## Instructions
+
+
+## TODO

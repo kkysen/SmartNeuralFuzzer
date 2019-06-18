@@ -45,8 +45,9 @@ namespace aio {
             }
         }
         
-        void operator()(const T& t) noexcept(false) {
+        StandardWriteBuffer& operator<<(const T& t) noexcept(false) {
             on(t);
+            return *this;
         }
         
     };
