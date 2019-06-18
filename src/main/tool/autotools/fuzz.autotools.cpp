@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 
-int main(int, char* const* const argv) {
+int main(int, char* const* argv) {
     #define buildDir BUILD_PATH
     #define srcDir BIN_PATH_FUZZ_AUTOTOOLS_DIR
     #define libraries RUNTIME_COVERAGE_LIBRARIES
@@ -14,5 +14,5 @@ int main(int, char* const* const argv) {
     _(buildDir);
     _(srcDir);
     _(libraries);
-    execve(srcDir "/fuzz.autotools.sh", argv, environ);
+    return execve(srcDir "/fuzz.autotools.sh", argv, environ);
 }

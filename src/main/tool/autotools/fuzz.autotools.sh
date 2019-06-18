@@ -43,6 +43,22 @@ configure() {
 	CC=${cc} CXX=${cxx} RANLIB=${ranlib} CFLAGS=${cFlags} LDFLAGS=${ldFlags} ./configure
 }
 
+removeADotOut() {
+	for file in $(find . -name "a.out.*"); do
+		rm -f ${file}
+	done
+}
+
+configureCached() {
+	local lock="configure.lock"
+	if [[ ! -f "${lock}" ]]; then
+	    # only run configure once
+		configure
+		touch ${lock}
+		removeADotOut
+	fi
+}
+
 findOriginalLDFlags() {
 	# need these for final link
     make -n | tail -n 1 | sed 's/.*'"${myLDFLAGS}"'//' > "${originalLDFlagsCache}"
@@ -50,12 +66,6 @@ findOriginalLDFlags() {
 
 runMake() {
 	make -j$(getconf _NPROCESSORS_ONLN)
-}
-
-removeADotOut() {
-	for file in $(find . -name "a.out.*"); do
-		rm -f ${file}
-	done
 }
 
 compileTarget() {
@@ -102,7 +112,11 @@ compileTarget() {
 compileAllTargets() {
 	local originalLDFlags=${1}
 	local targetSuffix=".0.5.precodegen.bc"
-	for target in $(find . -name *${targetSuffix} | sed -e s/${targetSuffix}//); do
+	local targets=$(find . -name "*${targetSuffix}" \
+		| sed -e s/${targetSuffix}// \
+		| grep -vE "*.so" \
+	)
+	for target in ${targets}; do
 		compileTarget ${target} "${originalLDFlags}" &
 	done
 	wait
@@ -118,7 +132,7 @@ fuzz() {
 #        echo "usage: ${0} <target executable> [-clean [coverage | all]]"
 #        return 1
 #    fi
-    local option=${1}
+#    local option=${1}
 #    if [[ "${option}" == "-clean" ]]; then
 #        clean ${target} ${3}
 #        return
@@ -131,18 +145,15 @@ fuzz() {
     local currentCommand=
     local lastCommand=
     trap 'echo "\"${lastCommand}\" command filed with exit code $?."' EXIT
-    trap 'local lastCommand=${currentCommand}; local currentCommand=${BASH_COMMAND}' DEBUG
+    trap 'lastCommand=${currentCommand}; currentCommand=${BASH_COMMAND}' DEBUG
     # echo an error message before exiting
 
 	runNinja
 
+	configureCached
+
 	local originalLDFlags=""
-    if [[ -f "${originalLDFlagsCache}" ]]; then
-       	true
-    else
-       	# only run configure once
-       	configure
-       	removeADotOut
+    if [[ ! -f "${originalLDFlagsCache}" ]]; then
        	findOriginalLDFlags
     fi
     originalLDFlags=$(cat "${originalLDFlagsCache}")

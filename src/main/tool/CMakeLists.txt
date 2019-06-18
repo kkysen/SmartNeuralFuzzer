@@ -8,5 +8,6 @@ add_custom_target(tool DEPENDS
         tool.ar
         tool.ar.override
         tool.fuzz.autotools
+        tool.fuzz.gnu.utils
         tool.parse
         )

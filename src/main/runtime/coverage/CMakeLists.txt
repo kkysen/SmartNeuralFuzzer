@@ -14,6 +14,7 @@ set(files
         ${files.share.common}
         ${files.share.time}
         ${files.share.io}
+        ${files.share.io.env}
         ${files.share.aio.signal}
         ${files.share.concurrent}
         ${files.share.hook}
