@@ -11,6 +11,11 @@ fuzz() {
     trap 'lastCommand=${currentCommand}; currentCommand=${BASH_COMMAND}' DEBUG
     # echo an error message before exiting
 
+	if [[ -x opt-9 ]]; then
+		echo "opt-9 is not installed"
+		exit 1
+	fi
+
 	local name=${__name}
 
 	if [[ ! -d "${name}" ]]; then
