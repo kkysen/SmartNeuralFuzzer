@@ -12,8 +12,32 @@ Finished
     and it will help reduce the output size since there are less functions than blocks,
     especially when heavily inlined.
 
+    Write a LEB128 output buffer class for compression.
+
+    After testing on "nm-new.coverage `which opt-9-debug` | cxxfilt.coverage",
+    which generated 24 GB of coverage output for cxxfilt along (opt-9 is 1.25 GB),
+    I realized I really need to compress the output in some way,
+    especially since running normal compression tools on the resulting output
+    drastically compresses them:
+    	blocks.bin: 400x smaller
+    	nonSingle.bin: 540x smaller
+    	single.bin: 4800x smaller
+
+    For onBlock, most sequentially executed blocks are near each other,
+    so if I use the difference between adjacent blocks, they'll be all mostly small.
+    Therefore, I can use a varint encoding, such as signed LEB128.
+
+    For onInfiniteBranch, there's no pattern, but varint encoding might still help.
+
+    For onMultiBranch, the numbers are likely very low, so varint encoding will definitely help.
+
+    Results of LEB128 encoding on "nm-new.coverage `which opt-9-debug` | cxxfilt.coverage > /dev/null":
+    	blocks.bin: 7x smaller
+    	nonSingle.bin: 2x smaller
+    Normal compression algorithms still help a lot on top of LEB128.
+
 Next
-	Write a LEB128 output buffer class for compression.
+	Compress single.bin.
 
 Compression
 	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",
