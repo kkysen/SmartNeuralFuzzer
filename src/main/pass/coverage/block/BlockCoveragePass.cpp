@@ -28,7 +28,7 @@ namespace llvm::pass::coverage::block {
       * where !function and !block are true if there's no debug info for them,
       * and where `${index}` is the global index of the block.
       */
-    class BlockIndicesSourceMap {
+    class SourceMap {
     
     private:
         
@@ -54,7 +54,6 @@ namespace llvm::pass::coverage::block {
             }
             
             raw_fd_ostream open() {
-                // TODO I realize I could've used LLVM's fs code, but I like my own better.
                 return raw_fd_ostream(path.string(), ec);
             }
             
@@ -66,13 +65,13 @@ namespace llvm::pass::coverage::block {
             
         };
         
-        explicit BlockIndicesSourceMap(Output output) : _out(output.open()) {
+        explicit SourceMap(Output output) : _out(output.open()) {
             output.check();
         }
     
     public:
         
-        explicit BlockIndicesSourceMap(const Module& module) : BlockIndicesSourceMap(Output(module)) {}
+        explicit SourceMap(const Module& module) : SourceMap(Output(module)) {}
     
     private:
         
@@ -92,9 +91,9 @@ namespace llvm::pass::coverage::block {
     
     public:
         
-        void function(const Function& function) {
+        void function(u64 index, const Function& function) {
             hasDI = function.getSubprogram();
-            out() << "\n" << "function ";
+            out() << "\n" << index << ": ";
             if (!hasDI) {
                 // can always default to raw name, which has to exist
                 out() << function.getName() << " at " << "?:?";
@@ -125,6 +124,22 @@ namespace llvm::pass::coverage::block {
         
     };
     
+}
+
+namespace {
+    
+    using namespace llvm;
+    
+    CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
+        IRBuilder<> builder(&*block.getFirstInsertionPt());
+        IRBuilderExt ext(builder);
+        return *ext.call(f, {ext.constants().getInt(index)});
+    }
+    
+}
+
+namespace llvm::pass::coverage::block {
+    
     class BlockCoveragePass : public ModulePass {
     
     public:
@@ -139,22 +154,24 @@ namespace llvm::pass::coverage::block {
         
         bool runOnModule(Module& module) override {
             const Api api("BlockCoverage", module);
+            FunctionCallee onFunction = api.func<u64>("onFunction");
             FunctionCallee onBlock = api.func<u64>("onBlock");
+            u64 functionIndex = 0;
             u64 blockIndex = 0;
             
-            BlockIndicesSourceMap sourceMap(module);
+            SourceMap sourceMap(module);
             
             return filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        IRBuilder<> builder(&*block.getFirstInsertionPt());
-                        IRBuilderExt ext(builder);
-                        const auto& callInst = *ext.call(onBlock, {ext.constants().getInt(blockIndex)});
+                        const auto& callInst = call(block, onBlock, blockIndex);
                         sourceMap.block(blockIndex, callInst, &block == &block.getParent()->front());
                         blockIndex++;
                         return true;
                     }, [&](Function& function) {
                         errs() << "Block: " << function.getName() << "\n";
-                        sourceMap.function(function);
+                        call(function.front(), onFunction, functionIndex);
+                        sourceMap.function(functionIndex, function);
+                        functionIndex++;
                     });
         }
         

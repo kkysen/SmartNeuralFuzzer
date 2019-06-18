@@ -32,6 +32,8 @@
  * Another option is to just compress the output afterwards, separate from the program.
  */
 
-api(onBlock)(u64 blockNum) noexcept;
+api(onFunction)(u64 functionIndex) noexcept;
+
+api(onBlock)(u64 blockIndex) noexcept;
 
 #undef api

@@ -10,7 +10,7 @@ namespace runtime::coverage {
         return RuntimeOutput("coverage");
     }
     
-    io::Writer writer(const fse::Dir& dir, const std::string& name) {
+    io::Writer writer(const fse::Dir& dir, const std::string& name) noexcept(false) {
         // O_CLOEXEC is so the files all close on exec(), after which our runtime will be gone
         // the exec hooks should handle all this anyway,
         // but it's safer to have the kernel handle it also

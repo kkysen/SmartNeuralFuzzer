@@ -12,19 +12,48 @@ namespace runtime::coverage::block {
     
     private:
         
-        io::WriteBuffer<u64> buffer;
+        struct Buffer {
+            
+            io::WriteBuffer<i64> buffer;
+            u64 lastIndex = 0;
+            
+            void on(u64 index) noexcept {
+                const i64 delta = index - lastIndex;
+                lastIndex = index;
+                buffer << delta;
+            }
+            
+            Buffer& operator<<(u64 index) noexcept {
+                on(index);
+                return *this;
+            }
+            
+            Buffer(const fse::Dir& dir, const std::string& name) noexcept(false)
+                    : buffer(writer(dir, name)) {}
+            
+        };
         
-        u64 lastBlockNum = 0;
+        Buffer function;
+        Buffer block;
     
     public:
         
-        void onBlock(u64 blockNum) noexcept {
-            const u64 delta = math::difference(lastBlockNum, blockNum);
-            lastBlockNum = blockNum;
-            buffer << delta;
+        void onFunction(u64 functionIndex) noexcept {
+            function << functionIndex;
         }
         
-        BlockCoverageRuntime() noexcept(false) : buffer(writer(output().dir.dir("block"), "blocks")) {}
+        void onBlock(u64 blockIndex) noexcept {
+            block << blockIndex;
+        }
+    
+    private:
+        
+        explicit BlockCoverageRuntime(const fse::Dir& dir) noexcept(false)
+        : function(dir, "functions"), block(dir, "blocks") {}
+    
+    public:
+        
+        BlockCoverageRuntime() noexcept(false) : BlockCoverageRuntime(output().dir.dir("block")) {}
         
     };
     
@@ -36,7 +65,12 @@ namespace {
     using runtime::coverage::block::rt;
 }
 
-API_BlockCoverage(onBlock)(u64 blockNum) noexcept {
+API_BlockCoverage(onFunction)(u64 functionIndex) noexcept {
+//    printf("BlockCoverage: onFunction: %ld\n", functionNum);
+    API_rt().onFunction(functionIndex);
+}
+
+API_BlockCoverage(onBlock)(u64 blockIndex) noexcept {
 //    printf("BlockCoverage: onBlock: %ld\n", blockNum);
-    API_rt().onBlock(blockNum);
+    API_rt().onBlock(blockIndex);
 }

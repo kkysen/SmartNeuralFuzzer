@@ -4,12 +4,16 @@ Finished
 	it should search for multiple targets that were generated,
 	and then compile all of them in parallel.
 
-Next
+	Make fuzz.binutils and fuzz.coreutils that download and compile both seamlessly.
+
 	Add a FunctionCoveragePass, which does the exact same thing as BlockCoveragePass,
-	except it traces just functions, not whole blocks.
-	This will be useful for when the user wants to examine the output trace themselves,
-	and it will help reduce the output size since there are less functions than blocks,
-	especially when heavily inlined.
+    except it traces just functions, not whole blocks.
+    This will be useful for when the user wants to examine the output trace themselves,
+    and it will help reduce the output size since there are less functions than blocks,
+    especially when heavily inlined.
+
+Next
+	Write a LEB128 output buffer class for compression.
 
 Compression
 	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",

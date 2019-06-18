@@ -229,7 +229,7 @@ namespace runtime::coverage::branch {
     
     private:
         
-        explicit BranchCoverageRuntime(fse::Dir&& dir) noexcept(false)
+        explicit BranchCoverageRuntime(const fse::Dir& dir) noexcept(false)
                 : count(writer(dir, "counts")),
                   branches(writer(dir, "single"), writer(dir, "nonSingle")) {}
     
