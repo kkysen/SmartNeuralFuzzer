@@ -44,9 +44,7 @@ configure() {
 }
 
 removeADotOut() {
-	for file in $(find . -name "a.out.*"); do
-		rm -f ${file}
-	done
+	rm -f $(find . -name "a.out.*")
 }
 
 configureCached() {
@@ -55,8 +53,8 @@ configureCached() {
 	    # only run configure once
 		configure
 		touch ${lock}
-		removeADotOut
 	fi
+	removeADotOut
 }
 
 findOriginalLDFlags() {

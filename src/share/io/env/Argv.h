@@ -6,8 +6,9 @@
 
 #include "src/share/lib/corrade/CorradeArrayView.h"
 
+#include "llvm/ADT/SmallVector.h"
+
 #include <string>
-#include <vector>
 
 namespace env {
     
@@ -16,7 +17,7 @@ namespace env {
     class Argv {
         
         std::string raw;
-        std::vector<std::string_view> args;
+        llvm::SmallVector<std::string_view, 5> args;
         std::string_view _programName;
     
     private:
@@ -41,6 +42,14 @@ namespace env {
         
         constexpr std::string_view operator[](size_t i) const noexcept {
             return args[i];
+        }
+        
+        constexpr auto begin() const noexcept {
+            return args.begin();
+        }
+        
+        constexpr auto end() const noexcept {
+            return args.end();
         }
         
         constexpr std::string_view programName() const noexcept {

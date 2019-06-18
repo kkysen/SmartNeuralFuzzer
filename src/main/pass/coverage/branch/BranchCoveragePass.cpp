@@ -125,8 +125,8 @@ namespace llvm::pass::coverage::branch {
             return filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
                         return BlockPass(flags, onBranch, block).trace();
-                    }, [](Function& function) {
-                        errs() << "Branch: " << function.getName() << "\n";
+                    }, [](Function&) {
+//                        errs() << "Branch: " << function.getName() << "\n";
                     });
         }
         

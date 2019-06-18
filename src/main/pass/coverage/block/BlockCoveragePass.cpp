@@ -6,6 +6,8 @@
 #include "src/share/llvm/lib/conversions.h"
 #include "src/share/llvm/debug.h"
 #include "src/share/io/fse.h"
+#include "src/share/io/env/Argv.h"
+#include "src/share/stde/compareEnds.h"
 
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Support/raw_ostream.h"
@@ -13,6 +15,39 @@
 
 #include <numeric>
 #include <fstream>
+
+namespace {
+    
+    using env::Argv;
+    using llvm::Module;
+    
+    std::string_view tryGetSourceMapNameFromArgv() {
+        bool next = false;
+        for (const auto& arg : Argv::get()) {
+            if (arg == "-o") {
+                next = true;
+            } else if (next) {
+                const std::string_view ext = ".0.6.coverage.bc";
+                if (stde::endsWith(arg, ext)) {
+                    return arg.substr(0, arg.size() - ext.size());
+                }
+                break;
+            }
+        }
+        return {};
+    }
+    
+    void getSourceMapName(const Module& module, fs::path& path) {
+        const std::string_view argvName = tryGetSourceMapNameFromArgv();
+        if (argvName.data()) {
+            path = argvName;
+        } else {
+            path = module.getSourceFileName();
+            path.replace_extension();
+        }
+    }
+    
+}
 
 namespace llvm::pass::coverage::block {
     
@@ -49,7 +84,7 @@ namespace llvm::pass::coverage::block {
             fs::path path;
             
             explicit Output(const Module& module) {
-                path = module.getSourceFileName();
+                getSourceMapName(module, path);
                 path += ".blocks.map";
             }
             
@@ -168,7 +203,7 @@ namespace llvm::pass::coverage::block {
                         blockIndex++;
                         return true;
                     }, [&](Function& function) {
-                        errs() << "Block: " << function.getName() << "\n";
+//                        errs() << "Block: " << function.getName() << "\n";
                         call(function.front(), onFunction, functionIndex);
                         sourceMap.function(functionIndex, function);
                         functionIndex++;
