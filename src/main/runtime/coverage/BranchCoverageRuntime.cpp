@@ -159,16 +159,37 @@ namespace runtime::coverage::branch {
         private:
             
             struct Record {
-                u32 bitIndexDiff: 31;
-                bool isMultiple: 1;
-                u32 low;
-                u32 high;
+                
+                union {
+                    struct {
+                        u32 bitIndexDiff: 31;
+                        bool isMultiple: 1;
+                    };
+                    i32 combined;
+                };
+                union {
+                    struct {
+                        u32 low;
+                        u32 high;
+                    };
+                    u64 both;
+                };
+                
+                void print(io::LEB128WriteBuffer& out) noexcept {
+                    out << combined;
+                    if (isMultiple) {
+                        out << low << high;
+                    } else {
+                        out << both;
+                    }
+                }
+                
             };
             
-            io::WriteBuffer<Record> buffer;
+            io::LEB128WriteBuffer buffer;
             
             void onRecord(Record record) noexcept {
-                buffer << record;
+                record.print(buffer);
             }
         
         public:
