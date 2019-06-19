@@ -22,11 +22,11 @@ public:
     constexpr LazilyConstructed() noexcept = default;
     
     constexpr bool exists() const noexcept {
-        return instance > destructed;
+        return __builtin_expect(instance > destructed, true);
     }
     
     constexpr bool isDestructed() const noexcept {
-        return instance == destructed;
+        return __builtin_expect(instance == destructed, false);
     }
     
     explicit constexpr operator bool() const noexcept {

@@ -39,6 +39,11 @@ Finished
 Next
 	Compress single.bin.
 
+	Investigate the performance degradation when adding the coverage.
+	"nm-new.coverage `which opt-9-debug` | cxxfilt.coverage > /dev/null" took ~8 minutes,
+	but "nm-new `which opt-9-debug` | cxxfilt > /dev/null" only took ~8 seconds.
+	I'm trying to figure out how to profile it now using clang (apparently gprof doesn't work).
+
 Compression
 	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",
 	which generated 24 GB of coverage output for cxxfilt along (opt-9 is 1.25 GB),

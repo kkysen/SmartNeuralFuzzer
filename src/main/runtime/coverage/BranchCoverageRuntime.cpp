@@ -162,10 +162,10 @@ namespace runtime::coverage::branch {
                 
                 union {
                     struct {
-                        u32 bitIndexDiff: 31;
                         bool isMultiple: 1;
+                        u32 bitIndexDiff: 31;
                     };
-                    i32 combined;
+                    u32 combined;
                 };
                 union {
                     struct {
