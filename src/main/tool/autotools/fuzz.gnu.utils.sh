@@ -51,7 +51,7 @@ fuzz() {
 		cp ${ldFlagsFile} __LDFLAGS.txt
 	fi
 
-	${binDir}/fuzz.autotools
+	${binDir}/fuzz.autotools "$@"
 }
 
-fuzz
+fuzz "$@"

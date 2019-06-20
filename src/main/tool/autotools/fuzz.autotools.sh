@@ -12,6 +12,9 @@ flto="-flto -fuse-ld=lld" # flto makes .o files .bc files
 myLDFLAGS="${flto} -Wl,-plugin-opt=save-temps" # generates .bc files also
 
 clean() {
+	echo "clean not implemented yet"
+	exit 1
+
     local target=${1}
     local what=${2}
 
@@ -63,7 +66,7 @@ findOriginalLDFlags() {
 }
 
 runMake() {
-	make -j$(getconf _NPROCESSORS_ONLN)
+	make -j$(getconf _NPROCESSORS_ONLN) ${1}
 }
 
 compileTarget() {
@@ -107,10 +110,11 @@ compileTarget() {
 	fi
 }
 
-compileAllTargets() {
-	local originalLDFlags=${1}
+compileAllTargetsMatching() {
+	local pattern=${1}
+	local originalLDFlags=${2}
 	local targetSuffix=".0.5.precodegen.bc"
-	local targets=$(find . -name "*${targetSuffix}" \
+	local targets=$(find . -name "${pattern}${targetSuffix}" \
 		| sed -e s/${targetSuffix}// \
 		| grep -vE "*.so" \
 	)
@@ -120,23 +124,41 @@ compileAllTargets() {
 	wait
 }
 
+compileAllTargets() {
+	local originalLDFlags=${1}
+	compileAllTargetsMatching "*" "${originalLDFlags}"
+}
+
 usage() {
 	echo "usage: ${0} [-clean [coverage | all]]"
 	exit 1
 }
 
-fuzz() {
-#    if [[ $# == 0 ]]; then
-#        echo "usage: ${0} <target executable> [-clean [coverage | all]]"
-#        return 1
-#    fi
-#    local option=${1}
-#    if [[ "${option}" == "-clean" ]]; then
-#        clean ${target} ${3}
-#        return
-#    fi
+compile() {
+	local target=${1}
 
-    # exit when any command fails
+	runNinja
+	configureCached
+
+	local originalLDFlags=""
+    if [[ ! -f "${originalLDFlagsCache}" ]]; then
+       	findOriginalLDFlags
+    fi
+    originalLDFlags=$(cat "${originalLDFlagsCache}")
+
+	# it's easier just to re-make all targets
+	# this shouldn't happen (i.e. not cached) very often
+	runMake
+
+	if [[ "${target}" == "" ]]; then
+		compileAllTargets "${originalLDFlags}"
+	else
+		compileAllTargetsMatching ${target} "${originalLDFlags}"
+	fi
+}
+
+fuzz() {
+	# exit when any command fails
     set -e
 
     # keep track of the last executed command
@@ -146,19 +168,21 @@ fuzz() {
     trap 'lastCommand=${currentCommand}; currentCommand=${BASH_COMMAND}' DEBUG
     # echo an error message before exiting
 
-	runNinja
-
-	configureCached
-
-	local originalLDFlags=""
-    if [[ ! -f "${originalLDFlagsCache}" ]]; then
-       	findOriginalLDFlags
+    if [[ "${1}" == "-h" ]]; then
+    	usage
+    elif [[ "${1}" == "-help" ]]; then
+    	usage
+    elif [[ "${1}" == "--help" ]]; then
+    	usage
+    elif [[ "${1}" == "-c" ]]; then
+    	clean "${2}" "${3}"
+    elif [[ "${1}" == "-clean" ]]; then
+    	clean "${2}" "${3}"
+    elif [[ "${1}" == "--clean" ]]; then
+    	clean "${2}" "${3}"
+    else
+    	compile "${1}"
     fi
-    originalLDFlags=$(cat "${originalLDFlagsCache}")
-
-	runMake
-
-	compileAllTargets "${originalLDFlags}"
 }
 
 fuzz "$@"

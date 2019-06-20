@@ -165,12 +165,12 @@ namespace runtime::coverage::branch {
         private:
             
             class Average {
-
+            
             private:
                 
                 f64 total = 0;
                 u64 count = 0;
-
+            
             public:
                 
                 template <typename T>
@@ -194,7 +194,7 @@ namespace runtime::coverage::branch {
                 }
                 
             };
-    
+            
             struct VarintAverages {
                 
                 Average combined;
@@ -271,7 +271,7 @@ namespace runtime::coverage::branch {
         public:
             
             constexpr NonSingleBranches(Counts& counts, io::Writer&& write) noexcept
-            : counts(counts), buffer(std::move(write)) {}
+                    : counts(counts), buffer(std::move(write)) {}
             
             deleteCopy(NonSingleBranches);
             
@@ -310,8 +310,8 @@ namespace runtime::coverage::branch {
             
             explicit Branches(const fse::Dir& dir) noexcept
                     : count(writer(dir, "counts")),
-                    single(count, writer(dir, "single")),
-                    nonSingle(count, writer(dir, "nonSingle")) {}
+                      single(count, writer(dir, "single")),
+                      nonSingle(count, writer(dir, "nonSingle")) {}
             
         } branches;
     
