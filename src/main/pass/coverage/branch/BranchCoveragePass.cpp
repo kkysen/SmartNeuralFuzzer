@@ -2,6 +2,7 @@
 // Created by Khyber on 2/14/2019.
 //
 
+#include <src/share/llvm/debug.h>
 #include "src/main/pass/coverage/includes.h"
 
 namespace llvm::pass::coverage::branch {
@@ -70,8 +71,8 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            void traceSwitchCase(const SwitchInst::CaseHandle& caseHandle, u32 caseNum, u32 numCases) {
-                IRBuilder<> builder(&caseHandle.getCaseSuccessor()->front());
+            void traceSwitchCase(BasicBlock* blockPtr, u32 caseNum, u32 numCases) {
+                IRBuilder<> builder(blockPtr);
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 ext.call(onBranch.multi, {constants.getInt(caseNum), constants.getInt(numCases)});
@@ -89,11 +90,29 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 
-                // insert tracing code into each BasicBlock for each case
-                auto i = 0u;
-                traceSwitchCase(*switchInst.case_default(), i++, numCases);
+                // each branch can have multiple cases
+                // i.e., multiple cases can go to the same successor block,
+                // but it's only 1 real branch in that case
+                
+                SmallPtrSet<BasicBlock*, 8> successors;
+                successors.insert(switchInst.case_default()->getCaseSuccessor());
                 for (const auto& caseHandle : switchInst.cases()) {
-                    traceSwitchCase(caseHandle, i++, numCases);
+                    successors.insert(caseHandle.getCaseSuccessor());
+                }
+                successors.erase(nullptr);
+                
+                const auto numBranches = successors.size();
+                if (numBranches <= 1) {
+                    // still an unconditional jump to the same successor block
+                    return false;
+                }
+                
+                llvm_dbg(std::pair(numBranches, numCases));
+
+                // insert tracing code into each successor BasicBlock for each branch
+                auto i = 0u;
+                for (auto* successor : successors) {
+                    traceSwitchCase(successor, i++, numBranches);
                 }
                 return true;
             }

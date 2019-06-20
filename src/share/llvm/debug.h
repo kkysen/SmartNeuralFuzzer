@@ -21,6 +21,12 @@ namespace llvm {
     
     raw_ostream& operator<<(raw_ostream& out, Type::TypeID typeId);
     
+    template <typename A, typename B>
+    raw_ostream& operator<<(raw_ostream& out, const std::pair<A, B>& pair) {
+        const auto& [a, b] = pair;
+        return out << "(" << a << ", " << b << ")";
+    }
+    
 }
 
 #define llvm_debug() _debug(llvm::errs())

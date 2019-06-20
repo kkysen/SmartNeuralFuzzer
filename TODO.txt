@@ -192,6 +192,10 @@ onMultiBranch Bugfix and Compression
     Many of the switch cases return to the same block,
     causing repeated onMultiBranch() calls for that block.
 
+    For example, in d_count_templates_scopes(), which is one of the main demangling functions used in cxxfilt,
+    there is a switch statement with 82 cases, with one of the logical branches, probably the most common,
+    having 62 cases go into it (meaning each time it records 62 multi branches), and on top of that it's recursive.
+
     This is bad for two reasons:
     Firstly, each time on of those cases is taken,
     all of the onMultiBranch() calls are made, when only one should be.
@@ -205,3 +209,24 @@ onMultiBranch Bugfix and Compression
     Also, this is the perfect case for profile-guided optimization.
     I can sort the multi branches by probability,
     so once varint encoded, the most likely branches produce the least output.
+
+onNonSingleBranch repeats
+	In a switch statement (a multi branch), one successor block might later jump to one of the other successor blocks.
+	In this case, onMultiBranch() gets called twice, but it was only supposed to be called once.
+	This is a behavior unique to switch statements due to their fall-through behavior.
+	The fall-through behavior allows multiple cases to go the same successor block.
+	We record the switch/case value immediately before the switch instruction, like we do for br instructions,
+	but then we record extra information for when multiple cases are mapped to a single successor block.
+	Therefore, we want to place the onMultiBranch() call at the beginning of the successor block.
+	But that block can be entered in other ways.
+	We can check if this is the case by checking if the successor block has predecessor blocks other than the switch block.
+	Only in this case do we need to fix the runtime behavior.
+
+	To fix this, we add two more onMultiBranch APIs:
+    	api(onSwitchCase)(bool valid, u32 branchNum, u32 numBranches) noexcept;
+    Before the switch instruction, we insert a boolean local variable set to true
+    to indicate that a switch instruction is going to execute.
+    It's important that this variable is on the stack so that it is thread safe.
+    Then onSwitchCase() is called with the boolean variable as the first argument.
+    onSwitchCase() then calls onMultiBranch() if valid is true.
+    The boolean variable is then set to false so that no other successor blocks erroneously call onMultiBranch().
