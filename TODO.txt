@@ -44,6 +44,12 @@ Next
 	but "nm-new `which opt-9-debug` | cxxfilt > /dev/null" only took ~8 seconds.
 	I'm trying to figure out how to profile it now using clang (apparently gprof doesn't work).
 
+	Running perf on cxxfilt.coverage showed that most of the time is spent in __BranchCoverage_onMultiBranch()
+	calling pwrite(), because while non-single branches are buffered,
+	I flush the counts on each non-single branch, because I thought they were a lot rarer than they are.
+	This just means that I shouldn't flush the counts every time,
+	or maybe I should just mmap the memory for the counts so it's just a simple store instead of pwrite.
+
 Compression
 	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",
 	which generated 24 GB of coverage output for cxxfilt along (opt-9 is 1.25 GB),
@@ -103,3 +109,51 @@ Parser
 Others
 	Make Mask constexpr, will be much faster in critical sections
 
+Meta Compression
+	Junfeng gave me a great idea about how to drastically reduce the amount of output generated.
+
+	First, the branch coverage should be enough to fully recover the block coverage,
+	and from the block coverage the function coverage can be trivially recovered.
+
+	The branch coverage tells us all the decisions the code makes and what path it takes,
+	so from that, I can easily tell the order of blocks the program goes through.
+	The branch coverage output for single branches is much smaller (even uncompressed)
+	than the block coverage output, so this should be a big win.
+	The branch coverage output for multi branches (switch case) can be bigger,
+	but I'm still working on compressing it further.
+
+	The only place it can go wrong is on "infinite" branches,
+	i.e. where the program jumps to another variable location and starts executing,
+	like calling a function pointer or a virtual method call.
+
+	It may be possible to reduce some of these to multi branches,
+	such as virtual method calls (there are a limited number of classes whose virtual methods may be called),
+	or function pointers that are only assigned a limited number of constant pointers.
+
+	However, we could also bring back the block coverage just for these cases.
+	In __BranchCoverage_onInfiniteBranch(), we can set a flag indicating an infinite branch has just been made.
+	Then in __BlockCoverage_onBlock(), we can check this flag, and if true,
+	record the current block (or delta) instead of the function address.
+
+	Second, beyond storing single branches as repetition counts (which I'm not sure is always common),
+	there's another way to drastically reduce the branch coverage output.
+	Essentially, we can use profile guided optimization for this.
+	On the first run, or the first few, we record the full output.
+	From the output, we determine the most common branch in all cases (single, multi, infinite),
+	and then when running the program again, don't record any output for the most common branch,
+	and when parsing the output, interpret the absence of output
+	as indication that the most common branch was taken.
+
+	However, I'm not totally sure if this will work, at least for single branches.
+	A single branch can be stored in a single bit, which is already really small,
+	and since we don't where (which block) each branch came from, we can't tell the difference
+	between a missing branch and just the next branch.
+	If repetition counts are worth it, then single branches will be compressed even more,
+	so I don't think this should be that much of an issue.
+
+	This could work, however, for non-single branches, where there are a lot more possibilities in general.
+	I think we still need to save some output for the most common branch
+	since we still don't know where the branch is.
+	But these are variable (LEB128 varint) outputs, so we can select the smallest for the most common output.
+	For example, we could store 0 for the most common branch,
+	make the delta unsigned (store sign bit as LSB), and then add 1 to each delta.
