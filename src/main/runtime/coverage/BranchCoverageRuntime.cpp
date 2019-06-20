@@ -7,6 +7,7 @@
 #include "src/main/runtime/coverage/include.h"
 
 #include <numeric>
+#include <iostream>
 
 namespace runtime::coverage::branch {
     
@@ -67,6 +68,8 @@ namespace runtime::coverage::branch {
             Size bitIndex = 0;
             Size bitIndexDiff = 0;
             
+            Counts& counts;
+            
             struct shift {
                 
                 static constexpr Size byte = 3;
@@ -107,6 +110,7 @@ namespace runtime::coverage::branch {
             
             void writeBuffer(size_t numBytes = sizeof(buffer)) noexcept {
                 write(buffer.begin(), numBytes);
+                counts.flush();
             }
             
             void flush() noexcept {
@@ -132,7 +136,8 @@ namespace runtime::coverage::branch {
         
         public:
             
-            explicit constexpr SingleBranches(io::Writer&& write) noexcept : write(std::move(write)) {}
+            constexpr SingleBranches(Counts& counts, io::Writer&& write) noexcept
+                    : counts(counts), write(std::move(write)) {}
             
             deleteCopy(SingleBranches);
             
@@ -141,6 +146,7 @@ namespace runtime::coverage::branch {
             }
             
             void on(bool value) noexcept {
+                counts.branches.single++;
                 buffer[chunkIndex()] |= static_cast<u64>(value) << chunkBitIndex();
                 bitIndex++;
                 bitIndexDiff++;
@@ -157,6 +163,57 @@ namespace runtime::coverage::branch {
         class NonSingleBranches {
         
         private:
+            
+            class Average {
+
+            private:
+                
+                f64 total = 0;
+                u64 count = 0;
+
+            public:
+                
+                template <typename T>
+                constexpr void on(T t) noexcept {
+                    total += static_cast<f64>(t);
+                    count++;
+                }
+                
+                template <typename T>
+                constexpr Average& operator<<(T t) noexcept {
+                    on(t);
+                    return *this;
+                }
+                
+                constexpr f64 get() const noexcept {
+                    return total / count;
+                }
+                
+                /*implicit*/ constexpr operator f64() const noexcept {
+                    return get();
+                }
+                
+            };
+    
+            struct VarintAverages {
+                
+                Average combined;
+                Average low;
+                Average high;
+                Average both;
+                
+                void print(std::ostream& out) const noexcept {
+                    out << '\n';
+                    #define _(field) out << ""#field ": " << field << '\n';
+                    _(combined);
+                    _(low);
+                    _(high);
+                    _(both);
+                    #undef _
+                    out << std::endl;
+                }
+                
+            } varintAverages;
             
             struct Record {
                 
@@ -175,30 +232,56 @@ namespace runtime::coverage::branch {
                     u64 both;
                 };
                 
-                void print(io::LEB128WriteBuffer& out) noexcept {
+                void print(io::LEB128WriteBuffer& out, VarintAverages& averages) const noexcept {
+                    averages.combined << combined;
                     out << combined;
                     if (isMultiple) {
+                        averages.low << low;
+                        averages.high << high;
                         out << low << high;
                     } else {
+                        averages.both << both;
                         out << both;
                     }
+//                    averages.combined << out.on(combined);
+//                    if (isMultiple) {
+//                        averages.low << out.on(low);
+//                        averages.high << out.on(high);
+//                    } else {
+//                        averages.both << out.on(both);
+//                    }
                 }
                 
             };
             
+            Counts& counts;
+            
             io::LEB128WriteBuffer buffer;
             
             void onRecord(Record record) noexcept {
-                record.print(buffer);
+                static_assert(decltype(buffer.buffer)::size() > sizeof(record) * 2);
+                const size_t lastIndex = buffer.buffer.currentIndex();
+                record.print(buffer, varintAverages);
+                if (buffer.buffer.currentIndex() < lastIndex) {
+                    // means buffer was flushed
+                    counts.flush();
+                }
             }
         
         public:
             
-            explicit constexpr NonSingleBranches(io::Writer&& write) noexcept : buffer(std::move(write)) {}
+            constexpr NonSingleBranches(Counts& counts, io::Writer&& write) noexcept
+            : counts(counts), buffer(std::move(write)) {}
             
             deleteCopy(NonSingleBranches);
             
+            ~NonSingleBranches() {
+                counts.flush();
+                varintAverages.print(std::cerr);
+            }
+            
             void onMulti(u32 branchNum, u32 numBranches, u32 bitIndexDiff) noexcept {
+                counts.branches.multi++;
                 onRecord({
                                  .bitIndexDiff = bitIndexDiff,
                                  .isMultiple = static_cast<u32>(true),
@@ -208,6 +291,7 @@ namespace runtime::coverage::branch {
             }
             
             void onInfinite(u64 address, u32 bitIndexDiff) noexcept {
+                counts.branches.infinite++;
                 onRecord({
                                  .bitIndexDiff = bitIndexDiff,
                                  .isMultiple = static_cast<u32>(false),
@@ -218,47 +302,35 @@ namespace runtime::coverage::branch {
             
         };
         
-        Counts count;
-        
         struct Branches {
             
+            Counts count;
             SingleBranches single;
             NonSingleBranches nonSingle;
             
-            constexpr Branches(io::Writer&& singleWrite, io::Writer&& nonSingleWrite) noexcept
-                    : single(std::move(singleWrite)), nonSingle(std::move(nonSingleWrite)) {}
+            explicit Branches(const fse::Dir& dir) noexcept
+                    : count(writer(dir, "counts")),
+                    single(count, writer(dir, "single")),
+                    nonSingle(count, writer(dir, "nonSingle")) {}
             
         } branches;
     
     public:
         
         void onSingleBranch(bool value) noexcept {
-            count.branches.single++;
             branches.single << value;
         }
         
         void onMultiBranch(u32 branchNum, u32 numBranches) noexcept {
-            count.branches.multi++;
             branches.nonSingle.onMulti(branchNum, numBranches, branches.single.resetBitIndexDiff());
-            count.flush();
         }
         
         void onInfiniteBranch(void* address) noexcept {
-            count.branches.infinite++;
             branches.nonSingle.onInfinite(reinterpret_cast<u64>(address), branches.single.resetBitIndexDiff());
-            count.flush();
         }
-    
-    private:
-        
-        explicit BranchCoverageRuntime(const fse::Dir& dir) noexcept(false)
-                : count(writer(dir, "counts")),
-                  branches(writer(dir, "single"), writer(dir, "nonSingle")) {}
-    
-    public:
         
         explicit BranchCoverageRuntime() noexcept(false)
-                : BranchCoverageRuntime(output().dir.dir("branch")) {}
+                : branches(output().dir.dir("branch")) {}
         
     };
     

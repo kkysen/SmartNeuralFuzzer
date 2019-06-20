@@ -22,6 +22,18 @@ namespace io {
         
         std::array<T, bufferSize> buffer = {};
         size_t index = 0;
+
+    public:
+        
+        static constexpr size_t size() noexcept {
+            return bufferSize;
+        }
+        
+        constexpr size_t currentIndex() const noexcept {
+            return index;
+        }
+
+    private:
         
         const Writer write;
         
