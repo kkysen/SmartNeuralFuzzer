@@ -36,9 +36,6 @@ Finished
     	nonSingle.bin: 2x smaller
     Normal compression algorithms still help a lot on top of LEB128.
 
-Next
-	Compress single.bin.
-
 	Investigate the performance degradation when adding the coverage.
 	"nm-new.coverage `which opt-9-debug` | cxxfilt.coverage > /dev/null" took ~8 minutes,
 	but "nm-new `which opt-9-debug` | cxxfilt > /dev/null" only took ~8 seconds.
@@ -49,6 +46,20 @@ Next
 	I flush the counts on each non-single branch, because I thought they were a lot rarer than they are.
 	This just means that I shouldn't flush the counts every time,
 	or maybe I should just mmap the memory for the counts so it's just a simple store instead of pwrite.
+
+    I fixed most of the slow performance by only flushing the counts
+    when the buffer is flushed also.
+    Since the buffers are unconditionally flushed on program exit/crash,
+    the counts will be saved always as well.
+
+    This removes pwrite() and __BranchCoverage_onMultiBranch() as a hotspot
+    in the perf flamegraph, speeding up execution of cxxfilt.coverage by ~10x.
+    It's still ~10x slower than the un-instrumented cxxfilt, though.
+
+Next
+	onMultiBranch Bugfix and Compression
+
+	Compress single.bin.
 
 Compression
 	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",
@@ -157,3 +168,40 @@ Meta Compression
 	But these are variable (LEB128 varint) outputs, so we can select the smallest for the most common output.
 	For example, we could store 0 for the most common branch,
 	make the delta unsigned (store sign bit as LSB), and then add 1 to each delta.
+
+onMultiBranch Bugfix and Compression
+	I noticed that nonSingle.bin was getting very large,
+    even bigger than blocks.bin on many occasions.
+    The number of switch cases is generally small, so this seemed odd.
+    After collecting averages of LEB128 bytes used for each non-single branch part, and averages of the actual non-single branch parts,
+    I think I discovered the reason.
+
+    While LEB128 sizes still averaged ~1 byte,
+    the combined (1 bit + single branch bit index diff) averaged only ~4,
+    which is actually pretty small but expected based on how many switch cases there are.
+    But the low (switch value) averaged ~34 and high (num cases) averaged ~77.
+
+    This is extremely high, but it's also a product of the specific program.
+    cxxfilt uses a lot of large switch statements,
+    more than most programs, especially more modern programs.
+    There's not much I can do about this, however,
+    since the program was just written this way.
+
+    But in looking through the instrumented IR,
+    I discovered that there are a ton of redundant onMultiBranch() calls.
+    Many of the switch cases return to the same block,
+    causing repeated onMultiBranch() calls for that block.
+
+    This is bad for two reasons:
+    Firstly, each time on of those cases is taken,
+    all of the onMultiBranch() calls are made, when only one should be.
+
+    Secondly, this repetition of return blocks
+    means that there are a lot fewer actual branches in the switch.
+    When I instrument the code, I can keep track of the actual number of branches.
+    This will also reduce each of the switch values and the number of cases,
+    which will reduce the varint encoding output.
+
+    Also, this is the perfect case for profile-guided optimization.
+    I can sort the multi branches by probability,
+    so once varint encoded, the most likely branches produce the least output.
