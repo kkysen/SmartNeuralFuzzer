@@ -2,7 +2,6 @@
 // Created by Khyber on 2/14/2019.
 //
 
-#include <src/share/llvm/debug.h>
 #include "src/main/pass/coverage/includes.h"
 
 namespace llvm::pass::coverage::branch {
@@ -71,8 +70,8 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            void traceSwitchCase(BasicBlock* blockPtr, u32 caseNum, u32 numCases) {
-                IRBuilder<> builder(blockPtr);
+            void traceSwitchCase(BasicBlock& block, u32 caseNum, u32 numCases) {
+                IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 ext.call(onBranch.multi, {constants.getInt(caseNum), constants.getInt(numCases)});
@@ -95,11 +94,22 @@ namespace llvm::pass::coverage::branch {
                 // but it's only 1 real branch in that case
                 
                 SmallPtrSet<BasicBlock*, 8> successors;
-                successors.insert(switchInst.case_default()->getCaseSuccessor());
-                for (const auto& caseHandle : switchInst.cases()) {
-                    successors.insert(caseHandle.getCaseSuccessor());
+                {
+                    BasicBlock* block = switchInst.case_default()->getCaseSuccessor();
+                    if (block) {
+                        successors.insert(block);
+                    }
+                    const BasicBlock* lastBlock = block;
+                    for (const auto& caseHandle : switchInst.cases()) {
+                        block = caseHandle.getCaseSuccessor();
+                        // cases are usually already in order, so this is just an optimization
+                        if (!block || block == lastBlock) {
+                            continue;
+                        }
+                        successors.insert(block);
+                        lastBlock = block;
+                    }
                 }
-                successors.erase(nullptr);
                 
                 const auto numBranches = successors.size();
                 if (numBranches <= 1) {
@@ -107,12 +117,10 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 
-                llvm_dbg(std::pair(numBranches, numCases));
-
                 // insert tracing code into each successor BasicBlock for each branch
                 auto i = 0u;
                 for (auto* successor : successors) {
-                    traceSwitchCase(successor, i++, numBranches);
+                    traceSwitchCase(*successor, i++, numBranches);
                 }
                 return true;
             }
@@ -144,8 +152,6 @@ namespace llvm::pass::coverage::branch {
             return filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
                         return BlockPass(flags, onBranch, block).trace();
-                    }, [](Function&) {
-//                        errs() << "Branch: " << function.getName() << "\n";
                     });
         }
         

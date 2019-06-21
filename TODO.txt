@@ -1,4 +1,6 @@
-Finished
+	Finished
+
+Compilation Tooling
 	Make fuzz.autotools.sh more robust to handle binutils.
 	Specifically, it should handle originalLDFLAGS.txt better,
 	it should search for multiple targets that were generated,
@@ -6,12 +8,14 @@ Finished
 
 	Make fuzz.binutils and fuzz.coreutils that download and compile both seamlessly.
 
+FunctionCoveragePass
 	Add a FunctionCoveragePass, which does the exact same thing as BlockCoveragePass,
     except it traces just functions, not whole blocks.
     This will be useful for when the user wants to examine the output trace themselves,
     and it will help reduce the output size since there are less functions than blocks,
     especially when heavily inlined.
 
+LEB128 Varint Encoding Compression
     Write a LEB128 output buffer class for compression.
 
     After testing on "nm-new.coverage `which opt-9-debug` | cxxfilt.coverage",
@@ -36,6 +40,7 @@ Finished
     	nonSingle.bin: 2x smaller
     Normal compression algorithms still help a lot on top of LEB128.
 
+Runtime Performance Optimization
 	Investigate the performance degradation when adding the coverage.
 	"nm-new.coverage `which opt-9-debug` | cxxfilt.coverage > /dev/null" took ~8 minutes,
 	but "nm-new `which opt-9-debug` | cxxfilt > /dev/null" only took ~8 seconds.
@@ -56,13 +61,65 @@ Finished
     in the perf flamegraph, speeding up execution of cxxfilt.coverage by ~10x.
     It's still ~10x slower than the un-instrumented cxxfilt, though.
 
+onMultiBranch Bugfix and Compression
+	I noticed that nonSingle.bin was getting very large,
+    even bigger than blocks.bin on many occasions.
+    The number of switch cases is generally small, so this seemed odd.
+    After collecting averages of LEB128 bytes used for each non-single branch part, and averages of the actual non-single branch parts,
+    I think I discovered the reason.
+
+    While LEB128 sizes still averaged ~1 byte,
+    the combined (1 bit + single branch bit index diff) averaged only ~4,
+    which is actually pretty small but expected based on how many switch cases there are.
+    But the low (switch value) averaged ~34 and high (num cases) averaged ~77.
+
+    This is extremely high, but it's also a product of the specific program.
+    cxxfilt uses a lot of large switch statements,
+    more than most programs, especially more modern programs.
+    There's not much I can do about this, however,
+    since the program was just written this way.
+
+    But in looking through the instrumented IR,
+    I discovered that there are a ton of redundant onMultiBranch() calls.
+    Many of the switch cases return to the same block,
+    causing repeated onMultiBranch() calls for that block.
+
+    For example, in d_count_templates_scopes(), which is one of the main demangling functions used in cxxfilt,
+    there is a switch statement with 82 cases, with one of the logical branches, probably the most common,
+    having 62 cases go into it (meaning each time it records 62 multi branches), and on top of that it's recursive.
+
+    This is bad for two reasons:
+    Firstly, each time on of those cases is taken,
+    all of the onMultiBranch() calls are made, when only one should be.
+
+    Secondly, this repetition of return blocks
+    means that there are a lot fewer actual branches in the switch.
+    When I instrument the code, I can keep track of the actual number of branches.
+    This will also reduce each of the switch values and the number of cases,
+    which will reduce the varint encoding output.
+
+    Also, this is the perfect case for profile-guided optimization.
+    I can sort the multi branches by probability,
+    so once varint encoded, the most likely branches produce the least output.
+
+	After fixing this, nonSingle.bin got a lot smaller on switch-case heavy programs.
+	"nm-new.coverage `which opt-9-debug` | cxxfilt.coverage" now generates
+	232 MB of nonSingle.bin instead of 5685 MB, a 25x improvement.
+
+	The averages also changed a lot:
+		combined: ~21 instead of ~4, which is expected, since there's no more onMultiBranch() calls in a row.
+		low: ~13 instead of ~34
+		high: ~24 instead of ~77, both of which are sizeable improvements.
+
+	TODO
+
 Next
 	onMultiBranch Bugfix and Compression
 
 	Compress single.bin.
 
 Compression
-	After testing on "nm-new.coverage `which opt-9` | cxxfilt.coverage",
+	After testing on "nm-new.coverage `which opt-9-debug` | cxxfilt.coverage",
 	which generated 24 GB of coverage output for cxxfilt along (opt-9 is 1.25 GB),
 	I realized I really need to compress the output in some way,
 	especially since running normal compression tools on the resulting output
@@ -168,47 +225,6 @@ Meta Compression
 	But these are variable (LEB128 varint) outputs, so we can select the smallest for the most common output.
 	For example, we could store 0 for the most common branch,
 	make the delta unsigned (store sign bit as LSB), and then add 1 to each delta.
-
-onMultiBranch Bugfix and Compression
-	I noticed that nonSingle.bin was getting very large,
-    even bigger than blocks.bin on many occasions.
-    The number of switch cases is generally small, so this seemed odd.
-    After collecting averages of LEB128 bytes used for each non-single branch part, and averages of the actual non-single branch parts,
-    I think I discovered the reason.
-
-    While LEB128 sizes still averaged ~1 byte,
-    the combined (1 bit + single branch bit index diff) averaged only ~4,
-    which is actually pretty small but expected based on how many switch cases there are.
-    But the low (switch value) averaged ~34 and high (num cases) averaged ~77.
-
-    This is extremely high, but it's also a product of the specific program.
-    cxxfilt uses a lot of large switch statements,
-    more than most programs, especially more modern programs.
-    There's not much I can do about this, however,
-    since the program was just written this way.
-
-    But in looking through the instrumented IR,
-    I discovered that there are a ton of redundant onMultiBranch() calls.
-    Many of the switch cases return to the same block,
-    causing repeated onMultiBranch() calls for that block.
-
-    For example, in d_count_templates_scopes(), which is one of the main demangling functions used in cxxfilt,
-    there is a switch statement with 82 cases, with one of the logical branches, probably the most common,
-    having 62 cases go into it (meaning each time it records 62 multi branches), and on top of that it's recursive.
-
-    This is bad for two reasons:
-    Firstly, each time on of those cases is taken,
-    all of the onMultiBranch() calls are made, when only one should be.
-
-    Secondly, this repetition of return blocks
-    means that there are a lot fewer actual branches in the switch.
-    When I instrument the code, I can keep track of the actual number of branches.
-    This will also reduce each of the switch values and the number of cases,
-    which will reduce the varint encoding output.
-
-    Also, this is the perfect case for profile-guided optimization.
-    I can sort the multi branches by probability,
-    so once varint encoded, the most likely branches produce the least output.
 
 onNonSingleBranch repeats
 	In a switch statement (a multi branch), one successor block might later jump to one of the other successor blocks.

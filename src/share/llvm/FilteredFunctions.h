@@ -16,36 +16,47 @@ namespace llvm::pass {
         Module& module;
         
         template <class F>
-        bool forEachFunction(F f) {
+        bool forEachFunction(F onFunction) {
             bool modified = false;
             for (auto& function : module) {
                 if (function.empty() || filter(function.getName())) {
                     continue;
                 }
-                if (f(function)) {
+                if (onFunction(function)) {
                     modified = true;
                 }
             }
             return modified;
         }
     
-        template <class F, class G>
-        bool forEach(F f, G g) {
+        template <class F, class G, class H>
+        bool forEach(F onBlock, G preFunction, H postFunction) {
             return forEachFunction([&](auto& function) {
-                g(function);
+                preFunction(function);
                 bool modified = false;
                 for (auto& block : function) {
-                    if (f(block)) {
+                    if (onBlock(block)) {
                         modified = true;
                     }
                 }
+                postFunction(function, modified);
                 return modified;
             });
         }
         
+        template <class F, class G>
+        bool forEach(F onBlock, G preFunction) {
+            return forEach(onBlock, preFunction, [](auto&&, auto&&) {});
+        }
+    
         template <class F>
-        bool forEachBlock(F f) {
-            return forEach(f, [](auto&) {});
+        bool forEach(F onBlock) {
+            return forEach(onBlock, [](auto&&) {});
+        }
+        
+        template <class F>
+        bool forEachBlock(F onBlock) {
+            return forEach(onBlock);
         }
         
     };
