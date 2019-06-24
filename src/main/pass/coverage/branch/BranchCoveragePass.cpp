@@ -4,6 +4,8 @@
 
 #include "src/main/pass/coverage/includes.h"
 
+#include "llvm/IR/CFG.h"
+
 namespace llvm::pass::coverage::branch {
     
     class BranchCoveragePass : public ModulePass {
@@ -23,6 +25,7 @@ namespace llvm::pass::coverage::branch {
         struct OnBranch {
             const FunctionCallee single;
             const FunctionCallee multi;
+            const FunctionCallee switchCase;
             const FunctionCallee infinite;
         };
         
@@ -70,12 +73,82 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            void traceSwitchCase(BasicBlock& block, u32 caseNum, u32 numCases) {
+            void traceMultiBranch(BasicBlock& block, u32 branchNum, u32 numBranches) {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
-                ext.call(onBranch.multi, {constants.getInt(caseNum), constants.getInt(numCases)});
+                ext.call(onBranch.multi, {constants.getInt(branchNum), constants.getInt(numBranches)});
             }
+            
+            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum, u32 numCases) {
+                IRBuilder<> builder(&block.front());
+                IRBuilderExt ext(builder);
+                const auto constants = ext.constants();
+                Value* valid = builder.CreateLoad(&validPtr);
+                ext.call(onBranch.switchCase, {valid, constants.getInt(caseNum), constants.getInt(numCases)});
+                builder.CreateStore(constants.getInt(false), &validPtr);
+            }
+            
+            class SwitchCaseSuccessors {
+
+            private:
+                
+                using BlockSet = SmallPtrSet<BasicBlock*, 8>;
+                
+                BlockSet successors;
+            
+            public:
+                
+                constexpr u32 numBranches() const noexcept {
+                    return successors.size();
+                }
+                
+                constexpr const BlockSet& get() const noexcept {
+                    return successors;
+                }
+                
+                // each branch can have multiple cases
+                // i.e., multiple cases can go to the same successor block,
+                // but it's only 1 real branch in that case
+                void findUniqueBranches(SwitchInst& switchInst) {
+                    BasicBlock* successor = switchInst.case_default()->getCaseSuccessor();
+                    if (successor) {
+                        successors.insert(successor);
+                    }
+                    const BasicBlock* lastSuccessor = successor;
+                    for (const auto& caseHandle : switchInst.cases()) {
+                        BasicBlock* successor = caseHandle.getCaseSuccessor();
+                        // cases are usually already in order, so this is just an optimization
+                        if (!successor || successor == lastSuccessor) {
+                            continue;
+                        }
+                        successors.insert(successor);
+                        lastSuccessor = successor;
+                    }
+                }
+                
+                // find if there are any successors with non-unique predecessors (i.e. fallthrough cases)
+                // for these pairs, we need to use the onSwitchCase() API instead of just onMultiBranch()
+                bool hasFallThroughCases(BasicBlock& switchBlock) const {
+                    for (BasicBlock* successor : successors) {
+                        for (BasicBlock* predecessor : llvm::predecessors(successor)) {
+                            if (predecessor != &switchBlock) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+                
+                Value& createValidPtr(SwitchInst& switchInst) const {
+                    IRBuilder<> builder(&switchInst);
+                    IRBuilderExt ext(builder);
+                    Value& validPtr = *builder.CreateAlloca(ext.types().get<bool>());
+                    builder.CreateStore(ext.constants().getInt(true), &validPtr);
+                    return validPtr;
+                }
+                
+            };
             
             /**
              * Trace a switch instruction
@@ -89,39 +162,30 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 
-                // each branch can have multiple cases
-                // i.e., multiple cases can go to the same successor block,
-                // but it's only 1 real branch in that case
-                
-                SmallPtrSet<BasicBlock*, 8> successors;
-                {
-                    BasicBlock* block = switchInst.case_default()->getCaseSuccessor();
-                    if (block) {
-                        successors.insert(block);
-                    }
-                    const BasicBlock* lastBlock = block;
-                    for (const auto& caseHandle : switchInst.cases()) {
-                        block = caseHandle.getCaseSuccessor();
-                        // cases are usually already in order, so this is just an optimization
-                        if (!block || block == lastBlock) {
-                            continue;
-                        }
-                        successors.insert(block);
-                        lastBlock = block;
-                    }
-                }
-                
-                const auto numBranches = successors.size();
+                SwitchCaseSuccessors successors;
+                successors.findUniqueBranches(switchInst);
+                const auto numBranches = successors.numBranches();
                 if (numBranches <= 1) {
                     // still an unconditional jump to the same successor block
                     return false;
                 }
                 
-                // insert tracing code into each successor BasicBlock for each branch
-                auto i = 0u;
-                for (auto* successor : successors) {
-                    traceSwitchCase(*successor, i++, numBranches);
+                const bool hasFallThroughCases = successors.hasFallThroughCases(block);
+                u32 i = 0;
+                if (!hasFallThroughCases) {
+                    // for these successors, we can still use the raw onMultiBranch() API
+                    for (BasicBlock* successor : successors.get()) {
+                        traceMultiBranch(*successor, i++, numBranches);
+                    }
+                } else {
+                    // for these successors, we have to use the onSwitchCase() API
+                    // with the bool flag used to ensure only one onMultiBranch() is called
+                    Value& validPtr = successors.createValidPtr(switchInst);
+                    for (BasicBlock* successor : successors.get()) {
+                        traceSwitchCase(*successor, validPtr, i++, numBranches);
+                    }
                 }
+                
                 return true;
             }
             
@@ -146,6 +210,7 @@ namespace llvm::pass::coverage::branch {
             const OnBranch onBranch = {
                     .single = api.func<bool>("onSingleBranch"),
                     .multi = api.func<u32, u32>("onMultiBranch"),
+                    .switchCase = api.func<bool, u32, u32>("onSwitchCase"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
             

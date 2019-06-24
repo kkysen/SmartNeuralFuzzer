@@ -352,6 +352,12 @@ API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept {
     API_rt().onMultiBranch(branchNum, numBranches);
 }
 
+API_BranchCoverage(onSwitchCase)(bool valid, u32 caseNum, u32 numCases) noexcept {
+    if (valid) {
+        __BranchCoverage_onMultiBranch(caseNum, numCases);
+    }
+}
+
 API_BranchCoverage(onInfiniteBranch)(void* address) noexcept {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
     API_rt().onInfiniteBranch(address);

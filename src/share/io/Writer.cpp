@@ -8,6 +8,9 @@ namespace io {
     
     Writer::~Writer() noexcept {
         if (isValid()) {
+            if (fd <= 2) {
+                return; // don't close stdin, stdout, stderr
+            }
             close(fd);
         }
     }

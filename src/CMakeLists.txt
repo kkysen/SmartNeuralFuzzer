@@ -36,6 +36,8 @@ files(share.stde
         share/stde/addStrings.cpp
         share/stde/compareEnds.h
         share/stde/compareEnds.cpp
+        share/stde/dfs.h
+        share/stde/dfs.cpp
         )
 
 files(share.time

@@ -6,6 +6,8 @@
 
 #include "src/share/common/deleteCopy.h"
 
+#include <atomic>
+
 #include <unistd.h>
 
 namespace io {
@@ -14,7 +16,7 @@ namespace io {
     
     public:
         
-        int fd;
+        std::atomic<int> fd;
         
         constexpr bool isValid() noexcept {
             return fd >= 0;
@@ -22,9 +24,7 @@ namespace io {
         
         explicit constexpr Writer(int fd) : fd(fd) {}
         
-        constexpr Writer(Writer&& other) noexcept : Writer(other.fd) {
-            other.fd = -1; // don't close(fd) early
-        }
+        constexpr Writer(Writer&& other) noexcept : Writer(other.fd.exchange(-1)) {}
         
         deleteCopy(Writer);
         
