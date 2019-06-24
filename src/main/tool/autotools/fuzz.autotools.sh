@@ -80,6 +80,7 @@ compileTarget() {
     local branch=${libDir}/libpass.coverage.branch.so
     local passes="${block} ${branch}"
     local loadPasses="-load=${block} -load=${branch}"
+#    local loadPasses="-load=${branch}"
     local runtimes=${libDir}/libruntime.coverage.bc
     local src=${target}.0.5.precodegen.bc
     local dependencies="${src} ${passes}"

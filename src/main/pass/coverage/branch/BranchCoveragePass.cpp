@@ -90,7 +90,7 @@ namespace llvm::pass::coverage::branch {
             }
             
             class SwitchCaseSuccessors {
-
+            
             private:
                 
                 using BlockSet = SmallPtrSet<BasicBlock*, 8>;
@@ -141,7 +141,12 @@ namespace llvm::pass::coverage::branch {
                 }
                 
                 Value& createValidPtr(SwitchInst& switchInst) const {
-                    IRBuilder<> builder(&switchInst);
+                    // sometimes the default case block is jumped to from outside of the switch instruction
+                    // so we get an error "Instruction does not dominate all uses"
+                    // since the validPtr won't have been defined in that jump
+                    // if we insert the validPtr right before the switch instruction
+                    // instead, it's easier to just put it at the end of the first block of the function
+                    IRBuilder<> builder(switchInst.getParent()->getParent()->front().getTerminator());
                     IRBuilderExt ext(builder);
                     Value& validPtr = *builder.CreateAlloca(ext.types().get<bool>());
                     builder.CreateStore(ext.constants().getInt(true), &validPtr);
