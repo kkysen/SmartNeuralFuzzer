@@ -111,11 +111,31 @@ onMultiBranch Bugfix and Compression
 		low: ~13 instead of ~34
 		high: ~24 instead of ~77, both of which are sizeable improvements.
 
+onNonSingleBranch repeats
+	In a switch statement (a multi branch), one successor block might later jump to one of the other successor blocks.
+	In this case, onMultiBranch() gets called twice, but it was only supposed to be called once.
+	This is a behavior unique to switch statements due to their fall-through behavior.
+	The fall-through behavior allows multiple cases to go the same successor block.
+	We record the switch/case value immediately before the switch instruction, like we do for br instructions,
+	but then we record extra information for when multiple cases are mapped to a single successor block.
+	Therefore, we want to place the onMultiBranch() call at the beginning of the successor block.
+	But that block can be entered in other ways.
+	We can check if this is the case by checking if the successor block has predecessor blocks other than the switch block.
+	Only in this case do we need to fix the runtime behavior.
+
+	To fix this, we add two more onMultiBranch APIs:
+    	api(onSwitchCase)(bool valid, u32 branchNum, u32 numBranches) noexcept;
+    Before the switch instruction, we insert a boolean local variable set to true
+    to indicate that a switch instruction is going to execute.
+    It's important that this variable is on the stack so that it is thread safe.
+    Then onSwitchCase() is called with the boolean variable as the first argument.
+    onSwitchCase() then calls onMultiBranch() if valid is true.
+    The boolean variable is then set to false so that no other successor blocks erroneously call onMultiBranch().
+
+
 	TODO
 
 Next
-	onMultiBranch Bugfix and Compression
-
 	Compress single.bin.
 
 Compression
@@ -226,23 +246,92 @@ Meta Compression
 	For example, we could store 0 for the most common branch,
 	make the delta unsigned (store sign bit as LSB), and then add 1 to each delta.
 
-onNonSingleBranch repeats
-	In a switch statement (a multi branch), one successor block might later jump to one of the other successor blocks.
-	In this case, onMultiBranch() gets called twice, but it was only supposed to be called once.
-	This is a behavior unique to switch statements due to their fall-through behavior.
-	The fall-through behavior allows multiple cases to go the same successor block.
-	We record the switch/case value immediately before the switch instruction, like we do for br instructions,
-	but then we record extra information for when multiple cases are mapped to a single successor block.
-	Therefore, we want to place the onMultiBranch() call at the beginning of the successor block.
-	But that block can be entered in other ways.
-	We can check if this is the case by checking if the successor block has predecessor blocks other than the switch block.
-	Only in this case do we need to fix the runtime behavior.
+Branch to Block Recovery: BranchExecutionPass
+	Since we can recover the much larger block coverage data from the branch coverage data,
+	I have to figure out exactly how it will be done.
 
-	To fix this, we add two more onMultiBranch APIs:
-    	api(onSwitchCase)(bool valid, u32 branchNum, u32 numBranches) noexcept;
-    Before the switch instruction, we insert a boolean local variable set to true
-    to indicate that a switch instruction is going to execute.
-    It's important that this variable is on the stack so that it is thread safe.
-    Then onSwitchCase() is called with the boolean variable as the first argument.
-    onSwitchCase() then calls onMultiBranch() if valid is true.
-    The boolean variable is then set to false so that no other successor blocks erroneously call onMultiBranch().
+	Firstly, we don't need to record as much branch coverage data,
+	because when recovering the block data, we know where in the code we are currently executing,
+	so we can use some of that information.
+
+	For single branches, we still need to record true or false.
+
+	For multi branches, we only need to record the actual branch value/number, not the number of total branches.
+	We know the number of total branches from the code, so we don't need to record it.
+
+	For infinite branches, it's a little more complicated (see below).
+
+	To recover the block coverage data, we could traverse the bitcode through an optimization pass,
+	traversing the code path taken according to the branch coverage data.
+	But this interpretation of the bitcode will be really slow.
+	Instead, we can create another BranchExecutionPass that converts the program
+	into an executable that only converts branch coverage data to block coverage data.
+	It "executes" the recorded branches in effect.
+
+	For every branch, switch, etc. instruction, we replace the normal value
+	with a call to nextSingleBranch(), nextMultiBranch(), or nextInfiniteBranch(),
+	which read the saved branch coverage data and returns the next branch value.
+
+	Then we can make calls to output APIs that output the recovered block coverage data.
+
+	All other instructions in the program are then removed, so that only branches
+	and the calls to the API are left.
+	Function calls to functions not statically linked in the bitcode are removed because they weren't traced.
+	And function calls to functions that are present in the bitcode are modified.
+	All arguments are removed, and all functions return void.
+	All the necessary data comes from the saved branch coverage data,
+	and all that remains in the executable is control flow but no data operations.
+
+	Branch and switch instructions are trivial to replace for this,
+	but virtual calls, both in the multiBranch case where the possible functions can be narrowed down,
+	or in the infiniteBranch case, where any function can be called, are more complicated.
+
+	For multiBranch virtual calls, we can replace them with switch instructions,
+	because that's essentially what we've reduced them to.
+
+	For infiniteBranch virtual calls, we need to jump to a function's address to keep executing.
+	Therefore, we need the actual address of the next function to jump to.
+	A block index of the next function or the function index of the next function don't suffice,
+	because the CPU needs to jump to an actual address.
+	But recording the actual address on infiniteBranches doesn't work either.
+	For one, the addresses will change between executions due to ASLR (address space layout randomization).
+	But it's also a different executable compared to the stripped, control flow only one.
+	To work around this, it's possible I could have a function index to address table,
+	or I could lookup up the function's symbol name in the executable for its address.
+	This could be done using dlsym() when compiled with -rdynamic to put all symbols in the dynamic symbol table.
+
+Indirect Branches / Virtual Calls
+	From what I can tell, indirect branches can be generated from 4 LLVM IR instructions:
+		call
+		invoke
+		indirectbr
+		callbr
+
+	call, invoke, and callbr all jump to a function.
+	In most cases, the function is known and there's no indirect branch,
+	but sometimes the function is an unknown pointer and will generate an indirect branch.
+
+	indirectbr jumps to an address in the current function,
+	and the LLVM instruction also contains the possible destinations.
+	This means we can reimplement this as a switch instruction.
+
+	indirectbr and callbr are both very rare, so I won't worry about them too much.
+
+	call and invoke are identical, except invoke handles exceptions, so we'll treat them the same.
+
+	There are a number of cases where virtual calls are limited to a small, finite number of addresses.
+
+	For example, virtual method calls can only call one of the classes' methods.
+	This can be reduced to a multiBranch, or even a singleBranch if there are only 2 classes.
+
+	Sometimes (bool ? func1 : func2)(arg) is used,
+	which is the same as a branch instruction and direct calls,
+	but a select and indirect call instruction are generated instead.
+	This can be reduced to a singleBranch.
+
+	In other cases, especially in C code, there's a function pointer that is called,
+	but it is only assigned a few values.
+	Again, this can be reduced to a multiBranch,
+	but the original assignment to the function pointer is usually much farther removed from the call.
+	This is be harder to optimize, but it should possible to do.
+
