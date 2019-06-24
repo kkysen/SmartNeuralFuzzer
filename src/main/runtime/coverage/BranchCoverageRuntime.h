@@ -13,9 +13,9 @@
 
 api(onSingleBranch)(bool value) noexcept;
 
-api(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept;
+api(onMultiBranch)(u32 branchNum) noexcept;
 
-api(onSwitchCase)(bool valid, u32 caseNum, u32 numCases) noexcept;
+api(onSwitchCase)(bool valid, u32 caseNum) noexcept;
 
 api(onInfiniteBranch)(void* address) noexcept;
 

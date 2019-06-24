@@ -15,11 +15,11 @@ namespace llvm::pass::coverage::branch {
         struct Flags {
             bool branches;
             bool switches;
-            bool virtualMethods;
+            bool indirectCalls;
         } flags {
                 .branches = true,
                 .switches = true,
-                .virtualMethods = false,
+                .indirectCalls = false,
         };
         
         struct OnBranch {
@@ -48,12 +48,12 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 bool traced = false;
+//            traced |= flags.indirectCalls && traceDynamicDispatches(block);
                 if (const auto branchInst = dyn_cast<BranchInst>(terminator)) {
                     traced |= flags.branches && traceBranch(*branchInst);
                 } else if (const auto switchInst = dyn_cast<SwitchInst>(terminator)) {
                     traced |= flags.switches && traceSwitch(*switchInst);
                 }
-//            traced |= flags.virtualMethods && traceDynamicDispatches(block);
                 return traced;
             }
         
@@ -73,19 +73,19 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            void traceMultiBranch(BasicBlock& block, u32 branchNum, u32 numBranches) {
+            void traceMultiBranch(BasicBlock& block, u32 branchNum) {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
-                ext.call(onBranch.multi, {constants.getInt(branchNum), constants.getInt(numBranches)});
+                ext.call(onBranch.multi, {constants.getInt(branchNum)});
             }
             
-            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum, u32 numCases) {
+            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum) {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 Value* valid = builder.CreateLoad(&validPtr);
-                ext.call(onBranch.switchCase, {valid, constants.getInt(caseNum), constants.getInt(numCases)});
+                ext.call(onBranch.switchCase, {valid, constants.getInt(caseNum)});
                 builder.CreateStore(constants.getInt(false), &validPtr);
             }
             
@@ -169,8 +169,7 @@ namespace llvm::pass::coverage::branch {
                 
                 SwitchCaseSuccessors successors;
                 successors.findUniqueBranches(switchInst);
-                const auto numBranches = successors.numBranches();
-                if (numBranches <= 1) {
+                if (successors.numBranches() <= 1) {
                     // still an unconditional jump to the same successor block
                     return false;
                 }
@@ -180,21 +179,21 @@ namespace llvm::pass::coverage::branch {
                 if (!hasFallThroughCases) {
                     // for these successors, we can still use the raw onMultiBranch() API
                     for (BasicBlock* successor : successors.get()) {
-                        traceMultiBranch(*successor, i++, numBranches);
+                        traceMultiBranch(*successor, i++);
                     }
                 } else {
                     // for these successors, we have to use the onSwitchCase() API
                     // with the bool flag used to ensure only one onMultiBranch() is called
                     Value& validPtr = successors.createValidPtr(switchInst);
                     for (BasicBlock* successor : successors.get()) {
-                        traceSwitchCase(*successor, validPtr, i++, numBranches);
+                        traceSwitchCase(*successor, validPtr, i++);
                     }
                 }
                 
                 return true;
             }
             
-            bool traceDynamicDispatches([[maybe_unused]] BasicBlock& _block) {
+            bool traceIndirectCalls([[maybe_unused]] BasicBlock& _block) {
                 return true;
             }
             
@@ -214,8 +213,8 @@ namespace llvm::pass::coverage::branch {
             const Api api("BranchCoverage", module);
             const OnBranch onBranch = {
                     .single = api.func<bool>("onSingleBranch"),
-                    .multi = api.func<u32, u32>("onMultiBranch"),
-                    .switchCase = api.func<bool, u32, u32>("onSwitchCase"),
+                    .multi = api.func<u32>("onMultiBranch"),
+                    .switchCase = api.func<bool, u32>("onSwitchCase"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
             

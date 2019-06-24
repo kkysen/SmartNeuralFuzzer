@@ -66,7 +66,6 @@ namespace runtime::coverage::branch {
             
             std::array<Chunk, bufferSize> buffer = {};
             Size bitIndex = 0;
-            Size bitIndexDiff = 0;
             
             Counts& counts;
             
@@ -95,16 +94,6 @@ namespace runtime::coverage::branch {
             constexpr u8 chunkBitIndex() const noexcept {
                 return static_cast<u8>(bitIndex & ((1u << shift::chunk) - 1));
             }
-        
-        public:
-            
-            Size resetBitIndexDiff() noexcept {
-                const auto temp = bitIndexDiff;
-                bitIndexDiff = 0;
-                return temp;
-            }
-        
-        private:
             
             const io::Writer write;
             
@@ -149,7 +138,6 @@ namespace runtime::coverage::branch {
                 counts.branches.single++;
                 buffer[chunkIndex()] |= static_cast<u64>(value) << chunkBitIndex();
                 bitIndex++;
-                bitIndexDiff++;
                 tryFlush();
             }
             
@@ -197,76 +185,34 @@ namespace runtime::coverage::branch {
             
             struct VarintAverages {
                 
-                Average combined;
-                Average low;
-                Average high;
-                Average both;
+                Average multi;
+                Average infinite;
                 
                 void print(std::ostream& out) const noexcept {
                     out << '\n';
                     #define _(field) out << ""#field ": " << field << '\n';
-                    _(combined);
-                    _(low);
-                    _(high);
-                    _(both);
+                    _(multi);
+                    _(infinite);
                     #undef _
                     out << std::endl;
                 }
                 
             } varintAverages;
             
-            struct Record {
-                
-                union {
-                    struct {
-                        bool isMultiple: 1;
-                        u32 bitIndexDiff: 31;
-                    };
-                    u32 combined;
-                };
-                union {
-                    struct {
-                        u32 low;
-                        u32 high;
-                    };
-                    u64 both;
-                };
-                
-                void print(io::LEB128WriteBuffer& out, VarintAverages& averages) const noexcept {
-                    averages.combined << combined;
-                    out << combined;
-                    if (isMultiple) {
-                        averages.low << low;
-                        averages.high << high;
-                        out << low << high;
-                    } else {
-                        averages.both << both;
-                        out << both;
-                    }
-//                    averages.combined << out.on(combined);
-//                    if (isMultiple) {
-//                        averages.low << out.on(low);
-//                        averages.high << out.on(high);
-//                    } else {
-//                        averages.both << out.on(both);
-//                    }
-                }
-                
-            };
-            
             Counts& counts;
             
             io::LEB128WriteBuffer buffer;
             
-            void onRecord(Record record) noexcept {
-                static_assert(decltype(buffer.buffer)::size() > sizeof(record) * 2);
+            void tryFlush() noexcept {
+                static_assert(decltype(buffer.buffer)::size() > sizeof(u64) * 2);
                 const size_t lastIndex = buffer.buffer.currentIndex();
-                record.print(buffer, varintAverages);
                 if (buffer.buffer.currentIndex() < lastIndex) {
                     // means buffer was flushed
                     counts.flush();
                 }
             }
+            
+            static constexpr auto isMulti = static_cast<u32>(true);
         
         public:
             
@@ -280,24 +226,20 @@ namespace runtime::coverage::branch {
                 varintAverages.print(std::cerr);
             }
             
-            void onMulti(u32 branchNum, u32 numBranches, u32 bitIndexDiff) noexcept {
+            void onMulti(u32 branchNum) noexcept {
                 counts.branches.multi++;
-                onRecord({
-                                 .bitIndexDiff = bitIndexDiff,
-                                 .isMultiple = static_cast<u32>(true),
-                                 .low = branchNum,
-                                 .high = numBranches,
-                         });
+                varintAverages.multi << branchNum;
+                buffer << (isMulti | (branchNum << 1u)); // not simplifiable
+                tryFlush();
             }
             
-            void onInfinite(u64 address, u32 bitIndexDiff) noexcept {
+            void onInfinite(u64 address) noexcept {
                 counts.branches.infinite++;
-                onRecord({
-                                 .bitIndexDiff = bitIndexDiff,
-                                 .isMultiple = static_cast<u32>(false),
-                                 .low = static_cast<u32>(address),
-                                 .high = static_cast<u32>(address >> 32u),
-                         });
+                varintAverages.infinite << address;
+                // function addresses should be at least bit-aligned
+                assert(!(address & isMulti)); // not simplifiable
+                buffer << address;
+                tryFlush();
             }
             
         };
@@ -321,12 +263,12 @@ namespace runtime::coverage::branch {
             branches.single << value;
         }
         
-        void onMultiBranch(u32 branchNum, u32 numBranches) noexcept {
-            branches.nonSingle.onMulti(branchNum, numBranches, branches.single.resetBitIndexDiff());
+        void onMultiBranch(u32 branchNum) noexcept {
+            branches.nonSingle.onMulti(branchNum);
         }
         
         void onInfiniteBranch(void* address) noexcept {
-            branches.nonSingle.onInfinite(reinterpret_cast<u64>(address), branches.single.resetBitIndexDiff());
+            branches.nonSingle.onInfinite(reinterpret_cast<u64>(address));
         }
         
         explicit BranchCoverageRuntime() noexcept(false)
@@ -347,14 +289,14 @@ API_BranchCoverage(onSingleBranch)(bool value) noexcept {
     API_rt().onSingleBranch(value);
 }
 
-API_BranchCoverage(onMultiBranch)(u32 branchNum, u32 numBranches) noexcept {
-//    printf("BranchCoverage: onMultiBranch: %d/%d\n", branchNum, numBranches);
-    API_rt().onMultiBranch(branchNum, numBranches);
+API_BranchCoverage(onMultiBranch)(u32 branchNum) noexcept {
+//    printf("BranchCoverage: onMultiBranch: %d\n", branchNum);
+    API_rt().onMultiBranch(branchNum);
 }
 
-API_BranchCoverage(onSwitchCase)(bool valid, u32 caseNum, u32 numCases) noexcept {
+API_BranchCoverage(onSwitchCase)(bool valid, u32 caseNum) noexcept {
     if (valid) {
-        __BranchCoverage_onMultiBranch(caseNum, numCases);
+        __BranchCoverage_onMultiBranch(caseNum);
     }
 }
 

@@ -132,6 +132,24 @@ onNonSingleBranch repeats
     onSwitchCase() then calls onMultiBranch() if valid is true.
     The boolean variable is then set to false so that no other successor blocks erroneously call onMultiBranch().
 
+Branch to Block Recovery: BranchExecutionPass
+	Since we can recover the much larger block coverage data from the branch coverage data,
+	I have to figure out exactly how it will be done.
+
+	Firstly, we don't need to record as much branch coverage data,
+	because when recovering the block data, we know where in the code we are currently executing,
+	so we can use some of that information.
+
+	For single branches, we still need to record true or false.
+
+	For multi branches, we only need to record the actual branch value/number, not the number of total branches.
+	We know the number of total branches from the code, so we don't need to record it.
+
+	For infinite branches, it's a little more complicated (see below).
+
+	The change for multi branches decreases the size of nonSingle.bin by 4x for cxxfilt.
+	It's now smaller than single.bin for cxxfilt.
+
 
 	TODO
 
