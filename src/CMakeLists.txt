@@ -66,6 +66,8 @@ files(share.io
         share/io/readAll.cpp
         share/io/LEB128WriteBuffer.h
         share/io/LEB128WriteBuffer.cpp
+        share/io/LEB128Reader.h
+        share/io/LEB128Reader.cpp
         )
 
 files(share.io.env
