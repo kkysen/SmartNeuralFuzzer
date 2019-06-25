@@ -7,12 +7,11 @@
 #include "src/share/io/Popen.h"
 #include "src/share/io/Stat.h"
 #include "src/share/llvm/lib/conversions.h"
+#include "src/share/common/hardAssert.h"
 
 #include "llvm/Support/FileSystem.h"
 
 #include <fstream>
-
-#include <csignal> // TODO remove
 
 namespace {
     
@@ -114,9 +113,7 @@ namespace {
                         functionNameLines.insert(ref(functionName));
                     }
                 });
-        if (!someLines) {
-            raise(SIGKILL);
-        }
+        hardAssert(someLines);
         std::ofstream cacheFile(cacheFilePath);
         size_t length = 0;
         for (const auto& entry : functionNameLines) {
@@ -155,8 +152,8 @@ namespace llvm::pass {
         add(convert::ref(functionName));
     }
     
-    void BinaryFunctionFilter::addMappedCacheFile(io::ReadOnlyMappedMemory&& mappedCacheFile) {
-        const auto view = mappedCacheFile.view();
+    void BinaryFunctionFilter::addMappedCacheFile(io::ReadOnlyMappedMemory<char>&& mappedCacheFile) {
+        const std::string_view view = {mappedCacheFile.view().data(), mappedCacheFile.view().size()};
         mappedCacheFiles.push_back(std::move(mappedCacheFile));
         // cache files are just function name on each line
         size_t i = 0;
@@ -178,7 +175,7 @@ namespace llvm::pass {
         const size_t cacheFileLength = cacheHit
                                        ? cacheStat.size()
                                        : symbolsToFunctionNames(objectFilePath, cacheFilePath);
-        addMappedCacheFile(io::ReadOnlyMappedMemory(cacheFilePath, cacheFileLength));
+        addMappedCacheFile(io::ReadOnlyMappedMemory<char>(cacheFilePath, cacheFileLength));
     }
     
     RunOnce<> BinaryFunctionFilter::purgeCache = ::purgeCacheDir;

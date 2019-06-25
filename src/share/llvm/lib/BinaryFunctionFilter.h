@@ -24,7 +24,7 @@ namespace llvm::pass {
     private:
         
         // will be used by 2 runtime files
-        SmallVector<io::ReadOnlyMappedMemory, 2> mappedCacheFiles;
+        SmallVector<io::ReadOnlyMappedMemory<char>, 2> mappedCacheFiles;
         
         StringSet<> functionNames;
     
@@ -46,7 +46,7 @@ namespace llvm::pass {
     
     private:
         
-        void addMappedCacheFile(io::ReadOnlyMappedMemory&& mappedCacheFile);
+        void addMappedCacheFile(io::ReadOnlyMappedMemory<char>&& mappedCacheFile);
     
     public:
         

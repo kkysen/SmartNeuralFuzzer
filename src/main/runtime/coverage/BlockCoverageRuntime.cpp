@@ -18,12 +18,13 @@ namespace runtime::coverage::block {
             
             io::LEB128WriteBuffer buffer;
             u64 lastIndex = 0;
-
+        
         public:
             
             void on(u64 index) noexcept {
                 const i64 delta = index - lastIndex;
                 lastIndex = index;
+//                printf("delta: %ld\n", delta);
                 buffer << delta;
             }
             
@@ -47,6 +48,7 @@ namespace runtime::coverage::block {
         }
         
         void onBlock(u64 blockIndex) noexcept {
+//            printf("BlockCoverage: onBlock: %ld\n", blockIndex);
             block << blockIndex;
         }
     
@@ -71,12 +73,12 @@ namespace {
 
 #define api API_BlockCoverage
 
-void api(onFunction)(u64 functionIndex) noexcept {
-//    printf("BlockCoverage: onFunction: %ld\n", functionNum);
+void api (onFunction)(u64 functionIndex) noexcept {
+//    printf("BlockCoverage: onFunction: %ld\n", functionIndex);
     API_rt().onFunction(functionIndex);
 }
 
-void api(onBlock)(u64 blockIndex) noexcept {
-//    printf("BlockCoverage: onBlock: %ld\n", blockNum);
+void api (onBlock)(u64 blockIndex) noexcept {
+//            printf("BlockCoverage: onBlock: %ld\n", blockIndex);
     API_rt().onBlock(blockIndex);
 }

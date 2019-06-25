@@ -10,7 +10,7 @@
 namespace io {
     
     class LEB128Reader {
-
+    
     private:
         
         ReadOnlyMappedMemory<u8> data;
@@ -18,15 +18,27 @@ namespace io {
         mutable std::string_view _error = {};
         
         constexpr const u8* nextData() const noexcept {
-            return data.data() + i;
+            return data.view().data() + i;
         }
         
+        constexpr std::pair<const u8*, const u8*> range() const noexcept {
+            return {nextData(), data.view().end()};
+        }
+        
+        constexpr void advanceTo(const u8* p) noexcept {
+            i += p - nextData();
+        }
+    
     public:
         
         explicit constexpr LEB128Reader(ReadOnlyMappedMemory<u8>&& data) noexcept : data(std::move(data)) {}
         
         constexpr bool done() const noexcept {
-            return i == data.size();
+            return i == data.view().size();
+        }
+        
+        constexpr bool hasNext() const noexcept {
+            return !done();
         }
         
         constexpr bool hasError() const noexcept {
@@ -36,14 +48,13 @@ namespace io {
         constexpr std::string_view error() const noexcept {
             return _error;
         }
-
-    private:
-
-        constexpr std::pair<u64, const u8*> rawNextUnSigned() const noexcept {
-            const auto start = nextData();
-            const auto end = data.end();
-            auto p = start;
     
+    private:
+        
+        constexpr std::pair<u64, const u8*> rawNextUnSigned() const noexcept {
+            const auto[start, end] = range();
+            auto p = start;
+            
             u64 value = 0;
             u8 shift = 0;
             do {
@@ -61,10 +72,9 @@ namespace io {
             } while (*p++ >= 128);
             return {value, p};
         }
-    
+        
         constexpr std::pair<i64, const u8*> rawNextSigned() const noexcept {
-            const auto start = nextData();
-            const auto end = data.end();
+            const auto[start, end] = range();
             auto p = start;
             
             i64 value = 0;
@@ -84,18 +94,18 @@ namespace io {
                 value |= (-1ULL) << shift;
             return {value, p};
         }
-        
+    
     public:
         
         constexpr u64 nextUnSigned() noexcept {
-            const auto [value, p] = rawNextUnSigned();
-            i += p - nextData();
+            const auto[value, p] = rawNextUnSigned();
+            advanceTo(p);
             return value;
         }
         
         constexpr i64 nextSigned() noexcept {
-            const auto [value, p] = rawNextSigned();
-            i += p - nextData();
+            const auto[value, p] = rawNextSigned();
+            advanceTo(p);
             return value;
         }
         

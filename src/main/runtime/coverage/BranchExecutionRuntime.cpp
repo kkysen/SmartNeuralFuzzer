@@ -19,7 +19,7 @@ namespace runtime::coverage::branch::execute {
         public:
             
             bool next() noexcept {
-            
+                return false; // TODO
             }
             
         };
@@ -29,7 +29,7 @@ namespace runtime::coverage::branch::execute {
         private:
             
             u64 next() noexcept {
-            
+                return 0; // TODO
             }
             
         public:

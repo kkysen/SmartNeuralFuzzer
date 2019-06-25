@@ -9,6 +9,7 @@
 #include "src/share/lib/corrade/CorradeArrayView.h"
 
 #include <string_view>
+#include <atomic>
 
 #include <sys/mman.h>
 
@@ -17,23 +18,29 @@ namespace io {
     using namespace Corrade::Containers;
     
     template <typename T = u8>
-    class ReadOnlyMappedMemory : public ArrayView<const T> {
+    class ReadOnlyMappedMemory {
     
     public:
         
-        using Super = ArrayView<const T>;
+        using View = ArrayView<const T>;
         
         static constexpr int defaultFlags = MAP_PRIVATE;
-        
-        static constexpr auto failed = static_cast<const T*>(MAP_FAILED);
     
-        using Super::data;
-        using Super::size;
+    private:
         
+        View _view;
+        std::atomic<bool> moved = false;
+    
+    public:
+        
+        constexpr View view() const noexcept {
+            return _view;
+        }
+    
     private:
         
         ReadOnlyMappedMemory(bool close, int fd, size_t length, int flags)
-                : Super(fse::mmap<const T>(fd, PROT_READ, flags, length), length) {
+                : _view(fse::mmap<const T>(fd, PROT_READ, flags, length), length) {
             if (close) {
                 ::close(fd);
             }
@@ -65,18 +72,16 @@ namespace io {
                 : ReadOnlyMappedMemory(path.c_str(), length, flags) {}
         
         ~ReadOnlyMappedMemory() {
-            if (data() == failed || size() == 0) {
+            if (moved || _view.data() == static_cast<const T*>(MAP_FAILED) || _view.size() == 0) {
                 return;
             }
-            ::munmap(const_cast<T*>(data()), size());
+            ::munmap(const_cast<T*>(_view.data()), _view.size());
         }
         
         deleteCopy(ReadOnlyMappedMemory);
         
-        constexpr ReadOnlyMappedMemory(ReadOnlyMappedMemory&& other) noexcept : Super(other) {
-            other.data() = static_cast<const T*>(MAP_FAILED);
-            other.size() = 0;
-        }
+        constexpr ReadOnlyMappedMemory(ReadOnlyMappedMemory&& other) noexcept
+                : _view(other._view), moved(other.moved.exchange(true)) {}
         
     };
     
