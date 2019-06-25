@@ -11,12 +11,16 @@
 
 #define api API_BranchCoverage
 
-api(onSingleBranch)(bool value) noexcept;
+extern "C" {
 
-api(onMultiBranch)(u32 branchNum) noexcept;
+void api (onSingleBranch)(bool value) noexcept;
 
-api(onSwitchCase)(bool valid, u32 caseNum) noexcept;
+void api (onMultiBranch)(u32 branchNum) noexcept;
 
-api(onInfiniteBranch)(void* address) noexcept;
+void api (onSwitchCase)(bool valid, u32 caseNum) noexcept;
+
+void api (onInfiniteBranch)(void* address) noexcept;
+
+}
 
 #undef api

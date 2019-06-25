@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "BlockCoverageRuntime.h"
+#include "src/main/runtime/coverage/BlockCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 
@@ -69,12 +69,14 @@ namespace {
     using runtime::coverage::block::rt;
 }
 
-API_BlockCoverage(onFunction)(u64 functionIndex) noexcept {
+#define api API_BlockCoverage
+
+void api(onFunction)(u64 functionIndex) noexcept {
 //    printf("BlockCoverage: onFunction: %ld\n", functionNum);
     API_rt().onFunction(functionIndex);
 }
 
-API_BlockCoverage(onBlock)(u64 blockIndex) noexcept {
+void api(onBlock)(u64 blockIndex) noexcept {
 //    printf("BlockCoverage: onBlock: %ld\n", blockNum);
     API_rt().onBlock(blockIndex);
 }

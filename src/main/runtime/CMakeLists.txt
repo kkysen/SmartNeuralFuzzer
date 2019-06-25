@@ -7,4 +7,7 @@ files(runtime
 
 add_subdirectory(coverage)
 
-add_custom_target(runtime DEPENDS runtime.coverage)
+add_custom_target(runtime DEPENDS
+        runtime.coverage
+        runtime.coverage.branch.execute
+        )

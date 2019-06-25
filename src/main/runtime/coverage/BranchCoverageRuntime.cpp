@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "BranchCoverageRuntime.h"
+#include "src/main/runtime/coverage/BranchCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 
@@ -212,8 +212,6 @@ namespace runtime::coverage::branch {
                 }
             }
             
-            static constexpr auto isMulti = static_cast<u32>(true);
-        
         public:
             
             constexpr NonSingleBranches(Counts& counts, io::Writer&& write) noexcept
@@ -229,15 +227,13 @@ namespace runtime::coverage::branch {
             void onMulti(u32 branchNum) noexcept {
                 counts.branches.multi++;
                 varintAverages.multi << branchNum;
-                buffer << (isMulti | (branchNum << 1u)); // not simplifiable
+                buffer << branchNum;
                 tryFlush();
             }
             
             void onInfinite(u64 address) noexcept {
                 counts.branches.infinite++;
                 varintAverages.infinite << address;
-                // function addresses should be at least bit-aligned
-                assert(!(address & isMulti)); // not simplifiable
                 buffer << address;
                 tryFlush();
             }
@@ -284,23 +280,25 @@ namespace {
     using runtime::coverage::branch::rt;
 }
 
-API_BranchCoverage(onSingleBranch)(bool value) noexcept {
+#define api API_BranchCoverage
+
+void api(onSingleBranch)(bool value) noexcept {
 //    printf("BranchCoverage: onBranch: %s\n", value ? "true" : "false");
     API_rt().onSingleBranch(value);
 }
 
-API_BranchCoverage(onMultiBranch)(u32 branchNum) noexcept {
+void api(onMultiBranch)(u32 branchNum) noexcept {
 //    printf("BranchCoverage: onMultiBranch: %d\n", branchNum);
     API_rt().onMultiBranch(branchNum);
 }
 
-API_BranchCoverage(onSwitchCase)(bool valid, u32 caseNum) noexcept {
+void api(onSwitchCase)(bool valid, u32 caseNum) noexcept {
     if (valid) {
         __BranchCoverage_onMultiBranch(caseNum);
     }
 }
 
-API_BranchCoverage(onInfiniteBranch)(void* address) noexcept {
+void api(onInfiniteBranch)(void* address) noexcept {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
     API_rt().onInfiniteBranch(address);
 }

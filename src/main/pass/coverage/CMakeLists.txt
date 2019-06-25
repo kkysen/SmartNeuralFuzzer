@@ -25,4 +25,8 @@ add_subdirectory(branch)
 
 add_subdirectory(test)
 
-add_custom_target(pass.coverage DEPENDS pass.coverage.block pass.coverage.branch pass.coverage.test)
+add_custom_target(pass.coverage DEPENDS
+        pass.coverage.block
+        pass.coverage.branch
+        pass.coverage.branch.execute
+        pass.coverage.test)

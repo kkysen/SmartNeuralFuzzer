@@ -10,7 +10,7 @@ files(runtime.coverage
         BranchCoverageRuntime.cpp
         )
 
-set(files
+set(files.all.runtime.coverage
         ${files.share.common}
         ${files.share.time}
         ${files.share.io}
@@ -23,8 +23,21 @@ set(files
         ${files.runtime.coverage}
         )
 
-set(target runtime.coverage)
-add_library(${target} STATIC ${files})
-copyLibraryBC(${target})
-add_dependencies(${target} tool.ar.override.run)
+files(runtime.coverage.branch.execute
+        BranchExecutionRuntime.h
+        BranchExecutionRuntime.cpp
+        )
 
+set(files.all.runtime.coverage.branch.execute
+        ${files.runtime.coverage.branch.execute}
+        )
+
+function(addRuntime target)
+    add_library(${target} STATIC ${files.all.${target}})
+    copyLibraryBC(${target})
+    add_dependencies(${target} tool.ar.override.run)
+endfunction()
+
+addRuntime(runtime.coverage)
+
+addRuntime(runtime.coverage.branch.execute)

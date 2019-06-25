@@ -32,8 +32,12 @@
  * Another option is to just compress the output afterwards, separate from the program.
  */
 
-api(onFunction)(u64 functionIndex) noexcept;
+extern "C" {
 
-api(onBlock)(u64 blockIndex) noexcept;
+void api (onFunction)(u64 functionIndex) noexcept;
+
+void api (onBlock)(u64 blockIndex) noexcept;
+
+}
 
 #undef api
