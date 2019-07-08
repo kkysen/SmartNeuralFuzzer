@@ -4,40 +4,16 @@
 
 #pragma once
 
+#include "src/share/io/ReaderWrapper.h"
 #include "src/share/io/LEB128Reader.h"
 
 namespace io {
     
-    class DeltaReader {
-
-    public:
-        
-        using Data = typename LEB128Reader::Data;
+    class DeltaReader : ReaderWrapper<LEB128Reader> {
 
     private:
         
-        LEB128Reader reader;
         u64 last = 0;
-
-    public:
-    
-        explicit constexpr DeltaReader(Data&& data) noexcept : reader(std::move(data)) {}
-    
-        constexpr bool done() const noexcept {
-            return reader.done();
-        }
-    
-        constexpr bool hasNext() const noexcept {
-            return reader.hasNext();
-        }
-    
-        constexpr bool hasError() const noexcept {
-            return reader.hasError();
-        }
-    
-        constexpr std::string_view error() const noexcept {
-            return reader.error();
-        }
 
     private:
     

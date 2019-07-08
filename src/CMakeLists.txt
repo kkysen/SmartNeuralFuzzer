@@ -72,6 +72,12 @@ files(share.io
         share/io/DeltaWriteBuffer.cpp
         share/io/DeltaReader.h
         share/io/DeltaReader.cpp
+        share/io/BoolWriteBuffer.h
+        share/io/BoolWriteBuffer.cpp
+        share/io/BoolReader.h
+        share/io/BoolReader.cpp
+        share/io/ReaderWrapper.h
+        share/io/ReaderWrapper.cpp
         )
 
 files(share.io.env

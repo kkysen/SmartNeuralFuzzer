@@ -4,55 +4,90 @@
 
 #include "src/main/runtime/coverage/BranchExecutionRuntime.h"
 
+#include "src/share/io/LEB128Reader.h"
 #include "src/share/io/DeltaWriteBuffer.h"
 #include "src/share/common/lazy.h"
 
 namespace runtime::coverage::branch::execute {
     
+    struct Edge {
+        // block indices
+        u64 start;
+        u64 end;
+    };
+    
+    io::DeltaWriteBuffer& operator<<(io::DeltaWriteBuffer& out, const Edge& edge) {
+        return out << edge.start << edge.end;
+    }
+    
+    std::ostream& operator<<(std::ostream& out, const Edge& edge) {
+        return out << edge.start << ':' << edge.end << '\n';
+    }
+    
+    struct Output {
+        
+        io::DeltaWriteBuffer raw;
+        std::ostream& formatted;
+        const bool format;
+        
+        Output& operator<<(const Edge& edge) {
+            if (format) {
+                formatted << edge;
+            } else {
+                raw << edge;
+            }
+            return *this;
+        }
+        
+    };
+    
+    class SingleBranches {
+    
+    private:
+    
+    public:
+        
+        constexpr bool next() noexcept {
+            return false; // TODO
+        }
+        
+    };
+    
+    class NonSingleBranches {
+    
+    private:
+        
+        io::LEB128Reader reader;
+        
+        constexpr u64 next() noexcept {
+            return reader.next<u64>();
+        }
+    
+    public:
+        
+        constexpr u32 nextMulti() noexcept {
+            return static_cast<u32>(next());
+        }
+        
+        void* nextInfinite() noexcept {
+            return reinterpret_cast<void*>(next());
+        }
+        
+    };
+    
+    struct Branches {
+        
+        SingleBranches single;
+        NonSingleBranches nonSingle;
+        
+    };
+    
     class BranchExecutionRuntime {
     
     private:
         
-        class SingleBranches {
-        
-        private:
-        
-        public:
-            
-            bool next() noexcept {
-                return false; // TODO
-            }
-            
-        };
-        
-        class NonSingleBranches {
-        
-        private:
-            
-            u64 next() noexcept {
-                return 0; // TODO
-            }
-            
-        public:
-            
-            u32 nextMulti() noexcept {
-                return static_cast<u32>(next());
-            }
-            
-            void* nextInfinite() noexcept {
-                return reinterpret_cast<void*>(next());
-            }
-            
-        };
-        
-        struct Branches {
-            
-            SingleBranches single;
-            NonSingleBranches nonSingle;
-            
-        } branches;
-        
-        io::DeltaWriteBuffer blockOutput;
+        Branches branches;
+        Output output;
     
     public:
         
@@ -69,7 +104,7 @@ namespace runtime::coverage::branch::execute {
         }
         
         void onEdge(u64 startBlockIndex, u64 endBlockIndex) noexcept {
-            blockOutput << startBlockIndex << endBlockIndex;
+            output << Edge {.start = startBlockIndex, .end = endBlockIndex};
         }
         
     };
