@@ -4,11 +4,15 @@
 
 #pragma once
 
+#include "ReadOnlyMappedMemory.h"
+
 namespace io {
     
     class BoolReader {
+
+    public:
     
-    
+//        using Data = io::ReadOnlyMappedMemory<Chunk>;
     
     };
     

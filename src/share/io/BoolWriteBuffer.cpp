@@ -3,9 +3,3 @@
 //
 
 #include "src/share/io/BoolWriteBuffer.h"
-
-namespace io {
-
-
-
-}
