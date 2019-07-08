@@ -2,20 +2,16 @@
 // Created by Khyber on 6/12/2019.
 //
 
-#include "src/share/io/LEB128Reader.h"
+#include "src/share/io/DeltaReader.h"
 
 #include <iostream>
 
 #include <unistd.h>
 
 void parse(const fs::path& path, std::ostream& out) {
-    io::LEB128Reader reader {io::ReadOnlyMappedMemory(path)};
-    u64 last = 0;
+    io::DeltaReader reader {io::ReadOnlyMappedMemory(path)};
     while (reader.hasNext()) {
-        const auto delta = reader.next<i64>();
-//        out << "delta: " << delta << '\n';
-        const auto blockIndex = static_cast<u64>(last + delta);
-        last = blockIndex;
+        const auto blockIndex = reader.next();
         out << blockIndex << '\n';
     }
     out.flush();

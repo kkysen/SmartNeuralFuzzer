@@ -10,10 +10,14 @@
 namespace io {
     
     class LEB128Reader {
+
+    public:
+        
+        using Data = ReadOnlyMappedMemory<u8>;
     
     private:
         
-        ReadOnlyMappedMemory<u8> data;
+        Data data;
         size_t i = 0;
         mutable std::string_view _error = {};
         
@@ -31,7 +35,7 @@ namespace io {
     
     public:
         
-        explicit constexpr LEB128Reader(ReadOnlyMappedMemory<u8>&& data) noexcept : data(std::move(data)) {}
+        explicit constexpr LEB128Reader(Data&& data) noexcept : data(std::move(data)) {}
         
         constexpr bool done() const noexcept {
             return i == data.view().size();

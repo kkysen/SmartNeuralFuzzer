@@ -68,6 +68,10 @@ files(share.io
         share/io/LEB128WriteBuffer.cpp
         share/io/LEB128Reader.h
         share/io/LEB128Reader.cpp
+        share/io/DeltaWriteBuffer.h
+        share/io/DeltaWriteBuffer.cpp
+        share/io/DeltaReader.h
+        share/io/DeltaReader.cpp
         )
 
 files(share.io.env

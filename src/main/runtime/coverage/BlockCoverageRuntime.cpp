@@ -5,8 +5,7 @@
 #include "src/main/runtime/coverage/BlockCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
-
-#include <iostream>
+#include "src/share/io/DeltaWriteBuffer.h"
 
 namespace runtime::coverage::block {
     
@@ -14,32 +13,8 @@ namespace runtime::coverage::block {
     
     private:
         
-        class Buffer {
-            
-            io::LEB128WriteBuffer buffer;
-            u64 lastIndex = 0;
-        
-        public:
-            
-            void on(u64 index) noexcept {
-                const i64 delta = index - lastIndex;
-                lastIndex = index;
-//                printf("delta: %ld\n", delta);
-                buffer << delta;
-            }
-            
-            Buffer& operator<<(u64 index) noexcept {
-                on(index);
-                return *this;
-            }
-            
-            Buffer(const fse::Dir& dir, const std::string& name) noexcept(false)
-                    : buffer(writer(dir, name)) {}
-            
-        };
-        
-        Buffer function;
-        Buffer block;
+        io::DeltaWriteBuffer function;
+        io::DeltaWriteBuffer block;
     
     public:
         
@@ -48,14 +23,14 @@ namespace runtime::coverage::block {
         }
         
         void onBlock(u64 blockIndex) noexcept {
-//            printf("BlockCoverage: onBlock: %ld\n", blockIndex);
             block << blockIndex;
         }
     
     private:
         
         explicit BlockCoverageRuntime(const fse::Dir& dir) noexcept(false)
-                : function(dir, "functions"), block(dir, "blocks") {}
+                : function(writer(dir, "functions")),
+                  block(writer(dir, "blocks")) {}
     
     public:
         

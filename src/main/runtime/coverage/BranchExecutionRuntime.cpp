@@ -4,6 +4,7 @@
 
 #include "src/main/runtime/coverage/BranchExecutionRuntime.h"
 
+#include "src/share/io/DeltaWriteBuffer.h"
 #include "src/share/common/lazy.h"
 
 namespace runtime::coverage::branch::execute {
@@ -50,6 +51,8 @@ namespace runtime::coverage::branch::execute {
             NonSingleBranches nonSingle;
             
         } branches;
+        
+        io::DeltaWriteBuffer blockOutput;
     
     public:
         
@@ -66,7 +69,7 @@ namespace runtime::coverage::branch::execute {
         }
         
         void onEdge(u64 startBlockIndex, u64 endBlockIndex) noexcept {
-        
+            blockOutput << startBlockIndex << endBlockIndex;
         }
         
     };
