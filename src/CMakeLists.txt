@@ -19,6 +19,7 @@ files(share.common
         share/common/deleteCopy.h
         share/common/odrUse.h
         share/common/odrUse.cpp
+        share/common/bools.h
         )
 
 files(share.stde

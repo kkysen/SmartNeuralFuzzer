@@ -6,6 +6,7 @@
 
 #include "src/share/io/Writer.h"
 #include "src/share/io/fse.h"
+#include "src/share/common/bools.h"
 
 namespace io {
     
@@ -14,8 +15,8 @@ namespace io {
 
     private:
     
-        using Size = u32;
-        using Chunk = u64;
+        using Size = bools::Size;
+        using Chunk = bools::Chunk;
     
         static constexpr auto pageSize = fse::page::size::io::constant;
         static constexpr Size bufferByteSize = static_cast<Size>(math::lcm(pageSize, sizeof(Chunk)));
@@ -23,35 +24,9 @@ namespace io {
 //            static constexpr Size bufferBitSize = bufferByteSize * numBits<u8>();
         
         std::array<Chunk, bufferSize> buffer = {};
-        Size bitIndex = 0;
+        bools::BitIndex bitIndex;
         
         Counts& counts;
-        
-        struct shift {
-            
-            static constexpr Size byte = 3;
-            static_assert((1u << byte) == numBits<u8>());
-            
-            static constexpr Size chunk = 6;
-            static_assert((1u << chunk) == numBits<Chunk>());
-            
-        };
-        
-        constexpr Size byteIndex() const noexcept {
-            return bitIndex >> shift::byte;
-        }
-        
-        constexpr Size chunkIndex() const noexcept {
-            return bitIndex >> shift::chunk;
-        }
-        
-        constexpr u8 byteBitIndex() const noexcept {
-            return static_cast<u8>(bitIndex & ((1u << shift::byte) - 1));
-        }
-        
-        constexpr u8 chunkBitIndex() const noexcept {
-            return static_cast<u8>(bitIndex & ((1u << shift::chunk) - 1));
-        }
         
         const io::Writer write;
         
@@ -62,11 +37,11 @@ namespace io {
         
         void flush() noexcept {
             writeBuffer();
-            bitIndex = 0;
+            bitIndex.reset();
         }
         
         constexpr bool shouldFlush() const noexcept {
-            return chunkIndex() == buffer.size();
+            return bitIndex.chunkIndex() == buffer.size();
         }
         
         void tryFlush() noexcept {
@@ -77,7 +52,7 @@ namespace io {
         
         void finalFlush() noexcept {
             writeBuffer(math::minBytesForBits(bitIndex));
-            const u8 bitsInLastBytes = byteBitIndex();
+            const auto bitsInLastBytes = bitIndex.byteBitIndex();
             write(&bitsInLastBytes, sizeof(bitsInLastBytes));
         }
     
@@ -92,8 +67,8 @@ namespace io {
         
         void on(bool value) noexcept {
             counts.branches.single++;
-            buffer[chunkIndex()] |= static_cast<u64>(value) << chunkBitIndex();
-            bitIndex++;
+            buffer[bitIndex.chunkIndex()] |= static_cast<u64>(value) << bitIndex.chunkBitIndex();
+            ++bitIndex;
             tryFlush();
         }
     

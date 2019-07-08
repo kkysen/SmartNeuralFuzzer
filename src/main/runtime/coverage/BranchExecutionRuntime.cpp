@@ -4,6 +4,7 @@
 
 #include "src/main/runtime/coverage/BranchExecutionRuntime.h"
 
+#include "src/share/io/BoolReader.h"
 #include "src/share/io/LEB128Reader.h"
 #include "src/share/io/DeltaWriteBuffer.h"
 #include "src/share/common/lazy.h"
@@ -44,11 +45,13 @@ namespace runtime::coverage::branch::execute {
     class SingleBranches {
     
     private:
+        
+        io::BoolReader reader;
     
     public:
         
         constexpr bool next() noexcept {
-            return false; // TODO
+            return reader.next();
         }
         
     };
