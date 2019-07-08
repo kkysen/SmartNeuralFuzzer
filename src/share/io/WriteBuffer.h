@@ -15,7 +15,7 @@ namespace io {
     
     private:
         
-        static constexpr size_t pageSize = fse::page::constSize;
+        static constexpr size_t pageSize = fse::page::size::io::constant;
         
         static constexpr size_t bufferByteSize = math::lcm(pageSize, sizeof(T));
         static constexpr size_t bufferSize = bufferByteSize / sizeof(T);

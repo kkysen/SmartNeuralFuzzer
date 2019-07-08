@@ -34,7 +34,7 @@ namespace io {
     
     std::string Popen::read() {
         std::ostringstream ss;
-        char buffer[fse::page::dynamicSize];
+        char buffer[fse::page::size::io::dynamic];
         size_t n;
         do {
             n = ::fread(buffer, 1, sizeof(buffer), _file);

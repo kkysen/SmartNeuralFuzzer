@@ -15,7 +15,7 @@ namespace runtime::coverage::branch {
     
     private:
         
-        static constexpr size_t pageSize = fse::page::constSize;
+        static constexpr size_t pageSize = fse::page::size::io::constant;
         
         class Counts {
         

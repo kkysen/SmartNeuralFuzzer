@@ -18,15 +18,24 @@
 
 namespace fse {
     
-    namespace page {
+    namespace page::size {
         
-        constexpr size_t constSize = 4096; // only usually correct, but sometimes I need it as a constexpr
-        const size_t dynamicSize = static_cast<const size_t>(sysconf(_SC_PAGESIZE));
+        constexpr size_t constant = 4096; // only usually correct, but sometimes I need it as a constexpr
+        const size_t dynamic = static_cast<const size_t>(sysconf(_SC_PAGESIZE));
+        
+        namespace io {
+            
+            constexpr size_t optimalNumPages = 8;
+            
+            constexpr size_t constant = page::size::constant * optimalNumPages;
+            const size_t dynamic = page::size::dynamic * optimalNumPages;
+            
+        }
         
     }
     
     constexpr size_t bufferSize(size_t elementSize) noexcept {
-        return math::lcm(page::constSize, elementSize) / elementSize;
+        return math::lcm(page::size::constant, elementSize) / elementSize;
     }
     
     template <typename T>
