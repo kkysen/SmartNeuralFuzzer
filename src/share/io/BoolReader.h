@@ -35,7 +35,7 @@ namespace io {
         explicit constexpr BoolReader(Data&& data) noexcept : size(getSize(data)), data(std::move(data)) {}
     
         constexpr bool done() const noexcept {
-            return i.i == data.view().size();
+            return i.i == size;
         }
     
         constexpr bool hasNext() const noexcept {
