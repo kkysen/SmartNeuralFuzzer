@@ -13,8 +13,10 @@ namespace runtime::coverage::block {
     
     private:
         
-        io::DeltaWriteBuffer function;
-        io::DeltaWriteBuffer block;
+        using Buffer = io::DeltaWriteBuffer<io::LEB128WriteBuffer>;
+        
+        Buffer function;
+        Buffer block;
     
     public:
         

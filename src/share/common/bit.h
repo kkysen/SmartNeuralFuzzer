@@ -6,7 +6,7 @@
 
 #include "src/share/common/numbers.h"
 
-namespace bools {
+namespace bit {
     
     using Size = u64;
     using Chunk = u64;
@@ -21,7 +21,7 @@ namespace bools {
         
     }
     
-    struct BitIndex {
+    struct Index {
         
         Size i = 0;
     
@@ -41,12 +41,12 @@ namespace bools {
             return static_cast<u8>(i & ((1u << shift::chunk) - 1));
         }
         
-        constexpr BitIndex& operator++() noexcept {
+        constexpr Index& operator++() noexcept {
             ++i;
             return *this;
         }
         
-        constexpr BitIndex& reset() noexcept {
+        constexpr Index& reset() noexcept {
             i = 0;
             return *this;
         }

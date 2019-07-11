@@ -13,16 +13,18 @@
 
 extern "C" {
 
+extern const u64 api (numFunctions);
+
 void api (onSingleBranch)(bool value) noexcept;
 
-void api (onMultiBranch)(u32 branchNum) noexcept;
+void api (onMultiBranch)(u64 branchNum, u64 numBranches) noexcept;
 
-void api (onSwitchCase)(bool valid, u32 caseNum) noexcept;
+void api (onSwitchCase)(bool valid, u64 caseNum, u64 numCases) noexcept;
 
 // address must be a pointer to a symbol, usually a function
-void api (onInfiniteBranch)(void* address) noexcept;
+void api (onInfiniteBranch)() noexcept;
 
-void api (onFunctionStart)(void* address) noexcept;
+void api (onFunction)(u64 functionIndex) noexcept;
 
 }
 

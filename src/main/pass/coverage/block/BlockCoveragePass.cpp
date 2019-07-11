@@ -168,7 +168,7 @@ namespace {
     CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
         IRBuilder<> builder(&*block.getFirstInsertionPt());
         IRBuilderExt ext(builder);
-        return *ext.call(f, {ext.constants().getInt(index)});
+        return ext.call(f, {&ext.constants().getInt(index)});
     }
     
 }
@@ -204,7 +204,7 @@ namespace llvm::pass::coverage::block {
                         return true;
                     }, [&](Function& function) {
 //                        errs() << "Block: " << function.getName() << "\n";
-                        call(function.front(), onFunction, functionIndex);
+                        call(function.getEntryBlock(), onFunction, functionIndex);
                         sourceMap.function(functionIndex, function);
                         functionIndex++;
                     });

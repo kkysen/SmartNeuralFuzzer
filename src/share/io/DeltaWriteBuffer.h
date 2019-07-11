@@ -9,20 +9,29 @@
 
 namespace io {
     
+    template <class Buffer>
     class DeltaWriteBuffer {
 
     private:
     
-        io::LEB128WriteBuffer buffer;
+        Buffer buffer;
         u64 lastIndex = 0;
 
     public:
     
-        void on(u64 value) noexcept;
+        void on(u64 value) noexcept {
+            const i64 delta = value - lastIndex;
+            lastIndex = value;
+            buffer << delta;
+        }
     
-        DeltaWriteBuffer& operator<<(u64 value) noexcept;
+        DeltaWriteBuffer& operator<<(u64 value) noexcept {
+            on(value);
+            return *this;
+        }
     
-        explicit DeltaWriteBuffer(io::Writer&& writer) noexcept(false);
+        explicit DeltaWriteBuffer(io::Writer&& writer) noexcept(false)
+                : buffer(std::move(writer)) {}
         
     };
     

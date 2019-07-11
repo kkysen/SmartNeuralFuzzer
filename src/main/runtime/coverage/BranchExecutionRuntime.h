@@ -13,13 +13,17 @@
 
 extern "C" {
 
+extern const u64 api (numFunctions);
+
+extern const void* const* const api(functionTable);
+
 bool api (nextSingleBranch)() noexcept;
 
-u32 api (nextMultiBranch)() noexcept;
+u64 api (nextMultiBranch)(u64 numBranches) noexcept;
 
-void* api(nextInfiniteBranch)() noexcept;
+const void* api(nextInfiniteBranch)() noexcept;
 
-void api(onEdge)(u64 startBlockIndex, u64 endBlockIndex) noexcept;
+void api (onEdge)(u64 startBlockIndex, u64 endBlockIndex) noexcept;
 
 //void api(onEdge)(u64 edgeIndex) noexcept;
 

@@ -19,7 +19,9 @@ files(share.common
         share/common/deleteCopy.h
         share/common/odrUse.h
         share/common/odrUse.cpp
-        share/common/bools.h
+        share/common/bit.h
+        share/common/Average.h
+        share/common/Average.cpp
         )
 
 files(share.stde
@@ -73,10 +75,10 @@ files(share.io
         share/io/DeltaWriteBuffer.cpp
         share/io/DeltaReader.h
         share/io/DeltaReader.cpp
-        share/io/BoolWriteBuffer.h
-        share/io/BoolWriteBuffer.cpp
-        share/io/BoolReader.h
-        share/io/BoolReader.cpp
+        share/io/BitWriteBuffer.h
+        share/io/BitWriteBuffer.cpp
+        share/io/BitReader.h
+        share/io/BitReader.cpp
         share/io/ReaderWrapper.h
         share/io/ReaderWrapper.cpp
         )

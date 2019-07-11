@@ -19,8 +19,8 @@ namespace llvm {
         explicit constexpr Constants(LLVMContext& context) : types(context) {}
         
         template <typename T>
-        constexpr ConstantInt* getInt(T t) const {
-            return ConstantInt::get(types.integral<T>(), t, std::is_signed_v<T>);
+        constexpr ConstantInt& getInt(T t) const {
+            return *ConstantInt::get(types.integral<T>(), t, std::is_signed_v<T>);
         }
         
     };

@@ -102,13 +102,13 @@ namespace llvm::pass::coverage::branch {
                 return traceCondition(inst, selectInst.getCondition());
             }
             
-            bool traceTrueIndirectCall(Instruction& inst, Value& functionPointer) const {
+            bool traceTrueIndirectCall(Instruction& inst) const {
                 if (!flags.indirectCalls) {
                     return false;
                 }
                 IRBuilder<> builder(&inst);
                 IRBuilderExt ext(builder);
-                ext.call(onBranch.infinite, {&functionPointer});
+                ext.call(onBranch.infinite);
                 return true;
             }
             
@@ -124,24 +124,24 @@ namespace llvm::pass::coverage::branch {
                 if (!isa<SelectInst>(functionPtr)) {
                     return traceSelectCall(inst, cast<SelectInst>(functionPtr));
                 } else {
-                    return traceTrueIndirectCall(inst, functionPtr);
+                    return traceTrueIndirectCall(inst);
                 }
             }
             
-            void traceMultiBranch(BasicBlock& block, u32 branchNum) const {
+            void traceMultiBranch(BasicBlock& block, u64 branchNum, u64 numBranches) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
-                ext.call(onBranch.multi, {constants.getInt(branchNum)});
+                ext.call(onBranch.multi, {&constants.getInt(branchNum), &constants.getInt(numBranches)});
             }
             
-            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum) const {
+            void traceSwitchCase(BasicBlock& block, Value& validPtr, u64 caseNum, u64 numCases) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 Value* valid = builder.CreateLoad(&validPtr);
-                ext.call(onBranch.switchCase, {valid, constants.getInt(caseNum)});
-                builder.CreateStore(constants.getInt(false), &validPtr);
+                ext.call(onBranch.switchCase, {valid, &constants.getInt(caseNum), &constants.getInt(numCases)});
+                builder.CreateStore(&constants.getInt(false), &validPtr);
             }
             
             class SwitchCaseSuccessors {
@@ -204,7 +204,7 @@ namespace llvm::pass::coverage::branch {
                     IRBuilder<> builder(switchInst.getParent()->getParent()->front().getTerminator());
                     IRBuilderExt ext(builder);
                     Value& validPtr = *builder.CreateAlloca(ext.types().get<bool>());
-                    builder.CreateStore(ext.constants().getInt(true), &validPtr);
+                    builder.CreateStore(&ext.constants().getInt(true), &validPtr);
                     return validPtr;
                 }
                 
@@ -228,7 +228,8 @@ namespace llvm::pass::coverage::branch {
                 
                 SwitchCaseSuccessors successors;
                 successors.findUniqueBranches(inst);
-                if (successors.numBranches() <= 1) {
+                const auto numBranches = successors.numBranches();
+                if (numBranches <= 1) {
                     // still an unconditional jump to the same successor block
                     return false;
                 }
@@ -238,14 +239,14 @@ namespace llvm::pass::coverage::branch {
                 if (!hasFallThroughCases) {
                     // for these successors, we can still use the raw onMultiBranch() API
                     for (BasicBlock* successor : successors.get()) {
-                        traceMultiBranch(*successor, i++);
+                        traceMultiBranch(*successor, i++, numBranches);
                     }
                 } else {
                     // for these successors, we have to use the onSwitchCase() API
                     // with the bool flag used to ensure only one onMultiBranch() is called
                     Value& validPtr = successors.createValidPtr(inst);
                     for (BasicBlock* successor : successors.get()) {
-                        traceSwitchCase(*successor, validPtr, i++);
+                        traceSwitchCase(*successor, validPtr, i++, numBranches);
                     }
                 }
                 
@@ -268,20 +269,25 @@ namespace llvm::pass::coverage::branch {
             const Api api("BranchCoverage", module);
             const OnBranch onBranch = {
                     .single = api.func<bool>("onSingleBranch"),
-                    .multi = api.func<u32>("onMultiBranch"),
-                    .switchCase = api.func<bool, u32>("onSwitchCase"),
-                    .infinite = api.func<void*>("onInfiniteBranch"),
+                    .multi = api.func<u64, u64>("onMultiBranch"),
+                    .switchCase = api.func<bool, u64, u64>("onSwitchCase"),
+                    .infinite = api.func<>("onInfiniteBranch"),
             };
-            const FunctionCallee onFunctionStart = api.func<void*>("onFunctionStart");
-            
-            return filteredFunctions(module)
+            const auto onFunction = api.func<u64>("onFunction");
+            u64 functionIndex = 0;
+            const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
                         return BlockPass(flags, onBranch, block).trace();
                     }, [&](Function& function) {
                         IRBuilder<> builder(&*function.getEntryBlock().getFirstInsertionPt());
                         IRBuilderExt ext(builder);
-                        ext.call(onFunctionStart, {&function});
+                        ext.call(onFunction, {&ext.constants().getInt(functionIndex++)});
                     });
+            api.global<u64>("numFunctions", Api::GlobalArgs {
+                .isConstant = true,
+                .initializer = Constants(module.getContext()).getInt(functionIndex),
+            });
+            return modified;
         }
         
     };

@@ -36,9 +36,9 @@ namespace llvm {
             return Constants(context());
         }
         
-        constexpr CallInst* call(FunctionCallee callee, ArrayRef<Value*> args = None,
+        constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args = None,
                                  const Twine& name = "", MDNode* floatingPointMathTag = nullptr) const {
-            return builder.CreateCall(callee, args, name, floatingPointMathTag);
+            return *builder.CreateCall(callee, args, name, floatingPointMathTag);
         }
         
     };

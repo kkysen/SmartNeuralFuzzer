@@ -4,7 +4,7 @@
 
 #include "src/main/runtime/coverage/BranchExecutionRuntime.h"
 
-#include "src/share/io/BoolReader.h"
+#include "src/share/io/BitReader.h"
 #include "src/share/io/LEB128Reader.h"
 #include "src/share/io/DeltaWriteBuffer.h"
 #include "src/share/common/lazy.h"
@@ -17,7 +17,9 @@ namespace runtime::coverage::branch::execute {
         u64 end;
     };
     
-    io::DeltaWriteBuffer& operator<<(io::DeltaWriteBuffer& out, const Edge& edge) {
+    using WriteBuffer = io::DeltaWriteBuffer<io::LEB128WriteBuffer>;
+    
+    WriteBuffer& operator<<(WriteBuffer& out, const Edge& edge) {
         return out << edge.start << edge.end;
     }
     
@@ -27,7 +29,7 @@ namespace runtime::coverage::branch::execute {
     
     struct Output {
         
-        io::DeltaWriteBuffer raw;
+        WriteBuffer raw;
         std::ostream& formatted;
         const bool format;
         
@@ -42,68 +44,26 @@ namespace runtime::coverage::branch::execute {
         
     };
     
-    class SingleBranches {
-    
-    private:
-        
-        io::BoolReader reader;
-    
-    public:
-        
-        constexpr bool next() noexcept {
-            return reader.next();
-        }
-        
-    };
-    
-    class NonSingleBranches {
-    
-    private:
-        
-        io::LEB128Reader reader;
-        
-        constexpr u64 next() noexcept {
-            return reader.next<u64>();
-        }
-    
-    public:
-        
-        constexpr u32 nextMulti() noexcept {
-            return static_cast<u32>(next());
-        }
-        
-        void* nextInfinite() noexcept {
-            return reinterpret_cast<void*>(next());
-        }
-        
-    };
-    
-    struct Branches {
-        
-        SingleBranches single;
-        NonSingleBranches nonSingle;
-        
-    };
-    
     class BranchExecutionRuntime {
     
     private:
         
-        Branches branches;
+        io::BitReader branches;
         Output output;
     
     public:
         
         bool nextSingleBranch() noexcept {
-            return branches.single.next();
+            return branches.next();
         }
         
-        u32 nextMultiBranch() noexcept {
-            return branches.nonSingle.nextMulti();
+        u64 nextMultiBranch(u64 numBranches) noexcept {
+            return branches.next(numBranches);
         }
         
-        void* nextInfiniteBranch() noexcept {
-            return branches.nonSingle.nextInfinite();
+        const void* nextInfiniteBranch() noexcept {
+            const auto functionIndex = nextMultiBranch(__BranchExecution_numFunctions);
+            return __BranchExecution_functionTable[functionIndex];
         }
         
         void onEdge(u64 startBlockIndex, u64 endBlockIndex) noexcept {
@@ -126,11 +86,11 @@ bool api (nextSingleBranch)() noexcept {
     return rt().nextSingleBranch();
 }
 
-u32 api (nextMultiBranch)() noexcept {
-    return rt().nextMultiBranch();
+u64 api (nextMultiBranch)(u64 numBranches) noexcept {
+    return rt().nextMultiBranch(numBranches);
 }
 
-void* api(nextInfiniteBranch)() noexcept {
+const void* api(nextInfiniteBranch)() noexcept {
     return rt().nextInfiniteBranch();
 }
 
