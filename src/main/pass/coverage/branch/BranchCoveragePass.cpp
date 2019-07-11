@@ -49,23 +49,21 @@ namespace llvm::pass::coverage::branch {
                 }
                 auto& terminator = *terminatorPtr;
                 
-                #define _(block, InstType, flag, func) \
+                #define _(block, InstType, func) \
                 if (isa<InstType>(block)) { \
-                    traced |= flags.flag && func(cast<InstType>(block)); \
+                    traced |= func(cast<InstType>(block)); \
                 } \
 
                 bool traced = false;
-
-//                traced |= flags.indirectCalls && traceDynamicDispatches(block);
                 
-                _(terminator, BranchInst, branches, traceBranch)
-                else _(terminator, CallBase, branches, traceSelectCall)
-                else _(terminator, SwitchInst, switches, traceSwitch)
+                _(terminator, BranchInst, traceBranch)
+                else _(terminator, CallBase, traceIndirectCall)
+                else _(terminator, SwitchInst, traceSwitch)
                 
                 // CallBase = CallInst, InvokeInst, CallBrInst
                 // InvokeInst and CallBrInst are terminators
                 for (auto& inst : block) {
-                    _(inst, CallInst, branches, traceSelectCall)
+                    _(inst, CallInst, traceIndirectCall)
                 }
                 
                 return traced;
@@ -84,18 +82,37 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            /**
-             * Trace a br (branch) instruction
-             * by calling onBranch(booleanValue) immediately before the branch.
-             */
-            bool traceBranch(BranchInst& inst) {
+            bool traceBranch(BranchInst& inst) const {
+                if (!flags.branches) {
+                    return false;
+                }
                 if (!inst.isConditional()) {
                     return false;
                 }
                 return traceCondition(inst, inst.getCondition());
             }
             
-            bool traceSelectCall(const CallBase& inst) {
+            bool traceSelectCall(Instruction& inst, SelectInst& selectInst) const {
+                if (!flags.branches) {
+                    return false;
+                }
+                if (!selectInst.getCondition()) {
+                    return false;
+                }
+                return traceCondition(inst, selectInst.getCondition());
+            }
+            
+            bool traceTrueIndirectCall(Instruction& inst, Value& functionPointer) const {
+                if (!flags.indirectCalls) {
+                    return false;
+                }
+                IRBuilder<> builder(&inst);
+                IRBuilderExt ext(builder);
+                ext.call(onBranch.infinite, {&functionPointer});
+                return true;
+            }
+            
+            bool traceIndirectCall(CallBase& inst) const {
                 if (!inst.isIndirectCall()) {
                     return false;
                 }
@@ -103,24 +120,22 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 auto& functionPtr = *inst.getCalledOperand();
+                
                 if (!isa<SelectInst>(functionPtr)) {
-                    return false;
+                    return traceSelectCall(inst, cast<SelectInst>(functionPtr));
+                } else {
+                    return traceTrueIndirectCall(inst, functionPtr);
                 }
-                auto& selectInst = cast<SelectInst>(functionPtr);
-                if (!selectInst.getCondition()) {
-                    return false;
-                }
-                return traceCondition(selectInst, selectInst.getCondition());
             }
             
-            void traceMultiBranch(BasicBlock& block, u32 branchNum) {
+            void traceMultiBranch(BasicBlock& block, u32 branchNum) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 ext.call(onBranch.multi, {constants.getInt(branchNum)});
             }
             
-            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum) {
+            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
@@ -200,7 +215,11 @@ namespace llvm::pass::coverage::branch {
              * by calling onMultiBranch(caseNum, numCases)
              * as the first statement of each case's BasicBlock.
              */
-            bool traceSwitch(SwitchInst& inst) {
+            bool traceSwitch(SwitchInst& inst) const {
+                if (!flags.switches) {
+                    return false;
+                }
+                
                 const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
                     // unconditionally jump to default case
@@ -233,10 +252,6 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
-            bool traceIndirectCalls([[maybe_unused]] BasicBlock& _block) {
-                return true;
-            }
-            
         };
     
     public:
@@ -257,10 +272,15 @@ namespace llvm::pass::coverage::branch {
                     .switchCase = api.func<bool, u32>("onSwitchCase"),
                     .infinite = api.func<void*>("onInfiniteBranch"),
             };
+            const FunctionCallee onFunctionStart = api.func<void*>("onFunctionStart");
             
             return filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
                         return BlockPass(flags, onBranch, block).trace();
+                    }, [&](Function& function) {
+                        IRBuilder<> builder(&*function.getEntryBlock().getFirstInsertionPt());
+                        IRBuilderExt ext(builder);
+                        ext.call(onFunctionStart, {&function});
                     });
         }
         

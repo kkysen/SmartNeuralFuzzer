@@ -19,7 +19,10 @@ void api (onMultiBranch)(u32 branchNum) noexcept;
 
 void api (onSwitchCase)(bool valid, u32 caseNum) noexcept;
 
+// address must be a pointer to a symbol, usually a function
 void api (onInfiniteBranch)(void* address) noexcept;
+
+void api (onFunctionStart)(void* address) noexcept;
 
 }
 

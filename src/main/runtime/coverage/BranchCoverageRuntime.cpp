@@ -10,6 +10,12 @@
 #include <numeric>
 #include <iostream>
 
+namespace {
+    
+    thread_local bool inUntracedCode = false;
+    
+}
+
 namespace runtime::coverage::branch {
     
     class BranchCoverageRuntime {
@@ -146,6 +152,11 @@ namespace runtime::coverage::branch {
                 tryFlush();
             }
             
+            void onInfinite(void* address) noexcept {
+                // TODO lookup symbol using dladdr
+                onInfinite(reinterpret_cast<u64>(address));
+            }
+            
         };
         
         struct Branches {
@@ -172,7 +183,7 @@ namespace runtime::coverage::branch {
         }
         
         void onInfiniteBranch(void* address) noexcept {
-            branches.nonSingle.onInfinite(reinterpret_cast<u64>(address));
+            branches.nonSingle.onInfinite(address);
         }
         
         explicit BranchCoverageRuntime() noexcept(false)
@@ -209,4 +220,11 @@ void api(onSwitchCase)(bool valid, u32 caseNum) noexcept {
 void api(onInfiniteBranch)(void* address) noexcept {
 //    printf("BranchCoverage: onInfiniteBranch: %p\n", address);
     API_rt().onInfiniteBranch(address);
+}
+
+void api(onFunctionStart)(void* address) noexcept {
+    if (inUntracedCode) {
+        inUntracedCode = false;
+        __BranchCoverage_onInfiniteBranch(address);
+    }
 }
