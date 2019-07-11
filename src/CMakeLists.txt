@@ -268,6 +268,11 @@ files(share.capability
         share/capability/AmbientSet.cpp
         )
 
+files(share.dl
+        share/dl/Function.h
+        share/dl/Function.cpp
+        )
+
 # these only depend on LLVMSupport and LLVMCore (and pthread, tinfo)
 set(share.llvm.lib
         share/llvm/lib/alignment.h

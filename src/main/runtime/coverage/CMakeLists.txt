@@ -18,6 +18,7 @@ set(files.all.runtime.coverage
         ${files.share.aio.signal}
         ${files.share.concurrent}
         ${files.share.hook}
+        ${files.share.dl}
         ${files.share.capability}
         ${files.runtime}
         ${files.runtime.coverage}
