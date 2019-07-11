@@ -46,6 +46,14 @@ namespace io {
         ~BitWriteBuffer() noexcept;
         
         void on(bool bit) noexcept;
+    
+    private:
+    
+        void onWhenAligned(u64 bits, u8 numBits) noexcept;
+        
+        void onWhenUnAligned(u64 bits, u8 numBits) noexcept;
+        
+    public:
         
         void on(std::pair<u64, u64> bits) noexcept;
         
