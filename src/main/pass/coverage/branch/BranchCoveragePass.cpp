@@ -43,34 +43,74 @@ namespace llvm::pass::coverage::branch {
                     : flags(flags), onBranch(onBranch), block(block) {}
             
             bool trace() {
-                const auto terminator = block.getTerminator();
-                if (!terminator) {
+                auto* const terminatorPtr = block.getTerminator();
+                if (!terminatorPtr) {
                     return false;
                 }
+                auto& terminator = *terminatorPtr;
+                
+                #define _(block, InstType, flag, func) \
+                if (isa<InstType>(block)) { \
+                    traced |= flags.flag && func(cast<InstType>(block)); \
+                } \
+
                 bool traced = false;
-//            traced |= flags.indirectCalls && traceDynamicDispatches(block);
-                if (const auto branchInst = dyn_cast<BranchInst>(terminator)) {
-                    traced |= flags.branches && traceBranch(*branchInst);
-                } else if (const auto switchInst = dyn_cast<SwitchInst>(terminator)) {
-                    traced |= flags.switches && traceSwitch(*switchInst);
+
+//                traced |= flags.indirectCalls && traceDynamicDispatches(block);
+                
+                _(terminator, BranchInst, branches, traceBranch)
+                else _(terminator, CallBase, branches, traceSelectCall)
+                else _(terminator, SwitchInst, switches, traceSwitch)
+                
+                // CallBase = CallInst, InvokeInst, CallBrInst
+                // InvokeInst and CallBrInst are terminators
+                for (auto& inst : block) {
+                    _(inst, CallInst, branches, traceSelectCall)
                 }
+                
                 return traced;
             }
         
         private:
             
+            bool traceCondition(Instruction& inst, Value* conditionPtr) const {
+                if (!conditionPtr) {
+                    return false;
+                }
+                auto& condition = *conditionPtr;
+                IRBuilder<> builder(&inst);
+                IRBuilderExt ext(builder);
+                ext.call(onBranch.single, {&condition});
+                return true;
+            }
+            
             /**
              * Trace a br (branch) instruction
              * by calling onBranch(booleanValue) immediately before the branch.
              */
-            bool traceBranch(BranchInst& branchInst) {
-                if (!branchInst.isConditional()) {
+            bool traceBranch(BranchInst& inst) {
+                if (!inst.isConditional()) {
                     return false;
                 }
-                IRBuilder<> builder(&branchInst);
-                IRBuilderExt ext(builder);
-                ext.call(onBranch.single, {branchInst.getCondition()});
-                return true;
+                return traceCondition(inst, inst.getCondition());
+            }
+            
+            bool traceSelectCall(const CallBase& inst) {
+                if (!inst.isIndirectCall()) {
+                    return false;
+                }
+                if (!inst.getCalledOperand()) {
+                    return false;
+                }
+                auto& functionPtr = *inst.getCalledOperand();
+                if (!isa<SelectInst>(functionPtr)) {
+                    return false;
+                }
+                auto& selectInst = cast<SelectInst>(functionPtr);
+                if (!selectInst.getCondition()) {
+                    return false;
+                }
+                return traceCondition(selectInst, selectInst.getCondition());
             }
             
             void traceMultiBranch(BasicBlock& block, u32 branchNum) {
@@ -160,15 +200,15 @@ namespace llvm::pass::coverage::branch {
              * by calling onMultiBranch(caseNum, numCases)
              * as the first statement of each case's BasicBlock.
              */
-            bool traceSwitch(SwitchInst& switchInst) {
-                const auto numCases = switchInst.getNumCases() + 1;
+            bool traceSwitch(SwitchInst& inst) {
+                const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
                     // unconditionally jump to default case
                     return false;
                 }
                 
                 SwitchCaseSuccessors successors;
-                successors.findUniqueBranches(switchInst);
+                successors.findUniqueBranches(inst);
                 if (successors.numBranches() <= 1) {
                     // still an unconditional jump to the same successor block
                     return false;
@@ -184,7 +224,7 @@ namespace llvm::pass::coverage::branch {
                 } else {
                     // for these successors, we have to use the onSwitchCase() API
                     // with the bool flag used to ensure only one onMultiBranch() is called
-                    Value& validPtr = successors.createValidPtr(switchInst);
+                    Value& validPtr = successors.createValidPtr(inst);
                     for (BasicBlock* successor : successors.get()) {
                         traceSwitchCase(*successor, validPtr, i++);
                     }
