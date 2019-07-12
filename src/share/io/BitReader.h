@@ -16,7 +16,7 @@ namespace io {
         using Chunk = bit::Chunk;
         using Size = bit::Size;
     
-        using Data = io::ReadOnlyMappedMemory<u8>;
+        using Data = io::ReadOnlyMappedMemory<Chunk>;
 
     private:
     
@@ -27,7 +27,7 @@ namespace io {
         static constexpr Size getSize(const Data& data) noexcept {
             const auto& view = data.view();
             const auto size = view.size();
-            return (size * numBits<u8>()) + view[size - 1];
+            return (size * numBits<Chunk>()) + view[size - 1];
         }
 
     public:
@@ -41,21 +41,34 @@ namespace io {
         constexpr bool hasNext() const noexcept {
             return !done();
         }
+
+    private:
+
+        constexpr Chunk nextWhenAligned(u8 numBits) noexcept {
+            const Chunk value = data.view()[i.chunkIndex()] >> i.chunkBitIndex();
+            i.i += numBits;
+            return value & (1u << numBits);
+        }
+        
+        constexpr Chunk nextWhenUnAligned(u8 numBits) noexcept {
+            const u8 firstNumBits = numBits - i.chunkBitIndex();
+            const u8 secondNumBits = numBits - firstNumBits;
+            return nextWhenAligned(firstNumBits) | (nextWhenAligned(secondNumBits) << firstNumBits);
+        }
+        
+    public:
         
         constexpr bool next() noexcept {
-            const bool value = data.view()[i.byteIndex()] >> i.byteBitIndex();
-            ++i;
-            return value;
+            return nextWhenAligned(1);
         }
         
         constexpr u64 next(u64 maxValue) noexcept {
-            const auto _numBits = numBits<u64>() - static_cast<u8>(__builtin_clzl(maxValue));
-            // TODO this is a slow, naive implementation
-            u64 value = 0;
-            for (u8 i = 0; i < _numBits; i++) {
-                value |= static_cast<u64>(next()) << i;
+            const auto numBits = ::numBits<u64>() - static_cast<u8>(__builtin_clzl(maxValue));
+            if (numBits + i.chunkBitIndex() <= ::numBits<Chunk>()) {
+                return nextWhenAligned(numBits);
+            } else {
+                return nextWhenUnAligned(numBits);
             }
-            return value;
         }
         
     };

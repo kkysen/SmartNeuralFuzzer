@@ -23,7 +23,7 @@ namespace io {
 //            static constexpr Size bufferBitSize = bufferByteSize * numBits<u8>();
         
         std::array<Chunk, bufferSize> buffer = {};
-        bit::Index bitIndex;
+        bit::Index i;
         
         const io::Writer write;
         
@@ -32,7 +32,7 @@ namespace io {
         void flush() noexcept;
         
         constexpr bool shouldFlush() const noexcept {
-            return bitIndex.chunkIndex() == buffer.size();
+            return i.chunkIndex() == buffer.size();
         }
         
         void tryFlush() noexcept;
