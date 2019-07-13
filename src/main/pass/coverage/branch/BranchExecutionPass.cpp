@@ -8,24 +8,13 @@
 
 namespace llvm::pass::coverage::branch {
     
-    class BranchCoveragePass : public ModulePass {
+    class BranchExecutionPass : public ModulePass {
     
     private:
         
-        struct Flags {
-            bool branches;
-            bool switches;
-            bool indirectCalls;
-        } flags {
-                .branches = true,
-                .switches = true,
-                .indirectCalls = false,
-        };
-        
-        struct OnBranch {
+        struct NextBranch {
             const FunctionCallee single;
             const FunctionCallee multi;
-            const FunctionCallee switchCase;
             const FunctionCallee infinite;
         };
         
@@ -33,60 +22,128 @@ namespace llvm::pass::coverage::branch {
         
         private:
             
-            const Flags& flags;
-            const OnBranch& onBranch;
+            const NextBranch& nextBranch;
+            const FunctionCallee onEdge;
             BasicBlock& block;
         
         public:
             
-            constexpr BlockPass(const Flags& flags, const OnBranch& onBranch, BasicBlock& block) noexcept
-                    : flags(flags), onBranch(onBranch), block(block) {}
-            
-            bool trace() {
-                const auto terminator = block.getTerminator();
-                if (!terminator) {
+            constexpr BlockPass(const NextBranch& onBranch, FunctionCallee onEdge, BasicBlock& block) noexcept
+                    : nextBranch(onBranch), onEdge(onEdge), block(block) {}
+
+        private:
+    
+            #define _(block, InstType, func) \
+                if (isa<InstType>(block)) { \
+                    traced |= func(cast<InstType>(block)); \
+                } \
+
+            bool traceTerminator() {
+                auto* const terminatorPtr = block.getTerminator();
+                if (!terminatorPtr) {
                     return false;
                 }
+                auto& terminator = *terminatorPtr;
+        
                 bool traced = false;
-//            traced |= flags.indirectCalls && traceDynamicDispatches(block);
-                if (const auto branchInst = dyn_cast<BranchInst>(terminator)) {
-                    traced |= flags.branches && traceBranch(*branchInst);
-                } else if (const auto switchInst = dyn_cast<SwitchInst>(terminator)) {
-                    traced |= flags.switches && traceSwitch(*switchInst);
+                _(terminator, BranchInst, traceBranch)
+                else _(terminator, CallBase, traceIndirectCall)
+                else _(terminator, SwitchInst, traceSwitch)
+                return traced;
+            }
+    
+            bool traceNonTerminators() {
+                // CallBase = CallInst, InvokeInst, CallBrInst
+                // InvokeInst and CallBrInst are terminators
+                bool traced = false;
+                for (auto& inst : block) {
+                    _(inst, CallInst, traceIndirectCall)
                 }
                 return traced;
+            }
+    
+            #undef _
+
+        public:
+    
+            bool trace() {
+                const bool tracedTerminator = traceTerminator();
+                const bool tracedNonTerminators = traceNonTerminators();
+                const bool traced = tracedTerminator || tracedNonTerminators;
+                if (!traced) {
+                    block.eraseFromParent();
+                } else if (!tracedNonTerminators) {
+                
+                } else if (!tracedTerminator) {
+                
+                }
+                return true;
             }
         
         private:
             
-            /**
-             * Trace a br (branch) instruction
-             * by calling onBranch(booleanValue) immediately before the branch.
-             */
-            bool traceBranch(BranchInst& branchInst) {
-                if (!branchInst.isConditional()) {
+            bool traceCondition(Instruction& inst, Value* conditionPtr) const {
+                if (!conditionPtr) {
                     return false;
                 }
-                IRBuilder<> builder(&branchInst);
+                auto& condition = *conditionPtr;
+                IRBuilder<> builder(&inst);
                 IRBuilderExt ext(builder);
-                ext.call(onBranch.single, {branchInst.getCondition()});
+                ext.call(nextBranch.single, {&condition});
                 return true;
             }
             
-            void traceMultiBranch(BasicBlock& block, u32 branchNum) {
+            bool traceBranch(BranchInst& inst) const {
+                if (!inst.isConditional()) {
+                    return false;
+                }
+                return traceCondition(inst, inst.getCondition());
+            }
+            
+            bool traceSelectCall(Instruction& inst, SelectInst& selectInst) const {
+                if (!selectInst.getCondition()) {
+                    return false;
+                }
+                return traceCondition(inst, selectInst.getCondition());
+            }
+            
+            bool traceTrueIndirectCall(Instruction& inst) const {
+                IRBuilder<> builder(&inst);
+                IRBuilderExt ext(builder);
+                ext.call(nextBranch.infinite);
+                return true;
+            }
+            
+            bool traceIndirectCall(CallBase& inst) const {
+                if (!inst.isIndirectCall()) {
+                    return false;
+                }
+                if (!inst.getCalledOperand()) {
+                    return false;
+                }
+                auto& functionPtr = *inst.getCalledOperand();
+                
+                if (!isa<SelectInst>(functionPtr)) {
+                    return traceSelectCall(inst, cast<SelectInst>(functionPtr));
+                } else {
+                    return traceTrueIndirectCall(inst);
+                }
+            }
+            
+            void traceMultiBranch(BasicBlock& block, u64 branchNum, u64 numBranches) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
-                ext.call(onBranch.multi, {constants.getInt(branchNum)});
+                ext.call(nextBranch.multi, {&constants.getInt(branchNum), &constants.getInt(numBranches)});
             }
             
-            void traceSwitchCase(BasicBlock& block, Value& validPtr, u32 caseNum) {
+            void traceSwitchCase(BasicBlock& block, Value& validPtr, u64 caseNum, u64 numCases) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 Value* valid = builder.CreateLoad(&validPtr);
-                ext.call(onBranch.switchCase, {valid, constants.getInt(caseNum)});
-                builder.CreateStore(constants.getInt(false), &validPtr);
+                ext.call(nextBranch.switchCase, {valid, &constants.getInt(caseNum), &constants.getInt(numCases)});
+                builder.CreateStore(&constants.getInt(false), &validPtr);
             }
             
             class SwitchCaseSuccessors {
@@ -149,7 +206,7 @@ namespace llvm::pass::coverage::branch {
                     IRBuilder<> builder(switchInst.getParent()->getParent()->front().getTerminator());
                     IRBuilderExt ext(builder);
                     Value& validPtr = *builder.CreateAlloca(ext.types().get<bool>());
-                    builder.CreateStore(ext.constants().getInt(true), &validPtr);
+                    builder.CreateStore(&ext.constants().getInt(true), &validPtr);
                     return validPtr;
                 }
                 
@@ -160,16 +217,17 @@ namespace llvm::pass::coverage::branch {
              * by calling onMultiBranch(caseNum, numCases)
              * as the first statement of each case's BasicBlock.
              */
-            bool traceSwitch(SwitchInst& switchInst) {
-                const auto numCases = switchInst.getNumCases() + 1;
+            bool traceSwitch(SwitchInst& inst) const {
+                const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
                     // unconditionally jump to default case
                     return false;
                 }
                 
                 SwitchCaseSuccessors successors;
-                successors.findUniqueBranches(switchInst);
-                if (successors.numBranches() <= 1) {
+                successors.findUniqueBranches(inst);
+                const auto numBranches = successors.numBranches();
+                if (numBranches <= 1) {
                     // still an unconditional jump to the same successor block
                     return false;
                 }
@@ -179,21 +237,17 @@ namespace llvm::pass::coverage::branch {
                 if (!hasFallThroughCases) {
                     // for these successors, we can still use the raw onMultiBranch() API
                     for (BasicBlock* successor : successors.get()) {
-                        traceMultiBranch(*successor, i++);
+                        traceMultiBranch(*successor, i++, numBranches);
                     }
                 } else {
                     // for these successors, we have to use the onSwitchCase() API
                     // with the bool flag used to ensure only one onMultiBranch() is called
-                    Value& validPtr = successors.createValidPtr(switchInst);
+                    Value& validPtr = successors.createValidPtr(inst);
                     for (BasicBlock* successor : successors.get()) {
-                        traceSwitchCase(*successor, validPtr, i++);
+                        traceSwitchCase(*successor, validPtr, i++, numBranches);
                     }
                 }
                 
-                return true;
-            }
-            
-            bool traceIndirectCalls([[maybe_unused]] BasicBlock& _block) {
                 return true;
             }
             
@@ -203,31 +257,43 @@ namespace llvm::pass::coverage::branch {
         
         static char ID;
         
-        BranchCoveragePass() : ModulePass(ID) {}
+        BranchExecutionPass() : ModulePass(ID) {}
         
         StringRef getPassName() const override {
             return "Branch Coverage Pass";
         }
         
         bool runOnModule(Module& module) override {
-            const Api api("BranchCoverage", module);
-            const OnBranch onBranch = {
-                    .single = api.func<bool>("onSingleBranch"),
-                    .multi = api.func<u32>("onMultiBranch"),
-                    .switchCase = api.func<bool, u32>("onSwitchCase"),
-                    .infinite = api.func<void*>("onInfiniteBranch"),
+            const Api api("BranchExecution", module);
+            const NextBranch nextBranch = {
+                    .single = api.func<bool>("nextSingleBranch"),
+                    .multi = api.func<u64, u64>("nextMultiBranch"),
+                    .infinite = api.func<const void*>("nextInfiniteBranch"),
             };
-            
-            return filteredFunctions(module)
+            const auto onEdge = api.func<void, u64, u64>("onEdge");
+            SmallVector<Constant*, 0> functions;
+            const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(flags, onBranch, block).trace();
+                        return BlockPass(nextBranch, onEdge, block).trace();
+                    }, [&](Function& function) {
+                        functions.emplace_back(&function);
                     });
+            api.global<u64>("numFunctions", Api::GlobalArgs {
+                    .isConstant = true,
+                    .initializer = Constants(module.getContext()).getInt(functions.size()),
+            });
+            const auto arrayType = ArrayType::get(api.types.get<const void*>(), functions.size());
+            api.global("functions", *arrayType, Api::GlobalArgs {
+                .isConstant = true,
+                .initializer = *ConstantArray::get(arrayType, functions),
+            });
+            return modified;
         }
         
     };
     
-    char BranchCoveragePass::ID = 0;
+    char BranchExecutionPass::ID = 0;
     
-    bool registered = registerStandardAlwaysLast<BranchCoveragePass>();
+    bool registered = registerStandardAlwaysLast<BranchExecutionPass>();
     
 }

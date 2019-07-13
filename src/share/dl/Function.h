@@ -12,7 +12,7 @@ namespace dl {
     class Function {
         
         static auto lookup(Args ... args) noexcept {
-            impl = (F*) dlsym(RTLD_NEXT, name);
+            impl = (F*) ::dlsym(RTLD_NEXT, name);
             return impl(args...);
         }
     

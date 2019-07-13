@@ -12,16 +12,6 @@ namespace llvm::pass::coverage::branch {
     
     private:
         
-        struct Flags {
-            bool branches;
-            bool switches;
-            bool indirectCalls;
-        } flags {
-                .branches = true,
-                .switches = true,
-                .indirectCalls = false,
-        };
-        
         struct OnBranch {
             const FunctionCallee single;
             const FunctionCallee multi;
@@ -33,40 +23,54 @@ namespace llvm::pass::coverage::branch {
         
         private:
             
-            const Flags& flags;
             const OnBranch& onBranch;
             BasicBlock& block;
         
         public:
             
-            constexpr BlockPass(const Flags& flags, const OnBranch& onBranch, BasicBlock& block) noexcept
-                    : flags(flags), onBranch(onBranch), block(block) {}
-            
-            bool trace() {
+            constexpr BlockPass(const OnBranch& onBranch, BasicBlock& block) noexcept
+                    : onBranch(onBranch), block(block) {}
+
+        private:
+    
+            #define _(block, InstType, func) \
+                if (isa<InstType>(block)) { \
+                    traced |= func(cast<InstType>(block)); \
+                } \
+
+            bool traceTerminator() {
                 auto* const terminatorPtr = block.getTerminator();
                 if (!terminatorPtr) {
                     return false;
                 }
                 auto& terminator = *terminatorPtr;
-                
-                #define _(block, InstType, func) \
-                if (isa<InstType>(block)) { \
-                    traced |= func(cast<InstType>(block)); \
-                } \
 
                 bool traced = false;
-                
                 _(terminator, BranchInst, traceBranch)
                 else _(terminator, CallBase, traceIndirectCall)
                 else _(terminator, SwitchInst, traceSwitch)
-                
+                else _(terminator, IndirectBrInst, traceIndirectBranch)
+                return traced;
+            }
+            
+            bool traceNonTerminators() {
                 // CallBase = CallInst, InvokeInst, CallBrInst
                 // InvokeInst and CallBrInst are terminators
+                bool traced = false;
                 for (auto& inst : block) {
                     _(inst, CallInst, traceIndirectCall)
                 }
-                
                 return traced;
+            }
+    
+            #undef _
+            
+        public:
+            
+            bool trace() {
+                const bool tracedTerminator = traceTerminator();
+                const bool tracedNonTerminators = traceNonTerminators();
+                return tracedTerminator || tracedNonTerminators;
             }
         
         private:
@@ -83,9 +87,6 @@ namespace llvm::pass::coverage::branch {
             }
             
             bool traceBranch(BranchInst& inst) const {
-                if (!flags.branches) {
-                    return false;
-                }
                 if (!inst.isConditional()) {
                     return false;
                 }
@@ -93,9 +94,6 @@ namespace llvm::pass::coverage::branch {
             }
             
             bool traceSelectCall(Instruction& inst, SelectInst& selectInst) const {
-                if (!flags.branches) {
-                    return false;
-                }
                 if (!selectInst.getCondition()) {
                     return false;
                 }
@@ -103,9 +101,6 @@ namespace llvm::pass::coverage::branch {
             }
             
             bool traceTrueIndirectCall(Instruction& inst) const {
-                if (!flags.indirectCalls) {
-                    return false;
-                }
                 IRBuilder<> builder(&inst);
                 IRBuilderExt ext(builder);
                 ext.call(onBranch.infinite);
@@ -210,16 +205,7 @@ namespace llvm::pass::coverage::branch {
                 
             };
             
-            /**
-             * Trace a switch instruction
-             * by calling onMultiBranch(caseNum, numCases)
-             * as the first statement of each case's BasicBlock.
-             */
             bool traceSwitch(SwitchInst& inst) const {
-                if (!flags.switches) {
-                    return false;
-                }
-                
                 const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
                     // unconditionally jump to default case
@@ -253,6 +239,10 @@ namespace llvm::pass::coverage::branch {
                 return true;
             }
             
+            bool traceIndirectBranch(IndirectBrInst&) const {
+                llvm_unreachable("indirectbr not supported yet");
+            }
+            
         };
     
     public:
@@ -268,16 +258,16 @@ namespace llvm::pass::coverage::branch {
         bool runOnModule(Module& module) override {
             const Api api("BranchCoverage", module);
             const OnBranch onBranch = {
-                    .single = api.func<bool>("onSingleBranch"),
-                    .multi = api.func<u64, u64>("onMultiBranch"),
-                    .switchCase = api.func<bool, u64, u64>("onSwitchCase"),
-                    .infinite = api.func<>("onInfiniteBranch"),
+                    .single = api.func<void, bool>("onSingleBranch"),
+                    .multi = api.func<void, u64, u64>("onMultiBranch"),
+                    .switchCase = api.func<void, bool, u64, u64>("onSwitchCase"),
+                    .infinite = api.func<void>("onInfiniteBranch"),
             };
-            const auto onFunction = api.func<u64>("onFunction");
+            const auto onFunction = api.func<void, u64>("onFunction");
             u64 functionIndex = 0;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(flags, onBranch, block).trace();
+                        return BlockPass(onBranch, block).trace();
                     }, [&](Function& function) {
                         IRBuilder<> builder(&*function.getEntryBlock().getFirstInsertionPt());
                         IRBuilderExt ext(builder);

@@ -22,9 +22,10 @@ namespace llvm {
     private:
         
         Module& module;
-        const Types types;
-    
+        
     public:
+    
+        const Types types;
         
         constexpr Api(std::string_view name, Module& module) noexcept
                 : name(name), module(module), types(module.getContext()) {}
@@ -36,7 +37,7 @@ namespace llvm {
         
         template <typename... Args>
         FunctionCallee func(std::string_view funcName) const {
-            return module.getOrInsertFunction(nameFor(funcName), types.function<void, Args...>());
+            return module.getOrInsertFunction(nameFor(funcName), types.function<Args...>());
         }
         
         struct GlobalArgs {
