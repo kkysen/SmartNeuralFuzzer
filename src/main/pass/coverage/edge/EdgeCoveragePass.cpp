@@ -4,18 +4,6 @@
 
 #include "src/main/pass/coverage/includes.h"
 
-namespace {
-    
-    using namespace llvm;
-    
-    CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
-        IRBuilder<> irb(&*block.getFirstInsertionPt());
-        IRBuilderExt irbe(irb);
-        return irbe.callIndex(f, index);
-    }
-    
-}
-
 namespace llvm::pass::coverage::edge {
     
     class EdgeCoveragePass : public ModulePass {

@@ -9,7 +9,7 @@
 
 namespace io {
     
-    class DeltaReader : ReaderWrapper<LEB128Reader> {
+    class DeltaReader : public ReaderWrapper<LEB128Reader> {
 
     private:
         
@@ -25,6 +25,8 @@ namespace io {
         }
 
     public:
+    
+        explicit constexpr DeltaReader(Data&& data) noexcept : ReaderWrapper<LEB128Reader>(std::move(data)) {}
     
         template <typename T = u64>
         constexpr T next() noexcept {

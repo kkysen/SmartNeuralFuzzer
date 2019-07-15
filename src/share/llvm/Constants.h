@@ -20,7 +20,7 @@ namespace llvm {
         
         template <typename T>
         constexpr ConstantInt& getInt(T t) const {
-            return *ConstantInt::get(types.integral<T>(), t, std::is_signed_v<T>);
+            return *ConstantInt::get(&types.integral<T>(), t, std::is_signed_v<T>);
         }
         
     };

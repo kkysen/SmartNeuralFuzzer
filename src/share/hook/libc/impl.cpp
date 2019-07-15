@@ -54,7 +54,7 @@ namespace hook::libc::impl {
     
     // unconditionally hook
     // onExit
-    
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winvalid-noreturn"
     

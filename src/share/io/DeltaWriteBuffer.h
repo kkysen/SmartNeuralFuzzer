@@ -30,7 +30,7 @@ namespace io {
             return *this;
         }
     
-        explicit DeltaWriteBuffer(io::Writer&& writer) noexcept(false)
+        explicit constexpr DeltaWriteBuffer(io::Writer&& writer) noexcept(false)
                 : buffer(std::move(writer)) {}
         
     };

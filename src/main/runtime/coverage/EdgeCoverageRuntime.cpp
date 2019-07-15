@@ -16,7 +16,7 @@ namespace {
     
 }
 
-namespace runtime::coverage::block {
+namespace runtime::coverage::edge {
     
     class EdgeCoverageRuntime {
     
@@ -50,7 +50,7 @@ namespace runtime::coverage::block {
 }
 
 namespace {
-    using runtime::coverage::block::rt;
+    using runtime::coverage::edge::rt;
 }
 
 #define api API_EdgeCoverage

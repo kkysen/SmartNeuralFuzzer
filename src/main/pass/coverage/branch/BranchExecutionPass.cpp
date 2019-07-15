@@ -29,13 +29,13 @@ namespace llvm::pass::coverage::branch {
             
             const Api& api;
             Instruction& instruction;
-            IRBuilder<>& irb;
+//            IRBuilder<>& irb;
             IRBuilderExt irbe;
         
         public:
             
             constexpr InstructionPass(const Api& api, Instruction& instruction, IRBuilder<>& irb) noexcept
-                    : api(api), instruction(instruction), irb(irb), irbe(irb) {}
+                    : api(api), instruction(instruction), /*irb(irb),*/ irbe(irb) {}
             
         private:
     
@@ -184,7 +184,8 @@ namespace llvm::pass::coverage::branch {
                     InstructionPass(api, inst, irb)();
                 }
                 // TODO need to delete all instructions in block.original
-                block.original.clearAndDispose();
+//                block.original.clearAndDispose([](Instruction*) {});
+                block.original.clear();
                 return true;
             }
             
@@ -229,7 +230,7 @@ namespace llvm::pass::coverage::branch {
             });
             api.global(
                     "functions",
-                    *ArrayType::get(api.types.get<const void*>(), functions.size()),
+                    api.types.array<const void*>(functions.size()),
                     Api::GlobalArgs {
                             .isConstant = true,
                             .initializer = *ConstantDataArray::get(module.getContext(), functions),

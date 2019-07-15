@@ -45,10 +45,10 @@ namespace llvm::pass::coverage::branch {
         // since the validPtr won't have been defined in that jump
         // if we insert the validPtr right before the switch instruction
         // instead, it's easier to just put it at the end of the first block of the function
-        IRBuilder<> builder(switchInst.getParent()->getParent()->front().getTerminator());
-        IRBuilderExt ext(builder);
-        Value& validPtr = *builder.CreateAlloca(ext.types().get<bool>());
-        builder.CreateStore(&ext.constants().getInt(true), &validPtr);
+        IRBuilder<> irb(switchInst.getParent()->getParent()->front().getTerminator());
+        IRBuilderExt irbe(irb);
+        auto& validPtr = irbe.alloca(irbe.types().get<bool>());
+        irbe.store(irbe.constants().getInt(true), validPtr);
         return validPtr;
     }
     

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/share/common/numbers.h"
+
 class Average {
 
 private:

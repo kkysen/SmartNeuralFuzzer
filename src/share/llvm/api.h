@@ -37,10 +37,11 @@ namespace llvm {
         
         template <typename... Args>
         FunctionCallee func(std::string_view funcName) const {
-            return module.getOrInsertFunction(nameFor(funcName), types.function<Args...>());
+            return module.getOrInsertFunction(nameFor(funcName), &types.function<Args...>());
         }
         
         struct GlobalArgs {
+            
             Module* module;
             bool isConstant;
             GlobalValue::LinkageTypes linkage;
@@ -49,6 +50,35 @@ namespace llvm {
             GlobalValue::ThreadLocalMode threadLocalMode;
             u32 addressSpace;
             bool isExternallyInitialized;
+            
+            GlobalVariable& operator()(StringRef fullName, Type& type) const {
+                if (module) {
+                    return *new GlobalVariable(
+                            *module,
+                            &type,
+                            isConstant,
+                            linkage,
+                            &initializer,
+                            fullName,
+                            insertBefore,
+                            threadLocalMode,
+                            addressSpace,
+                            isExternallyInitialized
+                    );
+                } else {
+                    return *new GlobalVariable(
+                            &type,
+                            isConstant,
+                            linkage,
+                            &initializer,
+                            fullName,
+                            threadLocalMode,
+                            addressSpace,
+                            isExternallyInitialized
+                    );
+                }
+            }
+            
         };
         
         Constant& global(std::string_view globalName, Type& type) const {
@@ -57,44 +87,19 @@ namespace llvm {
         
         Constant& global(std::string_view globalName, Type& type, const GlobalArgs& args) const {
             const auto fullName = nameFor(globalName);
-            const auto create = [&]() -> function_ref<GlobalVariable*()> {
-                if (args.module) {
-                    return new GlobalVariable(
-                            *args.module,
-                            &type,
-                            args.isConstant,
-                            args.linkage,
-                            &args.initializer,
-                            fullName,
-                            args.insertBefore,
-                            args.threadLocalMode,
-                            args.addressSpace,
-                            args.isExternallyInitialized
-                    );
-                } else {
-                    return new GlobalVariable(
-                            &type,
-                            args.isConstant,
-                            args.linkage,
-                            &args.initializer,
-                            fullName,
-                            args.threadLocalMode,
-                            args.addressSpace,
-                            args.isExternallyInitialized
-                    );
-                }
-            }();
-            return *module.getOrInsertGlobal(fullName, &type, create);
+            return *module.getOrInsertGlobal(fullName, &type, [&]() -> GlobalVariable* {
+                return &args(fullName, type);
+            });
         }
         
         template <typename T>
         Constant& global(std::string_view globalName) const {
-            return global(globalName, &types.get<T>());
+            return global(globalName, types.get<T>());
         }
         
         template <typename T>
         Constant& global(std::string_view globalName, const GlobalArgs& args) const {
-            return global(globalName, &types.get<T>(), args);
+            return global(globalName, types.get<T>(), args);
         }
         
     };

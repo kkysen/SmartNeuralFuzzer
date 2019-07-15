@@ -8,9 +8,10 @@
 
 namespace dl {
     
-    template <class F, const char* name, class... Args>
+    template <class F, const char* name>
     class Function {
         
+        template <class... Args>
         static auto lookup(Args ... args) noexcept {
             impl = (F*) ::dlsym(RTLD_NEXT, name);
             return impl(args...);
@@ -22,7 +23,7 @@ namespace dl {
         
     };
     
-    template <class F, const char* name, class... Args>
-    F* Function<F, name, Args...>::impl = lookup;
+    template <class F, const char* name>
+    F* Function<F, name>::impl = lookup;
     
 }

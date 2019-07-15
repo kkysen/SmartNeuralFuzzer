@@ -8,6 +8,9 @@
 #include "src/share/io/LEB128Reader.h"
 #include "src/share/io/DeltaWriteBuffer.h"
 #include "src/share/common/lazy.h"
+#include "src/main/runtime/coverage/CoverageOutput.h"
+
+#include <iostream>
 
 namespace runtime::coverage::branch::execute {
     
@@ -42,6 +45,9 @@ namespace runtime::coverage::branch::execute {
             return *this;
         }
         
+        constexpr Output(io::Writer&& writer, std::ostream& formatted, bool format) noexcept
+                : raw(std::move(writer)), formatted(formatted), format(format) {}
+        
     };
     
     class BranchExecutionRuntime {
@@ -69,6 +75,11 @@ namespace runtime::coverage::branch::execute {
         void onEdge(u64 startBlockIndex, u64 endBlockIndex) noexcept {
             output << Edge {.start = startBlockIndex, .end = endBlockIndex};
         }
+        
+        // TODO
+        explicit BranchExecutionRuntime() noexcept(false)
+                : branches(io::ReadOnlyMappedMemory<u64>("TODO")),
+                  output(writer(coverage::output().dir, "branches.edges"), std::cout, true) {}
         
     };
     

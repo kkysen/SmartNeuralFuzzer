@@ -58,6 +58,28 @@ namespace llvm {
                 MDNode* branchWeights = nullptr, MDNode* unpredictable = nullptr) const {
             return *irb.CreateSwitch(&value, &defaultDest, numCasesEstimate, branchWeights, unpredictable);
         }
+    
+        #undef alloca
+        
+        constexpr AllocaInst& alloca(Type& type, u32 addressSpace, Value& arraySize, const Twine& name = "") const {
+            return *irb.CreateAlloca(&type, addressSpace, &arraySize, name);
+        }
+    
+        constexpr AllocaInst& alloca(Type& type, u32 addressSpace, const Twine& name = "") const {
+            return *irb.CreateAlloca(&type, addressSpace, nullptr, name);
+        }
+        
+        constexpr AllocaInst& alloca(Type& type, Value& arraySize, const Twine& name = "") const {
+            return *irb.CreateAlloca(&type, &arraySize, name);
+        }
+    
+        constexpr AllocaInst& alloca(Type& type, const Twine& name = "") const {
+            return *irb.CreateAlloca(&type, nullptr, name);
+        }
+        
+        constexpr StoreInst& store(Value& value, Value& ptr, bool isVolatile = false) const {
+            return *irb.CreateStore(&value, &ptr, isVolatile);
+        }
         
     };
     

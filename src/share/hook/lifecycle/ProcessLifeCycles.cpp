@@ -29,7 +29,7 @@ namespace hook::lifecycle {
     
     void ProcessLifeCycles::onThreadDestruction() noexcept {
         thread::destruct();
-        own.~Owsn();
+        own.~Own();
     }
     
     bool ProcessLifeCycles::onProcessConstruction() noexcept {
