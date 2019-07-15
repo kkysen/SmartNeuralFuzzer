@@ -166,9 +166,9 @@ namespace {
     using namespace llvm;
     
     CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
-        IRBuilder<> builder(&*block.getFirstInsertionPt());
-        IRBuilderExt ext(builder);
-        return ext.call(f, {&ext.constants().getInt(index)});
+        IRBuilder<> irb(&*block.getFirstInsertionPt());
+        IRBuilderExt irbe(irb);
+        return irbe.call(f, {&irbe.constants().getInt(index)});
     }
     
 }

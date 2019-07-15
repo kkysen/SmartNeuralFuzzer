@@ -96,17 +96,18 @@ namespace llvm::pass::coverage::branch {
             void transformTerminator() {
                 switch (instruction.getOpcode()) {
                     case Instruction::Br:
-                        transformBranch(cast<BranchInst>(instruction));
+                        return transformBranch(cast<BranchInst>(instruction));
                     case Instruction::Switch:
-                        transformSwitch(cast<SwitchInst>(instruction));
+                        return transformSwitch(cast<SwitchInst>(instruction));
                     case Instruction::Invoke:
                     case Instruction::CallBr:
-                        transformIndirectCall(cast<CallBase>(instruction));
+                        return transformIndirectCall(cast<CallBase>(instruction));
                     case Instruction::IndirectBr:
-                        transformIndirectBranch(cast<IndirectBrInst>(instruction));
+                        return transformIndirectBranch(cast<IndirectBrInst>(instruction));
                     default: {
                         instruction.removeFromParent();
                         irbe.insert(instruction);
+                        return;
                     }
                 }
             }
@@ -114,7 +115,7 @@ namespace llvm::pass::coverage::branch {
             void transformNonTerminator() {
                 switch (instruction.getOpcode()) {
                     case Instruction::Call:
-                        transformIndirectCall(cast<CallBase>(instruction));
+                        return transformIndirectCall(cast<CallBase>(instruction));
                 }
             }
     
