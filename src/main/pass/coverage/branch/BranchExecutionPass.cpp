@@ -183,7 +183,8 @@ namespace llvm::pass::coverage::branch {
                 for (auto& inst : block.original) {
                     InstructionPass(api, inst, irb)();
                 }
-                // need to delete all instructions in block.original
+                // TODO need to delete all instructions in block.original
+                block.original.clearAndDispose();
                 return true;
             }
             
@@ -200,7 +201,7 @@ namespace llvm::pass::coverage::branch {
         BranchExecutionPass() : ModulePass(ID) {}
         
         StringRef getPassName() const override {
-            return "Branch Coverage Pass";
+            return "Branch Execution Pass";
         }
         
         bool runOnModule(Module& module) override {
@@ -220,6 +221,7 @@ namespace llvm::pass::coverage::branch {
                         return BlockPass(ownApi, block)();
                     }, [&](Function& function) {
                         functions.emplace_back(&function);
+                        // TODO need to make all functions 0 arg
                     });
             api.global<u64>("numFunctions", Api::GlobalArgs {
                     .isConstant = true,

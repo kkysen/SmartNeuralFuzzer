@@ -22,6 +22,7 @@ add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE=\"${CMAKE_BINARY_DIR}/lib/$<TA
 
 add_subdirectory(block)
 add_subdirectory(branch)
+add_subdirectory(edge)
 
 add_subdirectory(test)
 
@@ -29,4 +30,6 @@ add_custom_target(pass.coverage DEPENDS
         pass.coverage.block
         pass.coverage.branch
         pass.coverage.branch.execute
-        pass.coverage.test)
+        pass.coverage.edge
+        pass.coverage.test
+        )

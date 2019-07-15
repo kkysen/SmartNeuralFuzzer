@@ -41,6 +41,10 @@ namespace llvm {
             return *irb.CreateCall(callee, args, name, floatingPointMathTag);
         }
         
+        constexpr CallInst& callIndex(FunctionCallee f, u64 index) const {
+            return call(f, {&constants().getInt(index)});
+        }
+        
         template <class InstType>
         constexpr InstType& insert(InstType& inst, const Twine &name = "") const {
             return *irb.Insert(&inst, name);
@@ -51,7 +55,7 @@ namespace llvm {
         }
         
         constexpr SwitchInst& switchCase(Value& value, BasicBlock& defaultDest, u32 numCasesEstimate = 10,
-                MDNode* branchWeights = nullptr, MDNode* unpredictable = nullptr) {
+                MDNode* branchWeights = nullptr, MDNode* unpredictable = nullptr) const {
             return *irb.CreateSwitch(&value, &defaultDest, numCasesEstimate, branchWeights, unpredictable);
         }
         

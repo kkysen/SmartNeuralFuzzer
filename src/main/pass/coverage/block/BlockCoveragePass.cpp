@@ -168,7 +168,7 @@ namespace {
     CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
         IRBuilder<> irb(&*block.getFirstInsertionPt());
         IRBuilderExt irbe(irb);
-        return irbe.call(f, {&irbe.constants().getInt(index)});
+        return irbe.callIndex(f, index);
     }
     
 }

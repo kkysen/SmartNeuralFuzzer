@@ -8,6 +8,8 @@ files(runtime.coverage
         BlockCoverageRuntime.cpp
         BranchCoverageRuntime.h
         BranchCoverageRuntime.cpp
+        EdgeCoverageRuntime.h
+        EdgeCoverageRuntime.cpp
         )
 
 set(files.all.runtime.coverage
