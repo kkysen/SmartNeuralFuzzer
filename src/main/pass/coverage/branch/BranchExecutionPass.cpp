@@ -36,9 +36,9 @@ namespace llvm::pass::coverage::branch {
             
             constexpr InstructionPass(const Api& api, Instruction& instruction, IRBuilder<>& irb) noexcept
                     : api(api), instruction(instruction), /*irb(irb),*/ irbe(irb) {}
-            
+        
         private:
-    
+            
             void transformBranch(BranchInst& inst) {
                 inst.removeFromParent();
                 if (inst.isConditional()) {
@@ -47,7 +47,7 @@ namespace llvm::pass::coverage::branch {
                 }
                 irbe.insert(inst);
             }
-    
+            
             void transformSwitch(SwitchInst& inst) {
                 const auto numCases = inst.getNumCases();
                 auto& defaultDest = *inst.getDefaultDest();
@@ -56,7 +56,7 @@ namespace llvm::pass::coverage::branch {
                     irbe.branch(defaultDest);
                     return;
                 }
-    
+                
                 SwitchCaseSuccessors successors;
                 successors.findUniqueBranches(inst);
                 const auto numBranches = successors.numBranches();
@@ -92,7 +92,7 @@ namespace llvm::pass::coverage::branch {
                 inst.setCalledOperand(&functionPtr);
                 irbe.insert(inst);
             }
-    
+            
             void transformIndirectCall(CallBase& inst) {
                 if (!inst.isIndirectCall()) {
                     return;
@@ -112,7 +112,7 @@ namespace llvm::pass::coverage::branch {
                 llvm_unreachable("indirectbr not supported yet");
                 // TODO
             }
-
+        
         public:
             
             void transformTerminator() {
@@ -140,7 +140,7 @@ namespace llvm::pass::coverage::branch {
                         return transformIndirectCall(cast<CallBase>(instruction));
                 }
             }
-    
+            
             void transform() {
                 if (instruction.isTerminator()) {
                     transformTerminator();
@@ -148,7 +148,7 @@ namespace llvm::pass::coverage::branch {
                     transformNonTerminator();
                 }
             }
-    
+            
             void operator()() {
                 transform();
             }
@@ -225,6 +225,7 @@ namespace llvm::pass::coverage::branch {
                         // TODO need to make all functions 0 arg
                     });
             api.global<u64>("numFunctions", Api::GlobalArgs {
+                    .module = &module,
                     .isConstant = true,
                     .initializer = Constants(module.getContext()).getInt(functions.size()),
             });
@@ -232,6 +233,7 @@ namespace llvm::pass::coverage::branch {
                     "functions",
                     api.types.array<const void*>(functions.size()),
                     Api::GlobalArgs {
+                            .module = &module,
                             .isConstant = true,
                             .initializer = *ConstantDataArray::get(module.getContext(), functions),
                     });

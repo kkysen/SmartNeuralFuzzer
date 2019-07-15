@@ -34,9 +34,9 @@ namespace llvm::pass::coverage::branch {
             
             constexpr BlockPass(const Api& api, BasicBlock& block) noexcept
                     : api(api), block(block) {}
-
+        
         private:
-    
+            
             bool traceCondition(Instruction& inst, Value* conditionPtr) const {
                 if (!conditionPtr) {
                     return false;
@@ -47,28 +47,28 @@ namespace llvm::pass::coverage::branch {
                 irbe.call(api.onBranch.single, {&condition});
                 return true;
             }
-    
+            
             bool traceBranch(BranchInst& inst) const {
                 if (!inst.isConditional()) {
                     return false;
                 }
                 return traceCondition(inst, inst.getCondition());
             }
-    
+            
             bool traceSelectCall(Instruction& inst, SelectInst& select) const {
                 if (!select.getCondition()) {
                     return false;
                 }
                 return traceCondition(inst, select.getCondition());
             }
-    
+            
             bool traceTrueIndirectCall(CallBase& inst) const {
                 IRBuilder<> builder(&inst);
                 IRBuilderExt ext(builder);
                 ext.call(api.onBranch.infinite);
                 return true;
             }
-    
+            
             bool traceIndirectCall(CallBase& inst) const {
                 if (!inst.isIndirectCall()) {
                     return false;
@@ -77,21 +77,21 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 auto& functionPtr = *inst.getCalledOperand();
-        
+                
                 if (isa<SelectInst>(functionPtr)) {
                     return traceSelectCall(inst, cast<SelectInst>(functionPtr));
                 } else {
                     return traceTrueIndirectCall(inst);
                 }
             }
-    
+            
             void traceMultiBranch(BasicBlock& block, u64 branchNum, u64 numBranches) const {
                 IRBuilder<> builder(&block.front());
                 IRBuilderExt ext(builder);
                 const auto constants = ext.constants();
                 ext.call(api.onBranch.multi, {&constants.getInt(branchNum), &constants.getInt(numBranches)});
             }
-    
+            
             void traceSwitchCase(BasicBlock& block, Value& validPtr, u64 caseNum, u64 numCases) const {
                 IRBuilder<> irb(&block.front());
                 IRBuilderExt irbe(irb);
@@ -100,14 +100,14 @@ namespace llvm::pass::coverage::branch {
                 irbe.call(api.onBranch.switchCase, {valid, &constants.getInt(caseNum), &constants.getInt(numCases)});
                 irb.CreateStore(&constants.getInt(false), &validPtr);
             }
-    
+            
             bool traceSwitch(SwitchInst& inst) const {
                 const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
                     // unconditionally jump to default case
                     return false;
                 }
-        
+                
                 SwitchCaseSuccessors successors;
                 successors.findUniqueBranches(inst);
                 const auto numBranches = successors.numBranches();
@@ -115,7 +115,7 @@ namespace llvm::pass::coverage::branch {
                     // still an unconditional jump to the same successor block
                     return false;
                 }
-        
+                
                 const bool hasFallThroughCases = successors.hasFallThroughCases(block);
                 u64 i = 0;
                 if (!hasFallThroughCases) {
@@ -131,10 +131,10 @@ namespace llvm::pass::coverage::branch {
                         traceSwitchCase(*successor, validPtr, i++, numBranches);
                     }
                 }
-        
+                
                 return true;
             }
-    
+            
             bool traceIndirectBranch(IndirectBrInst&) const {
                 llvm_unreachable("indirectbr not supported yet");
                 // TODO
@@ -162,7 +162,7 @@ namespace llvm::pass::coverage::branch {
                 }
                 return false;
             }
-            
+        
         public:
             
             bool trace() {
@@ -214,10 +214,11 @@ namespace llvm::pass::coverage::branch {
                         IRBuilderExt irbe(irb);
                         irbe.call(onFunction, {&irbe.constants().getInt(functionIndex++)});
                     });
-            api.global<u64>("numFunctions", Api::GlobalArgs {
-                .isConstant = true,
-                .initializer = Constants(module.getContext()).getInt(functionIndex),
-            });
+            errs() << api.global<u64>("numFunctions", Api::GlobalArgs {
+                    .module = &module,
+                    .isConstant = true,
+                    .initializer = Constants(module.getContext()).getInt(functionIndex),
+            }) << '\n';
             return modified;
         }
         

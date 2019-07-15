@@ -4,6 +4,8 @@
 
 #include "src/main/pass/coverage/includes.h"
 
+#include "llvm/IR/CFG.h"
+
 namespace llvm::pass::coverage::edge {
     
     class EdgeCoveragePass : public ModulePass {
@@ -34,7 +36,7 @@ namespace llvm::pass::coverage::edge {
             
             constexpr InstructionPass(const Api& api, Instruction& instruction, u64 index) noexcept
                     : api(api), instruction(instruction), index(index) {}
-
+        
         private:
             
             bool shouldTrace() {
@@ -54,19 +56,21 @@ namespace llvm::pass::coverage::edge {
                         return false;
                 }
             }
-            
+        
         public:
             
-            void trace() {
-                if (shouldTrace()) {
+            bool trace() {
+                const bool traced = shouldTrace();
+                if (traced) {
                     IRBuilder<> irb(&instruction);
                     IRBuilderExt irbe(irb);
                     irbe.callIndex(api.onEdge.front, index);
                 }
+                return traced;
             }
             
-            void operator()() {
-                trace();
+            bool operator()() {
+                return trace();
             }
             
         };
@@ -83,17 +87,60 @@ namespace llvm::pass::coverage::edge {
             
             constexpr BlockPass(const Api& api, BasicBlock& block, u64 index) noexcept
                     : api(api), block(block), index(index) {}
+        
+        private:
             
-            bool trace() {
-                for (auto& inst : block) {
-                    InstructionPass(api, inst, index)();
+            constexpr bool isEntryBlock() const noexcept {
+                return &block == &block.getParent()->getEntryBlock();
+            }
+            
+            constexpr bool isFrontEdge(const Instruction& inst) const noexcept {
+                switch (inst.getOpcode()) {
+                    case Instruction::Br:
+                        return cast<BranchInst>(inst).isConditional();
+                    case Instruction::Switch:
+                        return cast<SwitchInst>(inst).getNumCases() > 0;
+                    case Instruction::IndirectBr:
+                        return cast<IndirectBrInst>(inst).getNumDestinations() > 0;
                 }
-                
+                return false;
+            }
+            
+            constexpr bool isFrontEdge(const BasicBlock& block) const noexcept {
+                return block.getTerminator() && isFrontEdge(*block.getTerminator());
+            }
+    
+            bool predecessorIsFrontEdge() const noexcept {
+                for (auto* const predecessor : llvm::predecessors(&block)) {
+                    if (isFrontEdge(*predecessor)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            bool isBackEdge() const noexcept {
+                return isEntryBlock() || predecessorIsFrontEdge();
+            }
+            
+            void traceBackEdge() {
                 IRBuilder<> irb(&*block.getFirstInsertionPt());
                 IRBuilderExt irbe(irb);
                 irbe.callIndex(api.onEdge.back, index);
-                
-                return true;
+            }
+        
+        public:
+            
+            bool trace() {
+                bool traced = false;
+                for (auto& inst : block) {
+                    traced |= InstructionPass(api, inst, index)();
+                }
+                if (isBackEdge()) {
+                    traceBackEdge();
+                    traced = true;
+                }
+                return traced;
             }
             
             bool operator()() {

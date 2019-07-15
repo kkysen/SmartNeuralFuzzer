@@ -78,9 +78,9 @@ compileTarget() {
     local register=${libDir}/libpass.register.so
     local block=${libDir}/libpass.coverage.block.so
     local branch=${libDir}/libpass.coverage.branch.so
-    local passes="${block} ${branch}"
-    local loadPasses="-load=${block} -load=${branch}"
-#    local loadPasses="-load=${branch}"
+    local edge=${libDir}/libpass.coverage.edge.so
+    local passes="${block} ${branch} ${edge}"
+    local loadPasses="-load=${block} -load=${branch} -load=${edge}"
     local runtimes=${libDir}/libruntime.coverage.bc
     local src=${target}.0.5.precodegen.bc
     local dependencies="${src} ${passes}"
