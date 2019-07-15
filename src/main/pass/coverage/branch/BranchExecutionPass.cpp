@@ -18,66 +18,96 @@ namespace llvm::pass::coverage::branch {
             const FunctionCallee infinite;
         };
         
+        struct Api {
+            const NextBranch nextBranch;
+            const FunctionCallee onEdge;
+        };
+        
+        class InstructionPass {
+        
+        private:
+            
+            const Api& api;
+            const Instruction& instruction;
+            IRBuilder<>& irb;
+            IRBuilderExt irbe;
+        
+        public:
+            
+            constexpr InstructionPass(const Api& api, const Instruction& instruction, IRBuilder<>& irb) noexcept
+                    : api(api), instruction(instruction), irb(irb), irbe(irb) {}
+            
+        private:
+    
+            void transformBranch(const BranchInst& inst) {
+        
+            }
+    
+            void transformSwitch(const SwitchInst& inst) {
+        
+            }
+    
+            void transformIndirectCall(const CallBase& inst) {
+        
+            }
+    
+            template <class InstType>
+            bool tryTransform(void (InstructionPass::*f)(const InstType&)) {
+                const bool transformed = isa<InstType>(instruction);
+                if (transformed) {
+                    (this->*f)(cast<InstType>(instruction));
+                }
+                return transformed;
+            }
+
+        public:
+    
+            void transform() {
+                using This = InstructionPass;
+                if (tryTransform(&This::transformBranch)) {}
+                else if (tryTransform(&This::transformSwitch)) {}
+                else if (tryTransform(&This::transformIndirectCall)) {}
+            }
+            
+            void operator()() {
+                transform();
+            }
+            
+        };
+        
         class BlockPass {
         
         private:
             
-            const NextBranch& nextBranch;
-            const FunctionCallee onEdge;
-            BasicBlock& block;
+            using Instructions = typename BasicBlock::InstListType;
+            
+            const Api& api;
+            struct {
+                BasicBlock& modified;
+                Instructions original;
+            } block;
+            IRBuilder<> irb;
+            
+            void init() noexcept {
+                block.original.swap(block.modified.getInstList());
+            }
         
         public:
             
-            constexpr BlockPass(const NextBranch& onBranch, FunctionCallee onEdge, BasicBlock& block) noexcept
-                    : nextBranch(onBranch), onEdge(onEdge), block(block) {}
-
-        private:
-    
-            #define _(block, InstType, func) \
-                if (isa<InstType>(block)) { \
-                    traced |= func(cast<InstType>(block)); \
-                } \
-
-            bool traceTerminator() {
-                auto* const terminatorPtr = block.getTerminator();
-                if (!terminatorPtr) {
-                    return false;
-                }
-                auto& terminator = *terminatorPtr;
-        
-                bool traced = false;
-                _(terminator, BranchInst, traceBranch)
-                else _(terminator, CallBase, traceIndirectCall)
-                else _(terminator, SwitchInst, traceSwitch)
-                return traced;
+            BlockPass(const Api& api, BasicBlock& block) noexcept
+                    : api(api), block({block, {}}), irb(&block) {
+                init();
             }
-    
-            bool traceNonTerminators() {
-                // CallBase = CallInst, InvokeInst, CallBrInst
-                // InvokeInst and CallBrInst are terminators
-                bool traced = false;
-                for (auto& inst : block) {
-                    _(inst, CallInst, traceIndirectCall)
-                }
-                return traced;
-            }
-    
-            #undef _
-
-        public:
-    
-            bool trace() {
-                const bool tracedTerminator = traceTerminator();
-                const bool tracedNonTerminators = traceNonTerminators();
-                const bool traced = tracedTerminator || tracedNonTerminators;
-                if (!traced) {
-                    block.eraseFromParent();
-                } else if (!tracedNonTerminators) {
-                
-                } else if (!tracedTerminator) {
-                
+            
+            bool transform() {
+                for (const auto& inst : block.original) {
+                    InstructionPass(api, inst, irb)();
                 }
                 return true;
+            }
+            
+            bool operator()() {
+                return transform();
             }
         
         private:
@@ -212,11 +242,6 @@ namespace llvm::pass::coverage::branch {
                 
             };
             
-            /**
-             * Trace a switch instruction
-             * by calling onMultiBranch(caseNum, numCases)
-             * as the first statement of each case's BasicBlock.
-             */
             bool traceSwitch(SwitchInst& inst) const {
                 const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
@@ -264,17 +289,20 @@ namespace llvm::pass::coverage::branch {
         }
         
         bool runOnModule(Module& module) override {
+            using llvm::Api;
             const Api api("BranchExecution", module);
-            const NextBranch nextBranch = {
-                    .single = api.func<bool>("nextSingleBranch"),
-                    .multi = api.func<u64, u64>("nextMultiBranch"),
-                    .infinite = api.func<const void*>("nextInfiniteBranch"),
+            const BranchExecutionPass::Api ownApi = {
+                    .nextBranch = {
+                            .single = api.func<bool>("nextSingleBranch"),
+                            .multi = api.func<u64, u64>("nextMultiBranch"),
+                            .infinite = api.func<const void*>("nextInfiniteBranch"),
+                    },
+                    .onEdge = api.func<void, u64, u64>("onEdge"),
             };
-            const auto onEdge = api.func<void, u64, u64>("onEdge");
             SmallVector<Constant*, 0> functions;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(nextBranch, onEdge, block).trace();
+                        return BlockPass(ownApi, block)();
                     }, [&](Function& function) {
                         functions.emplace_back(&function);
                     });
@@ -282,11 +310,13 @@ namespace llvm::pass::coverage::branch {
                     .isConstant = true,
                     .initializer = Constants(module.getContext()).getInt(functions.size()),
             });
-            const auto arrayType = ArrayType::get(api.types.get<const void*>(), functions.size());
-            api.global("functions", *arrayType, Api::GlobalArgs {
-                .isConstant = true,
-                .initializer = *ConstantArray::get(arrayType, functions),
-            });
+            api.global(
+                    "functions",
+                    *ArrayType::get(api.types.get<const void*>(), functions.size()),
+                    Api::GlobalArgs {
+                            .isConstant = true,
+                            .initializer = *ConstantDataArray::get(module.getContext(), functions),
+                    });
             return modified;
         }
         
