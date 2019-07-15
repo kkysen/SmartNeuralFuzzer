@@ -46,6 +46,15 @@ namespace llvm {
             return *irb.Insert(&inst, name);
         }
         
+        constexpr BranchInst& branch(BasicBlock& dest) const {
+            return *irb.CreateBr(&dest);
+        }
+        
+        constexpr SwitchInst& switchCase(Value& value, BasicBlock& defaultDest, u32 numCasesEstimate = 10,
+                MDNode* branchWeights = nullptr, MDNode* unpredictable = nullptr) {
+            return *irb.CreateSwitch(&value, &defaultDest, numCasesEstimate, branchWeights, unpredictable);
+        }
+        
     };
     
 }

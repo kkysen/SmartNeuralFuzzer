@@ -4,7 +4,7 @@
 
 #include "src/main/pass/coverage/includes.h"
 
-#include "llvm/IR/CFG.h"
+#include "src/main/pass/coverage/branch/SwitchCaseSuccessors.h"
 
 namespace llvm::pass::coverage::branch {
     
@@ -101,72 +101,6 @@ namespace llvm::pass::coverage::branch {
                 irb.CreateStore(&constants.getInt(false), &validPtr);
             }
     
-            class SwitchCaseSuccessors {
-    
-            private:
-        
-                using BlockSet = SmallPtrSet<BasicBlock*, 8>;
-        
-                BlockSet successors;
-    
-            public:
-        
-                constexpr u32 numBranches() const noexcept {
-                    return successors.size();
-                }
-        
-                constexpr const BlockSet& get() const noexcept {
-                    return successors;
-                }
-        
-                // each branch can have multiple cases
-                // i.e., multiple cases can go to the same successor block,
-                // but it's only 1 real branch in that case
-                void findUniqueBranches(SwitchInst& switchInst) {
-                    BasicBlock* successor = switchInst.case_default()->getCaseSuccessor();
-                    if (successor) {
-                        successors.insert(successor);
-                    }
-                    const BasicBlock* lastSuccessor = successor;
-                    for (const auto& caseHandle : switchInst.cases()) {
-                        BasicBlock* successor = caseHandle.getCaseSuccessor();
-                        // cases are usually already in order, so this is just an optimization
-                        if (!successor || successor == lastSuccessor) {
-                            continue;
-                        }
-                        successors.insert(successor);
-                        lastSuccessor = successor;
-                    }
-                }
-        
-                // find if there are any successors with non-unique predecessors (i.e. fallthrough cases)
-                // for these pairs, we need to use the onSwitchCase() API instead of just onMultiBranch()
-                bool hasFallThroughCases(BasicBlock& switchBlock) const {
-                    for (BasicBlock* successor : successors) {
-                        for (BasicBlock* predecessor : llvm::predecessors(successor)) {
-                            if (predecessor != &switchBlock) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-        
-                Value& createValidPtr(SwitchInst& switchInst) const {
-                    // sometimes the default case block is jumped to from outside of the switch instruction
-                    // so we get an error "Instruction does not dominate all uses"
-                    // since the validPtr won't have been defined in that jump
-                    // if we insert the validPtr right before the switch instruction
-                    // instead, it's easier to just put it at the end of the first block of the function
-                    IRBuilder<> builder(switchInst.getParent()->getParent()->front().getTerminator());
-                    IRBuilderExt ext(builder);
-                    Value& validPtr = *builder.CreateAlloca(ext.types().get<bool>());
-                    builder.CreateStore(&ext.constants().getInt(true), &validPtr);
-                    return validPtr;
-                }
-        
-            };
-    
             bool traceSwitch(SwitchInst& inst) const {
                 const auto numCases = inst.getNumCases() + 1;
                 if (numCases <= 1) {
@@ -183,7 +117,7 @@ namespace llvm::pass::coverage::branch {
                 }
         
                 const bool hasFallThroughCases = successors.hasFallThroughCases(block);
-                u32 i = 0;
+                u64 i = 0;
                 if (!hasFallThroughCases) {
                     // for these successors, we can still use the raw onMultiBranch() API
                     for (BasicBlock* successor : successors.get()) {

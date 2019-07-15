@@ -4,7 +4,7 @@
 
 #include "src/main/pass/coverage/includes.h"
 
-#include "llvm/IR/CFG.h"
+#include "src/main/pass/coverage/branch/SwitchCaseSuccessors.h"
 
 namespace llvm::pass::coverage::branch {
     
@@ -49,7 +49,29 @@ namespace llvm::pass::coverage::branch {
             }
     
             void transformSwitch(SwitchInst& inst) {
-                // TODO
+                const auto numCases = inst.getNumCases();
+                auto& defaultDest = *inst.getDefaultDest();
+                if (numCases <= 1) {
+                    // unconditionally jump to default case
+                    irbe.branch(defaultDest);
+                    return;
+                }
+    
+                SwitchCaseSuccessors successors;
+                successors.findUniqueBranches(inst);
+                const auto numBranches = successors.numBranches();
+                if (numBranches <= 1) {
+                    // still an unconditional jump to the same successor block
+                    irbe.branch(**successors.get().begin());
+                    return;
+                }
+                // TODO preserve branch weights if possible
+                auto& switchValue = irbe.call(api.nextBranch.multi, {&irbe.constants().getInt(numBranches)});
+                auto& switchInst = irbe.switchCase(switchValue, defaultDest, numBranches);
+                u64 i = 0;
+                for (auto* successor : successors.get()) {
+                    switchInst.addCase(&irbe.constants().getInt(i++), successor);
+                }
             }
             
             void transformSelectCall(CallBase& inst, SelectInst& select) {
