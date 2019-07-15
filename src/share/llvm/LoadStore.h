@@ -21,17 +21,17 @@ namespace llvm {
         
         constexpr LoadInst* load() const {
             if (alignment != alignment::unAligned) {
-                return builder.CreateAlignedLoad(mut(ptr), alignment);
+                return irb.CreateAlignedLoad(mut(ptr), alignment);
             } else {
-                return builder.CreateLoad(mut(ptr));
+                return irb.CreateLoad(mut(ptr));
             }
         }
         
         constexpr StoreInst* store(const Value* value) const {
             if (alignment != alignment::unAligned) {
-                return builder.CreateAlignedStore(mut(value), mut(ptr), alignment);
+                return irb.CreateAlignedStore(mut(value), mut(ptr), alignment);
             } else {
-                return builder.CreateStore(mut(value), mut(ptr));
+                return irb.CreateStore(mut(value), mut(ptr));
             }
         }
         

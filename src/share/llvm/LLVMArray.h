@@ -53,7 +53,7 @@ namespace llvm {
                           allocaInst, allocaInst->getArraySize(), allocaInst->getAlignment()) {}
         
         LLVMArray(AllocaArgs args) noexcept
-                : LLVMArray(args.builder, args()) {}
+                : LLVMArray(args.irb, args()) {}
         
         constexpr bool isAligned() const noexcept {
             return alignment == alignment::unAligned;
@@ -77,44 +77,44 @@ namespace llvm {
                     return *this + constIndex;
                 }
             }
-            return builder.CreateGEP(mut(type), mut(ptr), mut(index));
+            return irb.CreateGEP(mut(type), mut(ptr), mut(index));
         }
         
         constexpr const Value* operator+(const ConstantInt* index) const {
             if (hasConstSize) {
                 if (index->getZExtValue() < constSize()) {
-                    return builder.CreateInBoundsGEP(mut(type), mut(ptr), mut(index));
+                    return irb.CreateInBoundsGEP(mut(type), mut(ptr), mut(index));
                 }
             }
-            return builder.CreateInBoundsGEP(mut(type), mut(ptr), mut(index));
+            return irb.CreateInBoundsGEP(mut(type), mut(ptr), mut(index));
         }
         
         constexpr const Value* operator+(u64 index) const {
-            return builder.CreateConstGEP1_64(mut(type), mut(ptr), index);
+            return irb.CreateConstGEP1_64(mut(type), mut(ptr), index);
         }
         
         constexpr const Value* operator+(u32 index) const {
-            return builder.CreateConstGEP1_32(mut(type), mut(ptr), index);
+            return irb.CreateConstGEP1_32(mut(type), mut(ptr), index);
         }
         
         constexpr LoadStore operator[](const Value* index) const {
-            return LoadStore(builder, *this + index, alignment);
+            return LoadStore(irb, *this + index, alignment);
         }
         
         constexpr LoadStore operator[](const ConstantInt* index) const {
-            return LoadStore(builder, *this + index, alignment);
+            return LoadStore(irb, *this + index, alignment);
         }
         
         constexpr LoadStore operator[](u64 index) const {
-            return LoadStore(builder, *this + index, alignment);
+            return LoadStore(irb, *this + index, alignment);
         }
         
         constexpr LoadStore operator[](u32 index) const {
-            return LoadStore(builder, *this + index, alignment);
+            return LoadStore(irb, *this + index, alignment);
         }
         
         constexpr CallInst* memset(const Value* value) const {
-            return builder.CreateMemSet(mut(ptr), mut(value), mut(size), alignment);
+            return irb.CreateMemSet(mut(ptr), mut(value), mut(size), alignment);
         }
         
         constexpr CallInst* memset(u8 value = 0) const {
@@ -126,8 +126,8 @@ namespace llvm {
         }
         
         LLVMArray bitCast(const Type* type) const {
-            const auto castedPtr = builder.CreateBitCast(mut(ptr), mut(type));
-            return LLVMArray(builder, type, castedPtr, size, alignment);
+            const auto castedPtr = irb.CreateBitCast(mut(ptr), mut(type));
+            return LLVMArray(irb, type, castedPtr, size, alignment);
         }
         
         template <typename T>

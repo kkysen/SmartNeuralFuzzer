@@ -15,9 +15,9 @@ namespace llvm {
     
     public:
         
-        IRBuilder<>& builder;
+        IRBuilder<>& irb;
         
-        explicit constexpr IRBuilderExt(IRBuilder<>& builder) : builder(builder) {}
+        explicit constexpr IRBuilderExt(IRBuilder<>& builder) : irb(builder) {}
         
         template <typename T>
         static constexpr T* mut(const T* value) noexcept {
@@ -25,7 +25,7 @@ namespace llvm {
         }
         
         constexpr LLVMContext& context() const noexcept {
-            return builder.getContext();
+            return irb.getContext();
         }
         
         constexpr Types types() const noexcept {
@@ -38,7 +38,12 @@ namespace llvm {
         
         constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args = None,
                                  const Twine& name = "", MDNode* floatingPointMathTag = nullptr) const {
-            return *builder.CreateCall(callee, args, name, floatingPointMathTag);
+            return *irb.CreateCall(callee, args, name, floatingPointMathTag);
+        }
+        
+        template <class InstType>
+        constexpr InstType& insert(InstType& inst, const Twine &name = "") const {
+            return *irb.Insert(&inst, name);
         }
         
     };

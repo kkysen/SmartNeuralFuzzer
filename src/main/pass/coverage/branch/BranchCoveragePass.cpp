@@ -116,7 +116,7 @@ namespace llvm::pass::coverage::branch {
                 }
                 auto& functionPtr = *inst.getCalledOperand();
                 
-                if (!isa<SelectInst>(functionPtr)) {
+                if (isa<SelectInst>(functionPtr)) {
                     return traceSelectCall(inst, cast<SelectInst>(functionPtr));
                 } else {
                     return traceTrueIndirectCall(inst);

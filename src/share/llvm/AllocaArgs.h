@@ -44,7 +44,7 @@ namespace llvm {
         }
         
         constexpr AllocaInst* operator()() {
-            return builder.CreateAlloca(mut(type), mut(size));
+            return irb.CreateAlloca(mut(type), mut(size));
         }
         
     };
