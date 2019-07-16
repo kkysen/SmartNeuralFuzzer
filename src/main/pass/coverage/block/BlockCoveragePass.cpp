@@ -161,17 +161,6 @@ namespace llvm::pass::coverage::block {
     
 }
 
-namespace {
-    
-    using namespace llvm;
-    
-    CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
-        IRBuilderExt irbe(&*block.getFirstInsertionPt());
-        return irbe.callIndex(f, index);
-    }
-    
-}
-
 namespace llvm::pass::coverage::block {
     
     class BlockCoveragePass : public ModulePass {
@@ -194,16 +183,18 @@ namespace llvm::pass::coverage::block {
             u64 blockIndex = 0;
             
             SourceMap sourceMap(module);
-            
+            IRBuilderExt irbe(module);
             return filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        const auto& callInst = call(block, onBlock, blockIndex);
+                        irbe.setInsertPoint(block, true);
+                        const auto& callInst = irbe.callIndex(onBlock, blockIndex);
                         sourceMap.block(blockIndex, callInst, &block == &block.getParent()->front());
                         blockIndex++;
                         return true;
                     }, [&](Function& function) {
 //                        errs() << "Block: " << function.getName() << "\n";
-                        call(function.getEntryBlock(), onFunction, functionIndex);
+                        irbe.setInsertPoint(function, true);
+                        irbe.callIndex(onFunction, functionIndex);
                         sourceMap.function(functionIndex, function);
                         functionIndex++;
                     });

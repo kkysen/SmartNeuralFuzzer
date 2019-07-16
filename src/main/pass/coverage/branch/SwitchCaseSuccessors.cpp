@@ -39,13 +39,13 @@ namespace llvm::pass::coverage::branch {
         return false;
     }
     
-    Value& SwitchCaseSuccessors::createValidPtr(SwitchInst& switchInst) const {
+    Value& SwitchCaseSuccessors::createValidPtr(SwitchInst& switchInst, IRBuilderExt& irbe) const {
         // sometimes the default case block is jumped to from outside of the switch instruction
         // so we get an error "Instruction does not dominate all uses"
         // since the validPtr won't have been defined in that jump
         // if we insert the validPtr right before the switch instruction
         // instead, it's easier to just put it at the end of the first block of the function
-        IRBuilderExt irbe(switchInst.getParent()->getParent()->front().getTerminator());
+        irbe.setInsertPoint(*switchInst.getParent()->getParent()->front().getTerminator());
         auto& validPtr = irbe.alloca(irbe.types().get<bool>());
         irbe.store(irbe.constants().getInt(true), validPtr);
         return validPtr;

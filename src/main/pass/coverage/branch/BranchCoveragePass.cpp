@@ -29,11 +29,12 @@ namespace llvm::pass::coverage::branch {
             
             const Api& api;
             BasicBlock& block;
+            IRBuilderExt& irbe;
         
         public:
             
-            constexpr BlockPass(const Api& api, BasicBlock& block) noexcept
-                    : api(api), block(block) {}
+            constexpr BlockPass(const Api& api, BasicBlock& block, IRBuilderExt& irbe) noexcept
+                    : api(api), block(block), irbe(irbe) {}
         
         private:
             
@@ -42,7 +43,7 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 auto& condition = *conditionPtr;
-                IRBuilderExt irbe(&inst);
+                irbe.setInsertPoint(inst);
                 irbe.call(api.onBranch.single, {&condition});
                 return true;
             }
@@ -62,7 +63,7 @@ namespace llvm::pass::coverage::branch {
             }
             
             bool traceTrueIndirectCall(CallBase& inst) const {
-                IRBuilderExt irbe(&inst);
+                irbe.setInsertPoint(inst);
                 irbe.call(api.onBranch.infinite);
                 return true;
             }
@@ -84,13 +85,13 @@ namespace llvm::pass::coverage::branch {
             }
             
             void traceMultiBranch(BasicBlock& block, u64 branchNum, u64 numBranches) const {
-                IRBuilderExt irbe(&block.front());
+                irbe.setInsertPoint(block, true);
                 const auto constants = irbe.constants();
                 irbe.call(api.onBranch.multi, {&constants.getInt(branchNum), &constants.getInt(numBranches)});
             }
             
             void traceSwitchCase(BasicBlock& block, Value& validPtr, u64 caseNum, u64 numCases) const {
-                IRBuilderExt irbe(&block.front());
+                irbe.setInsertPoint(block, true);
                 const auto constants = irbe.constants();
                 auto& valid = irbe.load(validPtr);
                 irbe.call(api.onBranch.switchCase, {&valid, &constants.getInt(caseNum), &constants.getInt(numCases)});
@@ -122,7 +123,7 @@ namespace llvm::pass::coverage::branch {
                 } else {
                     // for these successors, we have to use the onSwitchCase() API
                     // with the bool flag used to ensure only one onMultiBranch() is called
-                    Value& validPtr = successors.createValidPtr(inst);
+                    Value& validPtr = successors.createValidPtr(inst, irbe);
                     for (BasicBlock* successor : successors.get()) {
                         traceSwitchCase(*successor, validPtr, i++, numBranches);
                     }
@@ -201,12 +202,13 @@ namespace llvm::pass::coverage::branch {
                     },
             };
             const auto onFunction = api.func<void(u64)>("onFunction");
+            IRBuilderExt irbe(module);
             u64 functionIndex = 0;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(ownApi, block)();
+                        return BlockPass(ownApi, block, irbe)();
                     }, [&](Function& function) {
-                        IRBuilderExt irbe(&*function.getEntryBlock().getFirstInsertionPt());
+                        irbe.setInsertPoint(*function.getEntryBlock().getFirstInsertionPt());
                         irbe.call(onFunction, {&irbe.constants().getInt(functionIndex++)});
                     });
             api.global<u64>("numFunctions", Api::GlobalArgs {

@@ -41,34 +41,22 @@ namespace llvm::pass::coverage::branch {
         private:
             
             void transformBranch(BranchInst& inst) const {
-                inst.removeFromParent();
                 if (inst.isConditional()) {
+                    irbe.setInsertPoint(inst);
                     auto& condition = irbe.call(api.nextBranch.single, {});
                     inst.setCondition(&condition);
                 }
-                irbe.insert(inst);
             }
             
             void transformSwitch(SwitchInst& inst) const {
-                const auto numCases = inst.getNumCases();
-                auto& defaultDest = *inst.getDefaultDest();
-                if (numCases <= 1) {
-                    // unconditionally jump to default case
-                    irbe.branch(defaultDest);
-                    return;
-                }
-                
                 SwitchCaseSuccessors successors;
                 successors.findUniqueBranches(inst);
                 const auto numBranches = successors.numBranches();
-                if (numBranches <= 1) {
-                    // still an unconditional jump to the same successor block
-                    irbe.branch(**successors.get().begin());
-                    return;
-                }
                 // TODO preserve branch weights if possible
+                irbe.setInsertPoint(inst);
+                inst.removeFromParent();
                 auto& switchValue = irbe.call(api.nextBranch.multi, {&irbe.constants().getInt(numBranches)});
-                auto& switchInst = irbe.switchCase(switchValue, defaultDest, numBranches);
+                auto& switchInst = irbe.switchCase(switchValue, *inst.getDefaultDest(), numBranches);
                 u64 i = 0;
                 for (auto* successor : successors.get()) {
                     switchInst.addCase(&irbe.constants().getInt(i++), successor);
@@ -168,33 +156,19 @@ namespace llvm::pass::coverage::branch {
         
         private:
             
-            using Instructions = typename BasicBlock::InstListType;
-            
             const Api& api;
-            struct {
-                BasicBlock& modified;
-                Instructions original;
-            } block;
-            IRBuilderExt irbe;
-            
-            void init() noexcept {
-                block.original.swap(block.modified.getInstList());
-            }
+            BasicBlock& block;
+            IRBuilderExt& irbe;
         
         public:
             
-            BlockPass(const Api& api, BasicBlock& block) noexcept
-                    : api(api), block({block, {}}), irbe(&block) {
-                init();
-            }
+            BlockPass(const Api& api, BasicBlock& block, IRBuilderExt& irbe) noexcept
+                    : api(api), block(block), irbe(irbe) {}
             
             bool transform() {
-                for (auto& inst : block.original) {
+                for (auto& inst : block) {
                     InstructionPass(api, inst, irbe)();
                 }
-                // TODO need to delete all instructions in block.original
-//                block.original.clearAndDispose([](Instruction*) {});
-                block.original.clear();
                 return true;
             }
             
@@ -228,9 +202,10 @@ namespace llvm::pass::coverage::branch {
                     .funcType = api.types.func<Func>(),
             };
             SmallVector<Constant*, 0> functions;
+            IRBuilderExt irbe(module);
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(ownApi, block)();
+                        return BlockPass(ownApi, block, irbe)();
                     }, [&](Function& function) {
                         functions.emplace_back(&function);
                         // make all functions 0 arg and void, i.e. void()

@@ -25,6 +25,7 @@ namespace llvm::pass::coverage::edge {
             
             const Api& api;
             Instruction& instruction;
+            IRBuilderExt& irbe;
             u64 index;
             
             template <class InstType>
@@ -34,8 +35,8 @@ namespace llvm::pass::coverage::edge {
         
         public:
             
-            constexpr InstructionPass(const Api& api, Instruction& instruction, u64 index) noexcept
-                    : api(api), instruction(instruction), index(index) {}
+            constexpr InstructionPass(const Api& api, Instruction& instruction, IRBuilderExt& irbe, u64 index) noexcept
+                    : api(api), instruction(instruction), irbe(irbe), index(index) {}
         
         private:
             
@@ -62,7 +63,7 @@ namespace llvm::pass::coverage::edge {
             bool trace() {
                 const bool traced = shouldTrace();
                 if (traced) {
-                    IRBuilderExt irbe(&instruction);
+                    irbe.setInsertPoint(instruction);
                     irbe.callIndex(api.onEdge.front, index);
                 }
                 return traced;
@@ -80,12 +81,13 @@ namespace llvm::pass::coverage::edge {
             
             const Api& api;
             BasicBlock& block;
+            IRBuilderExt& irbe;
             u64 index;
         
         public:
             
-            constexpr BlockPass(const Api& api, BasicBlock& block, u64 index) noexcept
-                    : api(api), block(block), index(index) {}
+            constexpr BlockPass(const Api& api, BasicBlock& block, IRBuilderExt& irbe, u64 index) noexcept
+                    : api(api), block(block), irbe(irbe), index(index) {}
         
         private:
             
@@ -123,7 +125,7 @@ namespace llvm::pass::coverage::edge {
             }
             
             void traceBackEdge() {
-                IRBuilderExt irbe(&*block.getFirstInsertionPt());
+                irbe.setInsertPoint(block, true);
                 irbe.callIndex(api.onEdge.back, index);
             }
         
@@ -132,7 +134,7 @@ namespace llvm::pass::coverage::edge {
             bool trace() {
                 bool traced = false;
                 for (auto& inst : block) {
-                    traced |= InstructionPass(api, inst, index)();
+                    traced |= InstructionPass(api, inst, irbe, index)();
                 }
                 if (isBackEdge()) {
                     traceBackEdge();
@@ -167,10 +169,11 @@ namespace llvm::pass::coverage::edge {
                             .back = api.func<void(u64)>("onBackEdge"),
                     },
             };
+            IRBuilderExt irbe(module);
             u64 blockIndex = 0;
             return filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(ownApi, block, blockIndex++)();
+                        return BlockPass(ownApi, block, irbe, blockIndex++)();
                     });
         }
         

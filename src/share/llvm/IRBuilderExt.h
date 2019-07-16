@@ -20,6 +20,8 @@ namespace llvm {
         template <class... Args>
         explicit IRBuilderExt(Args&& ... args) : irb(std::forward<Args...>(args)...) {}
         
+        explicit IRBuilderExt(const Module& module) : IRBuilderExt(module.getContext()) {}
+        
         template <typename T>
         static constexpr T* mut(const T* value) noexcept {
             return const_cast<T*>(value);
@@ -35,6 +37,29 @@ namespace llvm {
         
         constexpr Constants constants() const noexcept {
             return Constants(context());
+        }
+    
+        constexpr IRBuilderExt& setInsertPoint(Instruction& inst) {
+            irb.SetInsertPoint(&inst);
+            return *this;
+        }
+        
+        constexpr IRBuilderExt& setInsertPoint(BasicBlock& block, bool insertAtBeginning = false) {
+            if (insertAtBeginning) {
+                setInsertPoint(*block.getFirstInsertionPt());
+            } else {
+                irb.SetInsertPoint(&block);
+            }
+            return *this;
+        }
+        
+        constexpr IRBuilderExt& setInsertPoint(BasicBlock& block, BasicBlock::iterator iterator) {
+            irb.SetInsertPoint(&block, iterator);
+            return *this;
+        }
+    
+        constexpr IRBuilderExt& setInsertPoint(Function& function, bool insertAtBeginning = false) {
+            return setInsertPoint(insertAtBeginning ? function.front() : function.back(), insertAtBeginning);
         }
         
         constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args = None,

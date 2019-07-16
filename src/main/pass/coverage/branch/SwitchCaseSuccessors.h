@@ -32,7 +32,7 @@ namespace llvm::pass::coverage::branch {
         
         bool hasFallThroughCases(BasicBlock& switchBlock) const;
         
-        Value& createValidPtr(SwitchInst& switchInst) const;
+        Value& createValidPtr(SwitchInst& switchInst, IRBuilderExt& irbe) const;
         
     };
     
