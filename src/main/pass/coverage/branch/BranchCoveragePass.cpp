@@ -42,8 +42,7 @@ namespace llvm::pass::coverage::branch {
                     return false;
                 }
                 auto& condition = *conditionPtr;
-                IRBuilder<> irb(&inst);
-                IRBuilderExt irbe(irb);
+                IRBuilderExt irbe(&inst);
                 irbe.call(api.onBranch.single, {&condition});
                 return true;
             }
@@ -63,9 +62,8 @@ namespace llvm::pass::coverage::branch {
             }
             
             bool traceTrueIndirectCall(CallBase& inst) const {
-                IRBuilder<> builder(&inst);
-                IRBuilderExt ext(builder);
-                ext.call(api.onBranch.infinite);
+                IRBuilderExt irbe(&inst);
+                irbe.call(api.onBranch.infinite);
                 return true;
             }
             
@@ -86,19 +84,17 @@ namespace llvm::pass::coverage::branch {
             }
             
             void traceMultiBranch(BasicBlock& block, u64 branchNum, u64 numBranches) const {
-                IRBuilder<> builder(&block.front());
-                IRBuilderExt ext(builder);
-                const auto constants = ext.constants();
-                ext.call(api.onBranch.multi, {&constants.getInt(branchNum), &constants.getInt(numBranches)});
+                IRBuilderExt irbe(&block.front());
+                const auto constants = irbe.constants();
+                irbe.call(api.onBranch.multi, {&constants.getInt(branchNum), &constants.getInt(numBranches)});
             }
             
             void traceSwitchCase(BasicBlock& block, Value& validPtr, u64 caseNum, u64 numCases) const {
-                IRBuilder<> irb(&block.front());
-                IRBuilderExt irbe(irb);
+                IRBuilderExt irbe(&block.front());
                 const auto constants = irbe.constants();
-                Value* valid = irb.CreateLoad(&validPtr);
-                irbe.call(api.onBranch.switchCase, {valid, &constants.getInt(caseNum), &constants.getInt(numCases)});
-                irb.CreateStore(&constants.getInt(false), &validPtr);
+                auto& valid = irbe.load(validPtr);
+                irbe.call(api.onBranch.switchCase, {&valid, &constants.getInt(caseNum), &constants.getInt(numCases)});
+                irbe.store(constants.getInt(false), validPtr);
             }
             
             bool traceSwitch(SwitchInst& inst) const {
@@ -198,27 +194,26 @@ namespace llvm::pass::coverage::branch {
             const Api api("BranchCoverage", module);
             const BranchCoveragePass::Api ownApi = {
                     .onBranch = {
-                            .single = api.func<void, bool>("onSingleBranch"),
-                            .multi = api.func<void, u64, u64>("onMultiBranch"),
-                            .switchCase = api.func<void, bool, u64, u64>("onSwitchCase"),
-                            .infinite = api.func<void>("onInfiniteBranch"),
+                            .single = api.func<void(bool)>("onSingleBranch"),
+                            .multi = api.func<void(u64, u64)>("onMultiBranch"),
+                            .switchCase = api.func<void(bool, u64, u64)>("onSwitchCase"),
+                            .infinite = api.func<void()>("onInfiniteBranch"),
                     },
             };
-            const auto onFunction = api.func<void, u64>("onFunction");
+            const auto onFunction = api.func<void(u64)>("onFunction");
             u64 functionIndex = 0;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
                         return BlockPass(ownApi, block)();
                     }, [&](Function& function) {
-                        IRBuilder<> irb(&*function.getEntryBlock().getFirstInsertionPt());
-                        IRBuilderExt irbe(irb);
+                        IRBuilderExt irbe(&*function.getEntryBlock().getFirstInsertionPt());
                         irbe.call(onFunction, {&irbe.constants().getInt(functionIndex++)});
                     });
-            errs() << api.global<u64>("numFunctions", Api::GlobalArgs {
+            api.global<u64>("numFunctions", Api::GlobalArgs {
                     .module = &module,
                     .isConstant = true,
                     .initializer = Constants(module.getContext()).getInt(functionIndex),
-            }) << '\n';
+            });
             return modified;
         }
         

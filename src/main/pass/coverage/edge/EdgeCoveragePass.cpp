@@ -62,8 +62,7 @@ namespace llvm::pass::coverage::edge {
             bool trace() {
                 const bool traced = shouldTrace();
                 if (traced) {
-                    IRBuilder<> irb(&instruction);
-                    IRBuilderExt irbe(irb);
+                    IRBuilderExt irbe(&instruction);
                     irbe.callIndex(api.onEdge.front, index);
                 }
                 return traced;
@@ -124,8 +123,7 @@ namespace llvm::pass::coverage::edge {
             }
             
             void traceBackEdge() {
-                IRBuilder<> irb(&*block.getFirstInsertionPt());
-                IRBuilderExt irbe(irb);
+                IRBuilderExt irbe(&*block.getFirstInsertionPt());
                 irbe.callIndex(api.onEdge.back, index);
             }
         
@@ -165,8 +163,8 @@ namespace llvm::pass::coverage::edge {
             const Api api("EdgeCoverage", module);
             const EdgeCoveragePass::Api ownApi = {
                     .onEdge = {
-                            .front = api.func<void, u64>("onFrontEdge"),
-                            .back = api.func<void, u64>("onBackEdge"),
+                            .front = api.func<void(u64)>("onFrontEdge"),
+                            .back = api.func<void(u64)>("onBackEdge"),
                     },
             };
             u64 blockIndex = 0;

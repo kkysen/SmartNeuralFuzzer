@@ -35,9 +35,9 @@ namespace llvm {
             return (("__"s += name) += "_"sv) += symbolName;
         }
         
-        template <typename... Args>
+        template <class F>
         FunctionCallee func(std::string_view funcName) const {
-            return module.getOrInsertFunction(nameFor(funcName), &types.function<Args...>());
+            return module.getOrInsertFunction(nameFor(funcName), &types.func<F>());
         }
         
         struct GlobalArgs {

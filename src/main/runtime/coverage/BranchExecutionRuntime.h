@@ -11,17 +11,23 @@
 
 #define api API_BranchExecution
 
+namespace runtime::coverage::branch::execute {
+    
+    using Func = void();
+    
+}
+
 extern "C" {
 
 extern const u64 api (numFunctions);
 
-extern const void* const* const api(functionTable);
+extern runtime::coverage::branch::execute::Func* const* const api(functionTable);
 
 bool api (nextSingleBranch)() noexcept;
 
 u64 api (nextMultiBranch)(u64 numBranches) noexcept;
 
-const void* api(nextInfiniteBranch)() noexcept;
+runtime::coverage::branch::execute::Func* api(nextInfiniteBranch)() noexcept;
 
 void api (onEdge)(u64 startBlockIndex, u64 endBlockIndex) noexcept;
 

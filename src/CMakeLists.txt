@@ -293,9 +293,6 @@ files(share.llvm
         share/llvm/Types.h
         share/llvm/Constants.h
         share/llvm/IRBuilderExt.h
-        share/llvm/AllocaArgs.h
-        share/llvm/LoadStore.h
-        share/llvm/LLVMArray.h
         share/llvm/debug.h
         share/llvm/debug.cpp
         share/llvm/api.h

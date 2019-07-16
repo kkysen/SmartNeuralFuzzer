@@ -67,7 +67,7 @@ namespace runtime::coverage::branch::execute {
             return branches.next(numBranches);
         }
         
-        const void* nextInfiniteBranch() noexcept {
+        Func* nextInfiniteBranch() noexcept {
             const auto functionIndex = nextMultiBranch(__BranchExecution_numFunctions);
             return __BranchExecution_functionTable[functionIndex];
         }
@@ -89,6 +89,7 @@ namespace runtime::coverage::branch::execute {
 
 namespace {
     using runtime::coverage::branch::execute::rt;
+    using runtime::coverage::branch::execute::Func;
 }
 
 #define api API_BranchExecution
@@ -101,7 +102,7 @@ u64 api (nextMultiBranch)(u64 numBranches) noexcept {
     return rt().nextMultiBranch(numBranches);
 }
 
-const void* api(nextInfiniteBranch)() noexcept {
+Func* api(nextInfiniteBranch)() noexcept {
     return rt().nextInfiniteBranch();
 }
 

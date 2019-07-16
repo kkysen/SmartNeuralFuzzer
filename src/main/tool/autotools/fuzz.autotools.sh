@@ -79,6 +79,7 @@ compileTarget() {
     local block=${libDir}/libpass.coverage.block.so
     local branch=${libDir}/libpass.coverage.branch.so
     local edge=${libDir}/libpass.coverage.edge.so
+    local branchExecution=${libDir}/libpass.coverage.branch.execute.so
     local passes="${block} ${branch} ${edge}"
     local loadPasses="-load=${block} -load=${branch} -load=${edge}"
     local runtimes=${libDir}/libruntime.coverage.bc

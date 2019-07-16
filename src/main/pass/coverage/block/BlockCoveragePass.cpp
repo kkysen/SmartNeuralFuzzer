@@ -166,8 +166,7 @@ namespace {
     using namespace llvm;
     
     CallInst& call(BasicBlock& block, FunctionCallee f, u64 index) {
-        IRBuilder<> irb(&*block.getFirstInsertionPt());
-        IRBuilderExt irbe(irb);
+        IRBuilderExt irbe(&*block.getFirstInsertionPt());
         return irbe.callIndex(f, index);
     }
     
@@ -189,8 +188,8 @@ namespace llvm::pass::coverage::block {
         
         bool runOnModule(Module& module) override {
             const Api api("BlockCoverage", module);
-            FunctionCallee onFunction = api.func<void, u64>("onFunction");
-            FunctionCallee onBlock = api.func<void, u64>("onBlock");
+            FunctionCallee onFunction = api.func<void(u64)>("onFunction");
+            FunctionCallee onBlock = api.func<void(u64)>("onBlock");
             u64 functionIndex = 0;
             u64 blockIndex = 0;
             

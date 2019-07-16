@@ -49,7 +49,8 @@ namespace llvm {
             constexpr bool isIntegral = std::is_integral_v<T>;
             constexpr bool isFloating = std::is_floating_point_v<T>;
             constexpr bool isPointer = std::is_pointer_v<T>;
-            static_assert(isIntegral || isFloating || isPointer, "Unsupported type");
+            constexpr bool isFunction = std::is_function_v<T>;
+            static_assert(isIntegral || isFloating || isPointer || isFunction, "Unsupported type");
             if constexpr (isIntegral) {
                 return integral<T>();
             }
@@ -58,6 +59,9 @@ namespace llvm {
             }
             if constexpr (isPointer) {
                 return *get<std::remove_pointer_t<T>>().getPointerTo();
+            }
+            if constexpr (isFunction) {
+                return func<T>();
             }
             llvm_unreachable("Unsupported type");
         }
@@ -73,12 +77,46 @@ namespace llvm {
         auto convert() const noexcept {
             return SmallVector<Type*, sizeof...(Types)> {&get<Types>()...};
         }
-        
+
+    private:
+    
         template <typename Return, typename... Args>
-        FunctionType& function(bool isVarArg = false) const {
+        FunctionType& rawFunction(bool isVarArg) const {
             // FunctionType doesn't need to hold memory for args/params; it copies them in some way
             auto args = new SmallVector<Type*, sizeof...(Args)>(convert<Args...>());
             return *FunctionType::get(&get<Return>(), *args, isVarArg);
+        }
+        
+        template <class F>
+        struct Function;
+        
+        template <typename Return, typename... Args>
+        struct Function<Return(Args...)> {
+            
+            const Types& types;
+            
+            FunctionType& operator()() const {
+                return types.rawFunction<Return, Args...>(false);
+            }
+            
+        };
+    
+        template <typename Return, typename... Args>
+        struct Function<Return(Args... , ...)> {
+        
+            const Types& types;
+        
+            FunctionType& operator()() const {
+                return types.rawFunction<Return, Args...>(true);
+            }
+        
+        };
+
+    public:
+        
+        template <class F>
+        FunctionType& func() const {
+            return Function<F> {*this}();
         }
         
         template <typename T>
