@@ -1,5 +1,0 @@
-mock
-nose
-parameterized
-six
-coverage
