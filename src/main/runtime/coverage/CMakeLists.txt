@@ -6,10 +6,12 @@ files(runtime.coverage
         include.h
         BlockCoverageRuntime.h
         BlockCoverageRuntime.cpp
-        BranchCoverageRuntime.h
-        BranchCoverageRuntime.cpp
         EdgeCoverageRuntime.h
         EdgeCoverageRuntime.cpp
+        BranchCoverageRuntime.h
+        BranchCoverageRuntime.cpp
+        BranchExecutionRuntime.h
+        BranchExecutionRuntime.cpp
         )
 
 set(files.all.runtime.coverage
@@ -26,15 +28,6 @@ set(files.all.runtime.coverage
         ${files.runtime.coverage}
         )
 
-files(runtime.coverage.branch.execute
-        BranchExecutionRuntime.h
-        BranchExecutionRuntime.cpp
-        )
-
-set(files.all.runtime.coverage.branch.execute
-        ${files.runtime.coverage.branch.execute}
-        )
-
 function(addRuntime target)
     add_library(${target} STATIC ${files.all.${target}})
     copyLibraryBC(${target})
@@ -42,5 +35,3 @@ function(addRuntime target)
 endfunction()
 
 addRuntime(runtime.coverage)
-
-addRuntime(runtime.coverage.branch.execute)

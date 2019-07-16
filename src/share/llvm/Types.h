@@ -89,6 +89,8 @@ namespace llvm {
         
         template <class F>
         struct Function;
+    
+        // TODO other function type variants (noexcept, ref, cv-qualified) if needed
         
         template <typename Return, typename... Args>
         struct Function<Return(Args...)> {

@@ -19,9 +19,9 @@ namespace runtime::coverage::branch::execute {
 
 extern "C" {
 
-extern const u64 api (numFunctions);
+extern const u64 api (numFunctions) __attribute__((weak));
 
-extern runtime::coverage::branch::execute::Func* const* const api(functionTable);
+extern runtime::coverage::branch::execute::Func* const* const api(functionTable) __attribute__((weak));
 
 bool api (nextSingleBranch)() noexcept;
 

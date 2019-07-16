@@ -13,7 +13,7 @@
 
 extern "C" {
 
-extern const u64 api (numFunctions);
+extern const u64 api (numFunctions) __attribute__((weak));
 
 void api (onSingleBranch)(bool value) noexcept;
 

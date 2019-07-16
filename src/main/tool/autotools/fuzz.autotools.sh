@@ -69,30 +69,28 @@ runMake() {
 	make -j$(getconf _NPROCESSORS_ONLN) ${1}
 }
 
-compileTarget() {
-	local target=${1}
-	local originalLDFlags=${2}
+compileTargetWithPass() {
+	local passName=${1}
+	local target=${2}
+	local originalLDFlags=${3}
 
-    local libDir=${buildDir}/lib
-    local binDir=${buildDir}/bin
-    local register=${libDir}/libpass.register.so
-    local block=${libDir}/libpass.coverage.block.so
-    local branch=${libDir}/libpass.coverage.branch.so
-    local edge=${libDir}/libpass.coverage.edge.so
-    local branchExecution=${libDir}/libpass.coverage.branch.execute.so
-    local passes="${block} ${branch} ${edge}"
-    local loadPasses="-load=${block} -load=${branch} -load=${edge}"
-    local runtimes=${libDir}/libruntime.coverage.bc
-    local src=${target}.0.5.precodegen.bc
-    local dependencies="${src} ${passes}"
-    local bc=${target}.0.6.coverage.bc
-    local all=${target}.coverage.bc
-    local obj=${target}.coverage.o
-    local exe=${target}.coverage
-    local opt=${binDir}/opt-9
-    local link=llvm-link
-    local optLevel=-O3
-    local optArgs="${loadPasses} ${src}"
+	local name="coverage.${passName}"
+
+	local libDir="${buildDir}/lib"
+	local binDir="${buildDir}/bin"
+	local passLib="${libDir}/libpass.${name}.so"
+	local loadPass="-load=${passLib}"
+	local runtime="${libDir}/libruntime.coverage.bc"
+	local src="${target}.0.5.precodegen.bc"
+    local dependencies="${src} ${passLib}"
+    local bc="${target}.0.6.${name}.bc"
+    local all="${target}.${name}.bc"
+    local obj="${target}.${name}.o"
+    local exe="${target}.${name}"
+    local opt="${binDir}/opt-9"
+    local link="llvm-link"
+    local optLevel="-O3"
+    local optArgs="${loadPass} ${src}"
     local linkArgs="${flto} ${obj} ${libraries} ${originalLDFlags}"
 
     # optimize (instrument), compile bc to obj, and then link everything
@@ -102,8 +100,18 @@ compileTarget() {
 	cc=${cxx} opt=${opt} link=${link} \
 	dependencies=${dependencies} \
 	optLevel=${optLevel} optArgs=${optArgs} \
-	runtimes=${runtimes} linkArgs=${linkArgs} \
+	runtimes=${runtime} linkArgs=${linkArgs} \
 	make -f ${srcDir}/FuzzMakefile
+}
+
+compileTarget() {
+	local target=${1}
+	local originalLDFlags=${2}
+
+	local passes="block edge branch branch.execute"
+	for pass in ${passes}; do
+		compileTargetWithPass ${pass} ${target} ${originalLDFlags}
+	done
 
 	local sourceMapExt=blocks.map
 	local tempBlocksSourceMap=ld-temp.o.${sourceMapExt}
