@@ -121,6 +121,9 @@ namespace llvm::pass::coverage::branch {
                         return transformCall(cast<CallBase>(instruction));
                     case Instruction::IndirectBr:
                         return transformIndirectBranch(cast<IndirectBrInst>(instruction));
+                    default:
+                        instruction.removeFromParent();
+                        irbe.insert(instruction);
                 }
             }
             
@@ -152,17 +155,26 @@ namespace llvm::pass::coverage::branch {
         private:
             
             class BlockTransform {
-            
+
+            private:
+
+                BasicBlock& modified;
+                std::unique_ptr<BasicBlock> _original;
+
+                static BasicBlock& createBasedOff(BasicBlock& original) {
+                    return *BasicBlock::Create(original.getContext(), original.getName());
+                }
+                
             public:
                 
-                using Instructions = typename BasicBlock::InstListType;
-    
-                BasicBlock& modified;
-                Instructions original;
+                constexpr BasicBlock& original() const noexcept {
+                    return *_original;
+                }
                 
-                explicit BlockTransform(BasicBlock& realOriginal)
-                        : modified(realOriginal), original({}) {
-                    original.splice(original.begin(), modified.getInstList());
+                explicit BlockTransform(BasicBlock& realOriginal, IRBuilderExt& irbe)
+                        : modified(realOriginal), _original(&createBasedOff(realOriginal)) {
+                    original().getInstList().splice(original().begin(), modified.getInstList());
+                    irbe.setInsertPoint(modified);
                 }
                 
             };
@@ -174,12 +186,10 @@ namespace llvm::pass::coverage::branch {
         public:
             
             BlockPass(const Api& api, BasicBlock& originalBlock, IRBuilderExt& irbe) noexcept
-                    : api(api), block(originalBlock), irbe(irbe) {
-                irbe.setInsertPoint(block.modified);
-            }
+                    : api(api), block(originalBlock, irbe), irbe(irbe) {}
             
             bool transform() {
-                for (auto it = block.original.begin(); it != block.original.end();) {
+                for (auto it = block.original().begin(); it != block.original().end();) {
                     // it++ is necessary b/c inst might be removed,
                     // so we need to advance the iterator first before using the current value
                     auto& inst = *(it++);
@@ -222,7 +232,8 @@ namespace llvm::pass::coverage::branch {
             u64 blockIndex = 0;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        errs() << '\t' << "BranchExecution: block: " << blockIndex++;
+//                        errs() << &block << '\n';
+                        errs() << '\t' << "BranchExecution: block: " << blockIndex++ << '\n';
 //                        errs() << block;
                         const bool ret = BlockPass(ownApi, block, irbe)();
 //                        errs() << block;
@@ -238,13 +249,14 @@ namespace llvm::pass::coverage::branch {
                     .isConstant = true,
                     .initializer = Constants(module.getContext()).getInt(functions.size()),
             });
+            auto& arrayType = api.types.array<Func>(functions.size());
             api.global(
                     "functions",
-                    api.types.array<Func>(functions.size()),
+                    arrayType,
                     Api::GlobalArgs {
                             .module = &module,
                             .isConstant = true,
-                            .initializer = *ConstantDataArray::get(module.getContext(), functions),
+                            .initializer = *ConstantArray::get(&arrayType, functions),
                     });
             return modified;
         }

@@ -121,9 +121,13 @@ namespace llvm {
             return Function<F> {*this}();
         }
         
+        ArrayType& array(Type& type, u64 numElements) const {
+            return *ArrayType::get(&type, numElements);
+        }
+        
         template <typename T>
         ArrayType& array(u64 numElements) const {
-            return *ArrayType::get(&get<T>(), numElements);
+            return array(get<T>(), numElements);
         }
         
     };
