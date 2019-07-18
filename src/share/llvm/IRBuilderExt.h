@@ -21,6 +21,9 @@ namespace llvm {
         explicit IRBuilderExt(Args&& ... args) : irb(std::forward<Args...>(args)...) {}
         
         explicit IRBuilderExt(const Module& module) : IRBuilderExt(module.getContext()) {}
+    
+        // do differentiate from templated version
+        explicit IRBuilderExt(Module& module) : IRBuilderExt(static_cast<const Module&>(module)) {}
         
         template <typename T>
         static constexpr T* mut(const T* value) noexcept {

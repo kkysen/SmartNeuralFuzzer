@@ -50,9 +50,8 @@ namespace llvm::pass::coverage::edge {
                     case Instruction::CallBr:
                     case Instruction::Call:
                         return getInst<CallBase>().isIndirectCall();
-                    case Instruction::IndirectBr: {
+                    case Instruction::IndirectBr:
                         return getInst<IndirectBrInst>().getNumDestinations() > 0;
-                    }
                     default:
                         return false;
                 }

@@ -41,11 +41,12 @@ namespace llvm::pass::coverage::branch {
         private:
             
             void transformBranch(BranchInst& inst) const {
+                inst.removeFromParent();
                 if (inst.isConditional()) {
-                    irbe.setInsertPoint(inst);
                     auto& condition = irbe.call(api.nextBranch.single, {});
                     inst.setCondition(&condition);
                 }
+                irbe.insert(inst);
             }
             
             void transformSwitch(SwitchInst& inst) const {
@@ -53,8 +54,6 @@ namespace llvm::pass::coverage::branch {
                 successors.findUniqueBranches(inst);
                 const auto numBranches = successors.numBranches();
                 // TODO preserve branch weights if possible
-                irbe.setInsertPoint(inst);
-                inst.removeFromParent();
                 auto& switchValue = irbe.call(api.nextBranch.multi, {&irbe.constants().getInt(numBranches)});
                 auto& switchInst = irbe.switchCase(switchValue, *inst.getDefaultDest(), numBranches);
                 u64 i = 0;
@@ -100,6 +99,7 @@ namespace llvm::pass::coverage::branch {
                     if (func.isDeclaration() || runtimeFunctionFilter()(func.getName())) {
                         return;
                     }
+                    inst.removeFromParent();
                 }
                 irbe.insert(inst);
                 inst.mutateFunctionType(&api.funcType);
@@ -121,11 +121,6 @@ namespace llvm::pass::coverage::branch {
                         return transformCall(cast<CallBase>(instruction));
                     case Instruction::IndirectBr:
                         return transformIndirectBranch(cast<IndirectBrInst>(instruction));
-                    default: {
-                        instruction.removeFromParent();
-                        irbe.insert(instruction);
-                        return;
-                    }
                 }
             }
             
@@ -139,7 +134,7 @@ namespace llvm::pass::coverage::branch {
         public:
             
             void transform() const {
-                if (instruction.isTerminator()) {
+                if (__builtin_expect(instruction.isTerminator(), false)) {
                     transformTerminator();
                 } else {
                     transformNonTerminator();
@@ -156,17 +151,38 @@ namespace llvm::pass::coverage::branch {
         
         private:
             
+            class BlockTransform {
+            
+            public:
+                
+                using Instructions = typename BasicBlock::InstListType;
+    
+                BasicBlock& modified;
+                Instructions original;
+                
+                explicit BlockTransform(BasicBlock& realOriginal)
+                        : modified(realOriginal), original({}) {
+                    original.splice(original.begin(), modified.getInstList());
+                }
+                
+            };
+            
             const Api& api;
-            BasicBlock& block;
+            BlockTransform block;
             IRBuilderExt& irbe;
         
         public:
             
-            BlockPass(const Api& api, BasicBlock& block, IRBuilderExt& irbe) noexcept
-                    : api(api), block(block), irbe(irbe) {}
+            BlockPass(const Api& api, BasicBlock& originalBlock, IRBuilderExt& irbe) noexcept
+                    : api(api), block(originalBlock), irbe(irbe) {
+                irbe.setInsertPoint(block.modified);
+            }
             
             bool transform() {
-                for (auto& inst : block) {
+                for (auto it = block.original.begin(); it != block.original.end();) {
+                    // it++ is necessary b/c inst might be removed,
+                    // so we need to advance the iterator first before using the current value
+                    auto& inst = *(it++);
                     InstructionPass(api, inst, irbe)();
                 }
                 return true;
@@ -203,10 +219,16 @@ namespace llvm::pass::coverage::branch {
             };
             SmallVector<Constant*, 0> functions;
             IRBuilderExt irbe(module);
+            u64 blockIndex = 0;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
-                        return BlockPass(ownApi, block, irbe)();
+                        errs() << '\t' << "BranchExecution: block: " << blockIndex++;
+//                        errs() << block;
+                        const bool ret = BlockPass(ownApi, block, irbe)();
+//                        errs() << block;
+                        return ret;
                     }, [&](Function& function) {
+                        errs() << "BranchExecution: function: " << function.getName() << '\n';
                         functions.emplace_back(&function);
                         // make all functions 0 arg and void, i.e. void()
                         function.mutateType(&ownApi.funcType);
