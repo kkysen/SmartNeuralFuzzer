@@ -10,7 +10,11 @@
 #include "src/share/common/lazy.h"
 #include "src/main/runtime/coverage/CoverageOutput.h"
 
+#include "src/share/lib/corrade/CorradeArrayView.h"
+
 #include <iostream>
+
+#define api API_BranchExecution
 
 namespace runtime::coverage::branch::execute {
     
@@ -50,6 +54,10 @@ namespace runtime::coverage::branch::execute {
         
     };
     
+    using namespace Corrade::Containers;
+    
+    const ArrayView<Func* const> functionTable(api(functionTable), api(numFunctions));
+    
     class BranchExecutionRuntime {
     
     private:
@@ -69,7 +77,7 @@ namespace runtime::coverage::branch::execute {
         
         Func* nextInfiniteBranch() noexcept {
             const auto functionIndex = nextMultiBranch(__BranchExecution_numFunctions);
-            return __BranchExecution_functionTable[functionIndex];
+            return functionTable[functionIndex];
         }
         
         void onEdge(u64 startBlockIndex, u64 endBlockIndex) noexcept {
@@ -79,7 +87,12 @@ namespace runtime::coverage::branch::execute {
         // TODO
         explicit BranchExecutionRuntime() noexcept(false)
                 : branches(io::ReadOnlyMappedMemory<u64>("TODO")),
-                  output(writer(coverage::output().dir, "branches.edges"), std::cout, true) {}
+                  output(writer(coverage::output().dir, "branches.edges"), std::cout, true) {
+            // I want to see if I can compress these pointers (ala Javan compressed oops)
+            for (auto func : functionTable) {
+                std::cout << func << std::endl;
+            }
+        }
         
     };
     
@@ -91,8 +104,6 @@ namespace {
     using runtime::coverage::branch::execute::rt;
     using runtime::coverage::branch::execute::Func;
 }
-
-#define api API_BranchExecution
 
 bool api (nextSingleBranch)() noexcept {
     return rt().nextSingleBranch();

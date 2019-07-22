@@ -36,7 +36,7 @@ namespace runtime::coverage::block {
     
     public:
         
-        BlockCoverageRuntime() noexcept(false) : BlockCoverageRuntime(output().dir.dir("block")) {}
+        BlockCoverageRuntime() noexcept(false) : BlockCoverageRuntime(output().dir) {}
         
     };
     

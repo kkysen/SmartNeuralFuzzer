@@ -16,7 +16,7 @@ namespace {
     // overload operator+ so it can be used in fold expressions
     template <typename T, Fold<T> fold>
     struct Foldable {
-    
+        
         T t;
         
         /*implicit*/ constexpr Foldable(T t) noexcept : t(t) {}
@@ -43,6 +43,26 @@ namespace math {
     template <typename T>
     constexpr const T& max(const T& a, const T& b) noexcept {
         return a > b ? a : b;
+    }
+    
+    template <typename ...Ts>
+    constexpr std::common_type_t<Ts...> min(Ts... xs) noexcept {
+        return (... + Foldable<Ts, min>(xs));
+    }
+    
+    template <typename ...Ts>
+    constexpr std::common_type_t<Ts...> max(Ts... xs) noexcept {
+        return (... + Foldable<Ts, max>(xs));
+    }
+    
+    template <typename ...Ts>
+    constexpr size_t minSize() noexcept {
+        return min(sizeof(Ts)...);
+    }
+    
+    template <typename ...Ts>
+    constexpr size_t maxSize() noexcept {
+        return max(sizeof(Ts)...);
     }
     
     template <typename T>

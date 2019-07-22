@@ -8,3 +8,4 @@ endfunction()
 
 alias(clang-${llvmVersionMajorNewest})
 alias(opt-${llvmVersionMajorNewest})
+alias(opt-${llvmVersionMajorNewest}-debug)

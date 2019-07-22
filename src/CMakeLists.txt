@@ -301,6 +301,10 @@ files(share.llvm
         share/llvm/registerStandardPass.h
         share/llvm/FilteredFunctions.h
         share/llvm/FilteredFunctions.cpp
+        share/llvm/operandBundles.h
+        share/llvm/operandBundles.cpp
+        share/llvm/CallBaseHack.h
+        share/llvm/CallBaseHack.cpp
         )
 
 set(CMAKE_CXX_STANDARD 20)

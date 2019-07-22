@@ -64,6 +64,11 @@ namespace llvm {
         constexpr IRBuilderExt& setInsertPoint(Function& function, bool insertAtBeginning = false) {
             return setInsertPoint(insertAtBeginning ? function.front() : function.back(), insertAtBeginning);
         }
+    
+        constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles,
+                const Twine& name = "", MDNode* floatingPointMathTag = nullptr) {
+            return *irb.CreateCall(callee, args, operandBundles, name, floatingPointMathTag);
+        }
         
         constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args = None,
                                  const Twine& name = "", MDNode* floatingPointMathTag = nullptr) {
@@ -72,6 +77,26 @@ namespace llvm {
         
         constexpr CallInst& callIndex(FunctionCallee f, u64 index) {
             return call(f, {&constants().getInt(index)});
+        }
+        
+        constexpr InvokeInst& invoke(FunctionCallee callee, BasicBlock& normalDest, BasicBlock& unwindDest,
+                ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles, const Twine& name = "") {
+            return *irb.CreateInvoke(callee, &normalDest, &unwindDest, args, operandBundles, name);
+        }
+    
+        constexpr InvokeInst& invoke(FunctionCallee callee, BasicBlock& normalDest, BasicBlock& unwindDest,
+                ArrayRef<Value*> args = None, const Twine& name = "") {
+            return *irb.CreateInvoke(callee, &normalDest, &unwindDest, args, name);
+        }
+    
+        constexpr CallBrInst& callBr(FunctionCallee callee, BasicBlock& defaultDest, ArrayRef<BasicBlock*> indirectDests,
+                ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles, const Twine& name = "") {
+            return *irb.CreateCallBr(callee, &defaultDest, indirectDests, args, operandBundles, name);
+        }
+        
+        constexpr CallBrInst& callBr(FunctionCallee callee, BasicBlock& defaultDest, ArrayRef<BasicBlock*> indirectDests,
+                ArrayRef<Value*> args = None, const Twine& name = "") {
+            return *irb.CreateCallBr(callee, &defaultDest, indirectDests, args, name);
         }
         
         template <class InstType>

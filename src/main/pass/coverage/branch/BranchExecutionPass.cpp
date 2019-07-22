@@ -6,6 +6,7 @@
 
 #include "src/main/runtime/coverage/BranchExecutionRuntime.h"
 #include "src/main/pass/coverage/branch/SwitchCaseSuccessors.h"
+#include "src/share/llvm/CallBaseHack.h"
 
 namespace llvm::pass::coverage::branch {
     
@@ -62,19 +63,17 @@ namespace llvm::pass::coverage::branch {
                 }
             }
             
-            void transformSelectCall(CallBase& inst, SelectInst& select) const {
+            void transformSelectCall(SelectInst& select) const {
                 if (!select.getCondition()) {
                     return;
                 }
                 select.removeFromParent();
-                inst.removeFromParent();
                 auto& condition = irbe.call(api.nextBranch.single, {});
                 select.setCondition(&condition);
                 irbe.insert(select);
             }
             
             void transformTrueIndirectCall(CallBase& inst) const {
-                inst.removeFromParent();
                 auto& functionPtr = irbe.call(api.nextBranch.infinite, {});
                 inst.setCalledOperand(&functionPtr);
             }
@@ -82,7 +81,7 @@ namespace llvm::pass::coverage::branch {
             void transformIndirectCall(CallBase& inst) const {
                 auto& functionPtr = *inst.getCalledOperand();
                 if (isa<SelectInst>(functionPtr)) {
-                    transformSelectCall(inst, cast<SelectInst>(functionPtr));
+                    transformSelectCall(cast<SelectInst>(functionPtr));
                 } else {
                     transformTrueIndirectCall(inst);
                 }
@@ -99,10 +98,11 @@ namespace llvm::pass::coverage::branch {
                     if (func.isDeclaration() || runtimeFunctionFilter()(func.getName())) {
                         return;
                     }
-                    inst.removeFromParent();
                 }
-                irbe.insert(inst);
-                inst.mutateFunctionType(&api.funcType);
+                auto& call = cloneWithNewArgs(inst, {});
+                irbe.insert(call, inst.getName());
+//                errs() << call.arg_size() << '\n';
+//                errs() << call << '\n';
             }
             
             void transformIndirectBranch(IndirectBrInst&) const {
@@ -155,16 +155,16 @@ namespace llvm::pass::coverage::branch {
         private:
             
             class BlockTransform {
-
+            
             private:
-
+                
                 BasicBlock& modified;
                 std::unique_ptr<BasicBlock> _original;
-
+                
                 static BasicBlock& createBasedOff(BasicBlock& original) {
                     return *BasicBlock::Create(original.getContext(), original.getName());
                 }
-                
+            
             public:
                 
                 constexpr BasicBlock& original() const noexcept {
@@ -233,7 +233,11 @@ namespace llvm::pass::coverage::branch {
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
 //                        errs() << &block << '\n';
-                        errs() << '\t' << "BranchExecution: block: " << blockIndex++ << '\n';
+                        errs() << '\t' << "BranchExecution: block: " << blockIndex++;
+                        if (blockIndex == 100) {
+                            llvm_unreachable("stop");
+                        }
+                        errs() << '\n';
 //                        errs() << block;
                         const bool ret = BlockPass(ownApi, block, irbe)();
 //                        errs() << block;
@@ -242,7 +246,9 @@ namespace llvm::pass::coverage::branch {
                         errs() << "BranchExecution: function: " << function.getName() << '\n';
                         functions.emplace_back(&function);
                         // make all functions 0 arg and void, i.e. void()
+                        errs() << function << '\n';
                         function.mutateType(&ownApi.funcType);
+                        errs() << function << '\n';
                     });
             api.global<u64>("numFunctions", Api::GlobalArgs {
                     .module = &module,
@@ -258,6 +264,13 @@ namespace llvm::pass::coverage::branch {
                             .isConstant = true,
                             .initializer = *ConstantArray::get(&arrayType, functions),
                     });
+            
+            filteredFunctions(module)
+                    .forEachFunction([](const auto& f) -> bool {
+                        errs() << f << '\n';
+                        return false;
+                    });
+            
             return modified;
         }
         
