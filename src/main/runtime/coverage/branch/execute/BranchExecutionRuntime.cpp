@@ -2,7 +2,7 @@
 // Created by Khyber on 6/24/2019.
 //
 
-#include "src/main/runtime/coverage/BranchExecutionRuntime.h"
+#include "src/main/runtime/coverage/branch/execute/BranchExecutionRuntime.h"
 
 #include "src/share/io/BitReader.h"
 #include "src/share/io/LEB128Reader.h"

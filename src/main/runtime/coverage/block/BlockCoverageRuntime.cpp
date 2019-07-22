@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/coverage/BlockCoverageRuntime.h"
+#include "src/main/runtime/coverage/block/BlockCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 #include "src/share/io/DeltaWriteBuffer.h"

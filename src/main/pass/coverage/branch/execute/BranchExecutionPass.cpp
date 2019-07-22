@@ -4,7 +4,7 @@
 
 #include "src/main/pass/coverage/includes.h"
 
-#include "src/main/runtime/coverage/BranchExecutionRuntime.h"
+#include "src/main/runtime/coverage/branch/execute/BranchExecutionRuntime.h"
 #include "src/main/pass/coverage/branch/SwitchCaseSuccessors.h"
 #include "src/share/llvm/CallBaseHack.h"
 
@@ -247,6 +247,8 @@ namespace llvm::pass::coverage::branch {
                         functions.emplace_back(&function);
                         // make all functions 0 arg and void, i.e. void()
                         errs() << function << '\n';
+                        errs() << function.getType() << '\n';
+                        errs() << function.getFunctionType() << '\n';
                         function.mutateType(&ownApi.funcType);
                         errs() << function << '\n';
                     });

@@ -6,8 +6,11 @@ $(bc): $(dependencies)
 $(all): $(bc) $(runtimes)
 	$(link) $(bc) $(runtimes) -o $(all)
 
-$(obj): $(all)
-	$(cc) $(optLevel) $(all) -c -o $(obj)
+$(allOpt): $(all)
+	$(opt) $(optLevel) $(all) -o $(allOpt)
+
+$(obj): $(allOpt)
+	$(cc) -O0 $(allOpt) -c -o $(obj)
 
 $(exe): $(obj)
 	$(cc) $(linkArgs) -o $(exe)

@@ -18,18 +18,17 @@ set(files.share
         ${files.pass.coverage}
         )
 
-add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE=\"${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:runtime.coverage>\")
+function(addCoverageRuntimePathDefinition name)
+    add_compile_definitions(BIN_PATH_RUNTIME_COVERAGE=\"${CMAKE_BINARY_DIR}/lib/$<TARGET_FILE_NAME:runtime.coverage.${name}>\")
+endfunction()
 
 add_subdirectory(block)
 add_subdirectory(branch)
 add_subdirectory(edge)
 
-add_subdirectory(test)
-
 add_custom_target(pass.coverage DEPENDS
         pass.coverage.block
+        pass.coverage.edge
         pass.coverage.branch
         pass.coverage.branch.execute
-        pass.coverage.edge
-        pass.coverage.test
         )

@@ -80,11 +80,12 @@ compileTargetWithPass() {
 	local binDir="${buildDir}/bin"
 	local passLib="${libDir}/libpass.${name}.so"
 	local loadPass="-load=${passLib}"
-	local runtime="${libDir}/libruntime.coverage.bc"
+	local runtime="${libDir}/libruntime.${name}.bc"
 	local src="${target}.0.5.precodegen.bc"
     local dependencies="${src} ${passLib}"
     local bc="${target}.0.6.${name}.bc"
     local all="${target}.${name}.bc"
+    local allOpt="${target}.${name}.opt.bc"
     local obj="${target}.${name}.o"
     local exe="${target}.${name}"
     local opt="${binDir}/opt-9"
@@ -96,7 +97,7 @@ compileTargetWithPass() {
     # optimize (instrument), compile bc to obj, and then link everything
     # TODO this shouldn't have to be -O3
 
-	bc=${bc} all=${all} obj=${obj} exe=${exe} \
+	bc=${bc} all=${all} allOpt=${allOpt} obj=${obj} exe=${exe} \
 	cc=${cxx} opt=${opt} link=${link} \
 	dependencies=${dependencies} \
 	optLevel=${optLevel} optArgs=${optArgs} \
@@ -108,10 +109,12 @@ compileTarget() {
 	local target=${1}
 	local originalLDFlags=${2}
 
-	local passes="branch.execute block edge branch"
+	# "branch.execute"
+	local passes="block edge branch"
 	for pass in ${passes}; do
-		compileTargetWithPass ${pass} ${target} ${originalLDFlags}
+		compileTargetWithPass ${pass} ${target} ${originalLDFlags} &
 	done
+	wait
 
 	local sourceMapExt=blocks.map
 	local tempBlocksSourceMap=ld-temp.o.${sourceMapExt}

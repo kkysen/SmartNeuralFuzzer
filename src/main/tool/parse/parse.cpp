@@ -17,6 +17,6 @@ void parse(const fs::path& path, std::ostream& out) {
     out.flush();
 }
 
-int main() {
-    parse("blocks.bin", std::cout);
+int main(int, const char* const* argv) {
+    parse(argv[1], std::cout);
 }

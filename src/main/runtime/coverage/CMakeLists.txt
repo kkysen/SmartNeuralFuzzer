@@ -4,17 +4,9 @@ files(runtime.coverage
         CoverageOutput.h
         CoverageOutput.cpp
         include.h
-        BlockCoverageRuntime.h
-        BlockCoverageRuntime.cpp
-        EdgeCoverageRuntime.h
-        EdgeCoverageRuntime.cpp
-        BranchCoverageRuntime.h
-        BranchCoverageRuntime.cpp
-        BranchExecutionRuntime.h
-        BranchExecutionRuntime.cpp
         )
 
-set(files.all.runtime.coverage
+set(files.share
         ${files.share.common}
         ${files.share.time}
         ${files.share.io}
@@ -28,10 +20,23 @@ set(files.all.runtime.coverage
         ${files.runtime.coverage}
         )
 
-function(addRuntime target)
-    add_library(${target} STATIC ${files.all.${target}})
-    copyLibraryBC(${target})
-    add_dependencies(${target} tool.ar.override.run)
+function(addCoverageRuntime name)
+    set(name coverage.${name})
+    set(target runtime.${name})
+    set(files.all.${target}
+            ${files.share}
+            ${files.${target}}
+            )
+    addRuntime(${name})
 endfunction()
 
-addRuntime(runtime.coverage)
+add_subdirectory(block)
+add_subdirectory(edge)
+add_subdirectory(branch)
+
+add_custom_target(runtime.coverage DEPENDS
+        runtime.coverage.block
+        runtime.coverage.edge
+        runtime.coverage.branch
+        runtime.coverage.branch.execute
+        )

@@ -27,9 +27,10 @@ namespace {
             if (arg == "-o") {
                 next = true;
             } else if (next) {
-                const std::string_view ext = ".0.6.coverage.bc";
-                if (stde::endsWith(arg, ext)) {
-                    return arg.substr(0, arg.size() - ext.size());
+                const std::string_view ext = ".0.6.coverage.";
+                const auto i = arg.find(ext);
+                if (i != std::string_view::npos) {
+                    return arg.substr(0, i);
                 }
                 break;
             }

@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/coverage/EdgeCoverageRuntime.h"
+#include "src/main/runtime/coverage/edge/EdgeCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 #include "src/share/io/DeltaWriteBuffer.h"
@@ -32,12 +32,12 @@ namespace runtime::coverage::edge {
             pendingBackEdge = true;
             edge << blockIndex;
         }
-    
+        
         void onBackEdge(u64 blockIndex) noexcept {
             pendingBackEdge = false;
             edge << blockIndex;
         }
-
+    
     public:
         
         explicit EdgeCoverageRuntime() noexcept(false)

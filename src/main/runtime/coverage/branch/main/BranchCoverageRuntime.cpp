@@ -2,7 +2,7 @@
 // Created by Khyber on 3/14/2019.
 //
 
-#include "src/main/runtime/coverage/BranchCoverageRuntime.h"
+#include "src/main/runtime/coverage/branch/main/BranchCoverageRuntime.h"
 
 #include "src/main/runtime/coverage/include.h"
 #include "src/share/io/BitWriteBuffer.h"
