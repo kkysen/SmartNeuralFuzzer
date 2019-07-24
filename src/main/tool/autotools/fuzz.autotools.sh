@@ -110,7 +110,7 @@ compileTarget() {
 	local originalLDFlags=${2}
 
 	# "branch.execute"
-	local passes="block edge branch"
+	local passes="block edge branch branch.execute"
 	for pass in ${passes}; do
 		compileTargetWithPass ${pass} ${target} ${originalLDFlags} &
 	done

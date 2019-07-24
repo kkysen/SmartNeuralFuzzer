@@ -20,7 +20,7 @@ namespace llvm::pass::coverage::branch {
     
     public:
         
-        constexpr u32 numBranches() const noexcept {
+        constexpr u64 numBranches() const noexcept {
             return successors.size();
         }
         

@@ -42,3 +42,6 @@ build/
 bin
 
 coverage.out.dir/
+
+misc/
+!src/misc/

@@ -12,6 +12,7 @@ misc(stdListIteratorInvalidation stdListIteratorInvalidation.cpp)
 misc(reboot reboot.cpp ${files.share.capability} ${files.share.hook.libc.syscall})
 misc(prctlReturnErrno prctlReturnErrno.cpp)
 misc(signalOrder signalOrder.cpp)
+misc(functionCallWithTooFewArgs functionCallWithTooFewArgs.cpp)
 
 add_link_options(-lstdc++fs)
 
@@ -33,4 +34,5 @@ add_custom_target(misc DEPENDS
         misc.deltaVarintEncoding
         misc.bitStats
         misc.counts
+        misc.functionCallWithTooFewArgs
         )

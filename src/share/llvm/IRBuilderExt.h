@@ -64,6 +64,22 @@ namespace llvm {
         constexpr IRBuilderExt& setInsertPoint(Function& function, bool insertAtBeginning = false) {
             return setInsertPoint(insertAtBeginning ? function.front() : function.back(), insertAtBeginning);
         }
+        
+        constexpr BasicBlock::iterator insertPoint() const {
+            return irb.GetInsertPoint();
+        }
+        
+        constexpr BasicBlock& block() const {
+            return *irb.GetInsertBlock();
+        }
+        
+        constexpr Function& function() const {
+            return *block().getParent();
+        }
+        
+        constexpr Module& module() const {
+            return *function().getParent();
+        }
     
         constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles,
                 const Twine& name = "", MDNode* floatingPointMathTag = nullptr) {

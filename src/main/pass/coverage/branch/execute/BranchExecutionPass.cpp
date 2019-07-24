@@ -6,7 +6,6 @@
 
 #include "src/main/runtime/coverage/branch/execute/BranchExecutionRuntime.h"
 #include "src/main/pass/coverage/branch/SwitchCaseSuccessors.h"
-#include "src/share/llvm/CallBaseHack.h"
 
 namespace llvm::pass::coverage::branch {
     
@@ -23,7 +22,6 @@ namespace llvm::pass::coverage::branch {
         struct Api {
             const NextBranch nextBranch;
             const FunctionCallee onEdge;
-            FunctionType& funcType;
         };
         
         class InstructionPass {
@@ -42,12 +40,22 @@ namespace llvm::pass::coverage::branch {
         private:
             
             void transformBranch(BranchInst& inst) const {
+                const bool print = irbe.function().getName() == "ada_demangle" || true;
+                if (print) {
+                    errs() << inst << '\n';
+                }
                 inst.removeFromParent();
                 if (inst.isConditional()) {
                     auto& condition = irbe.call(api.nextBranch.single, {});
+                    if (print) {
+                        errs() << condition << '\n';
+                    }
                     inst.setCondition(&condition);
                 }
                 irbe.insert(inst);
+                if (print) {
+                    errs() << inst << '\n';
+                }
             }
             
             void transformSwitch(SwitchInst& inst) const {
@@ -99,10 +107,11 @@ namespace llvm::pass::coverage::branch {
                         return;
                     }
                 }
-                auto& call = cloneWithNewArgs(inst, {});
-                irbe.insert(call, inst.getName());
-//                errs() << call.arg_size() << '\n';
-//                errs() << call << '\n';
+                inst.removeFromParent();
+                for (auto& arg : inst.args()) {
+                    arg.set(UndefValue::get(arg.get()->getType()));
+                }
+                irbe.insert(inst);
             }
             
             void transformIndirectBranch(IndirectBrInst&) const {
@@ -110,17 +119,33 @@ namespace llvm::pass::coverage::branch {
                 // TODO
             }
             
+            void transformReturnAndResume() const {
+                if (instruction.getNumOperands() > 0) {
+                    auto& op = instruction.op_begin()[0];
+                    op.set(UndefValue::get(op.get()->getType()));
+                }
+            }
+            
+            template <class InstType>
+            InstType& casted() const {
+                return cast<InstType>(instruction);
+            }
+            
             void transformTerminator() const {
                 switch (instruction.getOpcode()) {
                     case Instruction::Br:
-                        return transformBranch(cast<BranchInst>(instruction));
+                        return transformBranch(casted<BranchInst>());
                     case Instruction::Switch:
-                        return transformSwitch(cast<SwitchInst>(instruction));
+                        return transformSwitch(casted<SwitchInst>());
                     case Instruction::Invoke:
                     case Instruction::CallBr:
-                        return transformCall(cast<CallBase>(instruction));
+                        return transformCall(casted<CallBase>());
                     case Instruction::IndirectBr:
-                        return transformIndirectBranch(cast<IndirectBrInst>(instruction));
+                        return transformIndirectBranch(casted<IndirectBrInst>());
+                    case Instruction::Ret:
+                    case Instruction::Resume:
+                        transformReturnAndResume();
+                        // fallthrough
                     default:
                         instruction.removeFromParent();
                         irbe.insert(instruction);
@@ -215,6 +240,8 @@ namespace llvm::pass::coverage::branch {
         }
         
         bool runOnModule(Module& module) override {
+            errs() << *module.getFunction("ada_demangle");
+            
             using llvm::Api;
             const Api api("BranchExecution", module);
             using runtime::coverage::branch::execute::Func;
@@ -225,32 +252,26 @@ namespace llvm::pass::coverage::branch {
                             .infinite = api.func<Func*()>("nextInfiniteBranch"),
                     },
                     .onEdge = api.func<void(u64, u64)>("onEdge"),
-                    .funcType = api.types.func<Func>(),
             };
             SmallVector<Constant*, 0> functions;
             IRBuilderExt irbe(module);
-            u64 blockIndex = 0;
+//            u64 blockIndex = 0;
             const bool modified = filteredFunctions(module)
                     .forEach([&](BasicBlock& block) -> bool {
 //                        errs() << &block << '\n';
-                        errs() << '\t' << "BranchExecution: block: " << blockIndex++;
-                        if (blockIndex == 100) {
-                            llvm_unreachable("stop");
-                        }
-                        errs() << '\n';
+//                        errs() << '\t' << "BranchExecution: block: " << blockIndex++;
+//                        errs() << '\n';
 //                        errs() << block;
                         const bool ret = BlockPass(ownApi, block, irbe)();
 //                        errs() << block;
                         return ret;
                     }, [&](Function& function) {
-                        errs() << "BranchExecution: function: " << function.getName() << '\n';
+//                        errs() << "BranchExecution: function: " << function.getName() << '\n';
                         functions.emplace_back(&function);
                         // make all functions 0 arg and void, i.e. void()
-                        errs() << function << '\n';
-                        errs() << function.getType() << '\n';
-                        errs() << function.getFunctionType() << '\n';
-                        function.mutateType(&ownApi.funcType);
-                        errs() << function << '\n';
+//                        errs() << function << '\n';
+//                        errs() << function.getType() << '\n';
+//                        errs() << function.getFunctionType() << '\n';
                     });
             api.global<u64>("numFunctions", Api::GlobalArgs {
                     .module = &module,
@@ -267,11 +288,23 @@ namespace llvm::pass::coverage::branch {
                             .initializer = *ConstantArray::get(&arrayType, functions),
                     });
             
-            filteredFunctions(module)
-                    .forEachFunction([](const auto& f) -> bool {
-                        errs() << f << '\n';
-                        return false;
-                    });
+            auto& f = *module.getFunction("ada_demangle");
+            errs() << f.getName() << '\n';
+            for (auto& b : f) {
+                for (auto& i : b) {
+                    errs() << &i << '\n';
+                    errs() << i.getOpcodeName() << '\n';
+                    switch (i.getOpcode()) {
+                        case Instruction::Call: {
+                            auto& call = cast<CallInst>(i);
+                            errs() << call.getCalledFunction()->getName() << '\n';
+                            errs() << *call.getFunctionType() << '\n';
+                        }
+                    }
+//                    errs() << i << '\n';
+                    errs() << '\n';
+                }
+            }
             
             return modified;
         }

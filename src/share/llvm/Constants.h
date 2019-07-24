@@ -32,6 +32,11 @@ namespace llvm {
             return *ConstantDataArray::getRaw(string, array.size(), types.get<T>());
         }
         
+        template <typename T>
+        constexpr UndefValue& undefined() const {
+            return *UndefValue::get(&types.get<T>());
+        }
+        
     };
     
 }
