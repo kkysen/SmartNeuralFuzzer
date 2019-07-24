@@ -21,7 +21,7 @@ namespace llvm {
         explicit IRBuilderExt(Args&& ... args) : irb(std::forward<Args...>(args)...) {}
         
         explicit IRBuilderExt(const Module& module) : IRBuilderExt(module.getContext()) {}
-    
+        
         // do differentiate from templated version
         explicit IRBuilderExt(Module& module) : IRBuilderExt(static_cast<const Module&>(module)) {}
         
@@ -41,7 +41,7 @@ namespace llvm {
         constexpr Constants constants() const noexcept {
             return Constants(context());
         }
-    
+        
         constexpr IRBuilderExt& setInsertPoint(Instruction& inst) {
             irb.SetInsertPoint(&inst);
             return *this;
@@ -60,7 +60,7 @@ namespace llvm {
             irb.SetInsertPoint(&block, iterator);
             return *this;
         }
-    
+        
         constexpr IRBuilderExt& setInsertPoint(Function& function, bool insertAtBeginning = false) {
             return setInsertPoint(insertAtBeginning ? function.front() : function.back(), insertAtBeginning);
         }
@@ -80,9 +80,10 @@ namespace llvm {
         constexpr Module& module() const {
             return *function().getParent();
         }
-    
-        constexpr CallInst& call(FunctionCallee callee, ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles,
-                const Twine& name = "", MDNode* floatingPointMathTag = nullptr) {
+        
+        constexpr CallInst&
+        call(FunctionCallee callee, ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles,
+             const Twine& name = "", MDNode* floatingPointMathTag = nullptr) {
             return *irb.CreateCall(callee, args, operandBundles, name, floatingPointMathTag);
         }
         
@@ -96,22 +97,25 @@ namespace llvm {
         }
         
         constexpr InvokeInst& invoke(FunctionCallee callee, BasicBlock& normalDest, BasicBlock& unwindDest,
-                ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles, const Twine& name = "") {
+                                     ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles,
+                                     const Twine& name = "") {
             return *irb.CreateInvoke(callee, &normalDest, &unwindDest, args, operandBundles, name);
         }
-    
+        
         constexpr InvokeInst& invoke(FunctionCallee callee, BasicBlock& normalDest, BasicBlock& unwindDest,
-                ArrayRef<Value*> args = None, const Twine& name = "") {
+                                     ArrayRef<Value*> args = None, const Twine& name = "") {
             return *irb.CreateInvoke(callee, &normalDest, &unwindDest, args, name);
         }
-    
-        constexpr CallBrInst& callBr(FunctionCallee callee, BasicBlock& defaultDest, ArrayRef<BasicBlock*> indirectDests,
-                ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles, const Twine& name = "") {
+        
+        constexpr CallBrInst&
+        callBr(FunctionCallee callee, BasicBlock& defaultDest, ArrayRef<BasicBlock*> indirectDests,
+               ArrayRef<Value*> args, ArrayRef<OperandBundleDef> operandBundles, const Twine& name = "") {
             return *irb.CreateCallBr(callee, &defaultDest, indirectDests, args, operandBundles, name);
         }
         
-        constexpr CallBrInst& callBr(FunctionCallee callee, BasicBlock& defaultDest, ArrayRef<BasicBlock*> indirectDests,
-                ArrayRef<Value*> args = None, const Twine& name = "") {
+        constexpr CallBrInst&
+        callBr(FunctionCallee callee, BasicBlock& defaultDest, ArrayRef<BasicBlock*> indirectDests,
+               ArrayRef<Value*> args = None, const Twine& name = "") {
             return *irb.CreateCallBr(callee, &defaultDest, indirectDests, args, name);
         }
         
@@ -161,6 +165,10 @@ namespace llvm {
         
         constexpr StoreInst& store(Value& value, Value& ptr, bool isVolatile = false) {
             return *irb.CreateStore(&value, &ptr, isVolatile);
+        }
+        
+        constexpr Value& bitCast(Value& value, Type& newType, const Twine& name = "") {
+            return *irb.CreateBitCast(&value, &newType, name);
         }
         
     };

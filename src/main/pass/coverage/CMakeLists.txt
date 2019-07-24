@@ -31,4 +31,5 @@ add_custom_target(pass.coverage DEPENDS
         pass.coverage.edge
         pass.coverage.branch
         pass.coverage.branch.execute
+        pass.coverage.branch.execute2
         )
