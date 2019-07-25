@@ -75,11 +75,12 @@ compileTargetWithPass() {
 	local originalLDFlags=${3}
 
 	local name="coverage.${passName}"
+	local pass="pass.${name}"
 
 	local libDir="${buildDir}/lib"
 	local binDir="${buildDir}/bin"
-	local passLib="${libDir}/libpass.${name}.so"
-	local loadPass="-load=${passLib}"
+	local passLib="${libDir}/lib${pass}.so"
+	local loadPass="-load=${passLib} -${pass}"
 	local runtime="${libDir}/libruntime.${name}.bc"
 	local src="${target}.0.5.precodegen.bc"
     local dependencies="${src} ${passLib}"
@@ -88,7 +89,7 @@ compileTargetWithPass() {
     local allOpt="${target}.${name}.opt.bc"
     local obj="${target}.${name}.o"
     local exe="${target}.${name}"
-    local opt="${binDir}/opt-9"
+    local opt="opt-9"
     local link="llvm-link"
     local optLevel="-O3"
     local optArgs="${loadPass} ${src}"
@@ -110,7 +111,7 @@ compileTarget() {
 	local originalLDFlags=${2}
 
 	# "branch.execute"
-	local passes="block edge branch branch.execute"
+	local passes="block edge branch"
 	for pass in ${passes}; do
 		compileTargetWithPass ${pass} ${target} ${originalLDFlags} &
 	done

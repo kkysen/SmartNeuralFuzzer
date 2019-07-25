@@ -1,4 +1,1 @@
-addCoverageRuntimePathDefinition(block)
-
-add_library(pass.coverage.block SHARED BlockCoveragePass.cpp ${files.share} ../../../../share/io/env/Argv.cpp)
-copyLibrary(pass.coverage.block)
+addCoveragePass(block BlockCoveragePass.cpp ../../../../share/io/env/Argv.cpp)

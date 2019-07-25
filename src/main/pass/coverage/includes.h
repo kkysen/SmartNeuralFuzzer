@@ -5,6 +5,7 @@
 #pragma once
 
 #include "src/main/pass/coverage/runtimeFunctionFilter.h"
-#include "src/share/llvm/registerStandardPass.h"
+#include "src/share/llvm/register/NamedRegisteredPass.h"
+#include "src/share/llvm/register/standard/registerStandardPass.h"
 #include "src/share/llvm/api.h"
 #include "src/share/llvm/IRBuilderExt.h"

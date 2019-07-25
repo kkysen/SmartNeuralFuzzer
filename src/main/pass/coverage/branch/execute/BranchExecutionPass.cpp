@@ -9,7 +9,7 @@
 
 namespace llvm::pass::coverage::branch {
     
-    class BranchExecutionPass : public ModulePass {
+    class BranchExecutionPass : public NamedRegisteredPass<BranchExecutionPass> {
     
     private:
         
@@ -40,21 +40,35 @@ namespace llvm::pass::coverage::branch {
         private:
             
             void transformBranch(BranchInst& inst) const {
-                const bool print = irbe.function().getName() == "ada_demangle" || true;
+                const auto name = irbe.function().getName();
+                ;
+                const bool print = (StringSet {
+                    "d_clone_suffix",
+                    "ada_demangle",
+                    "cplus_demangle_type",
+                    "d_array_type",
+                    "d_java_resource",
+                    "d_pack_length",
+                    "d_args_length",
+//                    "only_whitespace",
+                    "dlang_parse_qualified",
+                    "dlang_function_args",
+                    "dlang_template_args",
+                }).count(name) > 0;
                 if (print) {
-                    errs() << inst;
+                    errs() << inst << '\n';
                 }
                 inst.removeFromParent();
                 if (inst.isConditional()) {
                     auto& condition = irbe.call(api.nextBranch.single, {});
                     if (print) {
-                        errs() << condition;
+                        errs() << condition << '\n';
                     }
                     inst.setCondition(&condition);
                 }
                 irbe.insert(inst);
                 if (print) {
-                    errs() << inst;
+                    errs() << inst << '\n';
                 }
             }
             
@@ -233,13 +247,7 @@ namespace llvm::pass::coverage::branch {
     
     public:
         
-        static char ID;
-        
-        BranchExecutionPass() : ModulePass(ID) {}
-        
-        StringRef getPassName() const override {
-            return "Branch Execution Pass";
-        }
+        static constexpr auto name = "Branch Execution Pass";
         
         bool runOnModule(Module& module) override {
 //            errs() << *module.getFunction("ada_demangle");
@@ -313,8 +321,6 @@ namespace llvm::pass::coverage::branch {
         
     };
     
-    char BranchExecutionPass::ID = 0;
-    
-    bool registered = registerStandardAlwaysLast<BranchExecutionPass>();
+    bool registered = BranchExecutionPass::register_();
     
 }

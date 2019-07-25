@@ -9,7 +9,7 @@
 
 namespace llvm::pass::coverage::branch {
     
-    class BranchExecutionPass : public ModulePass {
+    class BranchExecutionPass : public NamedRegisteredPass<BranchExecutionPass> {
     
     private:
         
@@ -326,13 +326,7 @@ namespace llvm::pass::coverage::branch {
     
     public:
         
-        static char ID;
-        
-        BranchExecutionPass() : llvm::ModulePass(ID) {}
-        
-        StringRef getPassName() const override {
-            return "Branch Execution Pass";
-        }
+        static constexpr auto name = "Branch Execution Pass";
         
         bool runOnModule(Module& module) override {
             return ModulePass(module)();
@@ -340,8 +334,6 @@ namespace llvm::pass::coverage::branch {
         
     };
     
-    char BranchExecutionPass::ID = 0;
-    
-    bool registered = registerStandardAlwaysLast<BranchExecutionPass>();
+    bool registered = BranchExecutionPass::register_();
     
 }

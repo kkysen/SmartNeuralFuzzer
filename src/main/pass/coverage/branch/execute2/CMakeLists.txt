@@ -1,4 +1,5 @@
+set(target pass.coverage.branch.execute2)
 addCoverageRuntimePathDefinition(branch.execute)
-
-add_library(pass.coverage.branch.execute2 SHARED ${files.share} BranchExecutionPass.cpp)
-copyLibrary(pass.coverage.branch.execute2)
+add_compile_definitions(PASS_NAME=\"${target}\")
+add_library(${target} SHARED BranchExecutionPass.cpp ${files.share})
+copyLibrary(${target})

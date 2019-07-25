@@ -8,7 +8,7 @@
 
 namespace llvm::pass::coverage::edge {
     
-    class EdgeCoveragePass : public ModulePass {
+    class EdgeCoveragePass : public NamedRegisteredPass<EdgeCoveragePass> {
     
     private:
         
@@ -151,13 +151,7 @@ namespace llvm::pass::coverage::edge {
     
     public:
         
-        static char ID;
-        
-        EdgeCoveragePass() : ModulePass(ID) {}
-        
-        StringRef getPassName() const override {
-            return "Edge Coverage Pass";
-        }
+        static constexpr auto name = "Edge Coverage Pass";
         
         bool runOnModule(Module& module) override {
             using llvm::Api;
@@ -178,8 +172,6 @@ namespace llvm::pass::coverage::edge {
         
     };
     
-    char EdgeCoveragePass::ID = 0;
-    
-    bool registered = registerStandardAlwaysLast<EdgeCoveragePass>();
+    bool registered = EdgeCoveragePass::register_();
     
 }

@@ -160,21 +160,11 @@ namespace llvm::pass::coverage::block {
         
     };
     
-}
-
-namespace llvm::pass::coverage::block {
-    
-    class BlockCoveragePass : public ModulePass {
+    class BlockCoveragePass : public NamedRegisteredPass<BlockCoveragePass> {
     
     public:
         
-        static char ID;
-        
-        BlockCoveragePass() : ModulePass(ID) {}
-        
-        StringRef getPassName() const override {
-            return "Block Coverage Pass";
-        }
+        static constexpr auto name = "Block Coverage Pass";
         
         bool runOnModule(Module& module) override {
             const Api api("BlockCoverage", module);
@@ -203,8 +193,6 @@ namespace llvm::pass::coverage::block {
         
     };
     
-    char BlockCoveragePass::ID = 0;
-    
-    bool registered = registerStandardAlwaysLast<BlockCoveragePass>();
+    const bool registered = BlockCoveragePass::register_();
     
 }
