@@ -96,7 +96,6 @@ compileTargetWithPass() {
     local linkArgs="${flto} ${obj} ${libraries} ${originalLDFlags}"
 
     # optimize (instrument), compile bc to obj, and then link everything
-    # TODO this shouldn't have to be -O3
 
 	bc=${bc} all=${all} allOpt=${allOpt} obj=${obj} exe=${exe} \
 	cc=${cxx} opt=${opt} link=${link} \

@@ -41,19 +41,18 @@ namespace llvm::pass::coverage::branch {
             
             void transformBranch(BranchInst& inst) const {
                 const auto name = irbe.function().getName();
-                ;
                 const bool print = (StringSet {
-                    "d_clone_suffix",
-                    "ada_demangle",
-                    "cplus_demangle_type",
-                    "d_array_type",
-                    "d_java_resource",
-                    "d_pack_length",
-                    "d_args_length",
+                        "d_clone_suffix",
+                        "ada_demangle",
+                        "cplus_demangle_type",
+                        "d_array_type",
+                        "d_java_resource",
+                        "d_pack_length",
+                        "d_args_length",
 //                    "only_whitespace",
-                    "dlang_parse_qualified",
-                    "dlang_function_args",
-                    "dlang_template_args",
+                        "dlang_parse_qualified",
+                        "dlang_function_args",
+                        "dlang_template_args",
                 }).count(name) > 0;
                 if (print) {
                     errs() << inst << '\n';
@@ -297,7 +296,7 @@ namespace llvm::pass::coverage::branch {
                             .isConstant = true,
                             .initializer = *ConstantArray::get(&arrayType, functions),
                     });
-            
+
 //            auto& f = *module.getFunction("ada_demangle");
 //            errs() << f.getName() << '\n';
 //            for (auto& b : f) {

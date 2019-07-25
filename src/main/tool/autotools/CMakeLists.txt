@@ -3,7 +3,6 @@ llvmImportAsLibrary()
 set(libraries -lstdc++fs -ldl ${llvm.link.libs})
 string(REPLACE ";" " " libraries "${libraries}")
 
-add_compile_definitions(BUILD_PATH=\"${CMAKE_BINARY_DIR}\")
 add_compile_definitions(BIN_PATH_FUZZ_AUTOTOOLS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
 add_compile_definitions(RUNTIME_COVERAGE_LIBRARIES=\"${libraries}\")
 
