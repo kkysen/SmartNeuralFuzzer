@@ -24,6 +24,11 @@ constexpr std::tuple<bool, std::string_view, std::string_view> parseProgramName(
     return {false, {}, {}};
 }
 
+void exec(const char* const* argv) {
+    char* const* _argv = const_cast<char* const*>(argv);
+    execvp(_argv[0], _argv);
+}
+
 void run(int oldArgc, const char* const* oldArgv) {
     if (oldArgc < 1) {
         return;
@@ -54,12 +59,21 @@ void run(int oldArgc, const char* const* oldArgv) {
             "/lib/lib"sv + pass + ".so");
     arg(runPassArg, "-"sv + pass);
     
+    const bool specialCase = oldArgc == 3 && std::string_view(oldArgv[1]) == "";
+    if (specialCase) {
+        const std::string_view target = oldArgv[2];
+        arg(input, target + ".0.5.precodegen.bc"sv);
+        argv[i++] = "-o";
+        arg(output, target + ".0.6."sv + passName + ".bc"sv);
+        argv[i] = nullptr;
+        return exec(argv);
+    }
+    
     #undef arg
     
     std::copy(oldArgv + 1, oldArgv + oldArgc, argv + i);
     
-    char* const* _argv = const_cast<char* const*>(argv);
-    execvp(_argv[0], _argv);
+    return exec(argv);
 }
 
 int main(int argc, const char* const* argv) {
