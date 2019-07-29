@@ -41,6 +41,8 @@ files(share.stde
         share/stde/compareEnds.cpp
         share/stde/dfs.h
         share/stde/dfs.cpp
+        share/stde/forEachRemovable.h
+        share/stde/forEachRemovable.cpp
         )
 
 files(share.time

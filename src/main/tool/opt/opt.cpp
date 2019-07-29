@@ -10,7 +10,13 @@
 #include <unistd.h>
 
 constexpr std::tuple<bool, std::string_view, std::string_view> parseProgramName(std::string_view programName) noexcept {
-    const std::string_view prefixes[] = {"opt-" LLVM_VERSION_MAJOR, "opt"};
+    const std::string_view prefixes[] = {
+            "opt-" LLVM_VERSION_MAJOR ".Release",
+            "opt-" LLVM_VERSION_MAJOR ".RelWithDebInfo",
+            "opt-" LLVM_VERSION_MAJOR ".Debug",
+            "opt-" LLVM_VERSION_MAJOR,
+            "opt",
+    };
     const auto slashIndex = programName.find_last_of('/');
     constexpr auto npos = std::string::npos;
     const auto start = slashIndex == npos ? 0 : slashIndex + 1;

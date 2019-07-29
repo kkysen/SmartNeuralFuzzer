@@ -6,6 +6,7 @@
 
 #include "src/main/runtime/coverage/branch/execute/BranchExecutionRuntime.h"
 #include "src/main/pass/coverage/branch/SwitchCaseSuccessors.h"
+#include "src/share/stde/forEachRemovable.h"
 
 namespace llvm::pass::coverage::branch {
     
@@ -13,15 +14,53 @@ namespace llvm::pass::coverage::branch {
     
     private:
         
+        using Func = runtime::coverage::branch::execute::Func;
+        
         struct NextBranch {
+            
             const FunctionCallee single;
             const FunctionCallee multi;
             const FunctionCallee infinite;
+            
+            explicit NextBranch(const llvm::Api& api)
+                    : single(api.func<bool()>("nextSingleBranch")),
+                      multi(api.func<u64(u64)>("nextMultiBranch")),
+                      infinite(api.func<Func*()>("nextInfiniteBranch")) {}
+            
         };
         
         struct Api {
+            
+            const llvm::Api api;
+            
             const NextBranch nextBranch;
             const FunctionCallee onEdge;
+            Type& funcPtrType;
+            
+            Api(std::string_view name, Module& module)
+                    : api(name, module),
+                      nextBranch(api),
+                      onEdge(api.func<void(u64, u64)>("onEdge")),
+                      funcPtrType(api.types.get<Func*>()) {}
+            
+            void addFunctionTable(Module& module, ArrayRef<Constant*> functionPointers) const {
+                using llvm::Api;
+                api.global<u64>("numFunctions", Api::GlobalArgs {
+                        .module = &module,
+                        .isConstant = true,
+                        .initializer = Constants(module.getContext()).getInt(functionPointers.size()),
+                });
+                auto& arrayType = api.types.array(funcPtrType, functionPointers.size());
+                api.global(
+                        "functions",
+                        arrayType,
+                        Api::GlobalArgs {
+                                .module = &module,
+                                .isConstant = true,
+                                .initializer = *ConstantArray::get(&arrayType, functionPointers),
+                        });
+            }
+            
         };
         
         class InstructionPass {
@@ -40,35 +79,12 @@ namespace llvm::pass::coverage::branch {
         private:
             
             void transformBranch(BranchInst& inst) const {
-                const auto name = irbe.function().getName();
-                const bool print = (StringSet {
-                        "d_clone_suffix",
-                        "ada_demangle",
-                        "cplus_demangle_type",
-                        "d_array_type",
-                        "d_java_resource",
-                        "d_pack_length",
-                        "d_args_length",
-//                    "only_whitespace",
-                        "dlang_parse_qualified",
-                        "dlang_function_args",
-                        "dlang_template_args",
-                }).count(name) > 0;
-                if (print) {
-                    errs() << inst << '\n';
-                }
                 inst.removeFromParent();
                 if (inst.isConditional()) {
                     auto& condition = irbe.call(api.nextBranch.single, {});
-                    if (print) {
-                        errs() << condition << '\n';
-                    }
                     inst.setCondition(&condition);
                 }
                 irbe.insert(inst);
-                if (print) {
-                    errs() << inst << '\n';
-                }
             }
             
             void transformSwitch(SwitchInst& inst) const {
@@ -170,7 +186,7 @@ namespace llvm::pass::coverage::branch {
             void transformNonTerminator() const {
                 switch (instruction.getOpcode()) {
                     case Instruction::Call:
-                        return transformCall(cast<CallBase>(instruction));
+                        return transformCall(casted<CallBase>());
                 }
             }
         
@@ -198,7 +214,7 @@ namespace llvm::pass::coverage::branch {
             
             private:
                 
-                BasicBlock& transformed;
+                BasicBlock& _transformed;
                 std::unique_ptr<BasicBlock> _original;
                 
                 static BasicBlock& createBasedOff(BasicBlock& original) {
@@ -211,34 +227,119 @@ namespace llvm::pass::coverage::branch {
                     return *_original;
                 }
                 
-                explicit BlockTransform(BasicBlock& realOriginal, IRBuilderExt& irbe)
-                        : transformed(realOriginal), _original(&createBasedOff(realOriginal)) {
-                    original().getInstList().splice(original().begin(), transformed.getInstList());
-                    irbe.setInsertPoint(transformed);
+                constexpr BasicBlock& transformed() const noexcept {
+                    return _transformed;
+                }
+            
+            private:
+                
+                void swapInstructions() {
+                    original().getInstList().splice(original().begin(), transformed().getInstList());
+                }
+            
+            public:
+                
+                explicit BlockTransform(BasicBlock& original, IRBuilderExt& irbe)
+                        : _transformed(original), _original(&createBasedOff(original)) {
+                    swapInstructions();
+                    irbe.setInsertPoint(transformed());
+                }
+                
+                ~BlockTransform() {
+                    while (!original().empty()) {
+                        original().getInstList().pop_back();
+                    }
                 }
                 
             };
             
-            const Api& api;
             BlockTransform block;
+            const Api& api;
             IRBuilderExt& irbe;
         
         public:
             
-            BlockPass(const Api& api, BasicBlock& originalBlock, IRBuilderExt& irbe) noexcept
-                    : api(api), block(originalBlock, irbe), irbe(irbe) {}
+            BlockPass(BasicBlock& originalBlock, const Api& api, IRBuilderExt& irbe) noexcept
+                    : block(originalBlock, irbe), api(api), irbe(irbe) {}
             
-            bool transform() {
-                for (auto it = block.original().begin(); it != block.original().end();) {
-                    // it++ is necessary b/c inst might be removed,
-                    // so we need to advance the iterator first before using the current value
-                    auto& inst = *(it++);
+            void transform() {
+                stde::forEachRemovable(llvm::reverse(block.original()), [this](Instruction& inst) {
+                    irbe.setInsertPoint(block.transformed(), true);
                     InstructionPass(api, inst, irbe)();
+                });
+            }
+            
+            void operator()() {
+                transform();
+            }
+            
+        };
+        
+        class FunctionPass {
+        
+        private:
+            
+            Function& function;
+            const Api& api;
+            IRBuilderExt& irbe;
+        
+        public:
+            
+            constexpr FunctionPass(Function& function, const Api& api,
+                                   IRBuilderExt& irbe) noexcept
+                    : function(function), api(api), irbe(irbe) {}
+            
+            void transform() {
+                for (auto& block : llvm::reverse(function)) {
+                    BlockPass(block, api, irbe)();
                 }
+            }
+            
+            void operator()() {
+                transform();
+            }
+            
+        };
+        
+        class ModulePass {
+        
+        private:
+            
+            Module& module;
+        
+        public:
+            
+            explicit constexpr ModulePass(Module& module) : module(module) {}
+        
+        private:
+            
+            static bool shouldRemove(const Function& func) noexcept {
+                return func.empty() || func.isDeclaration() || runtimeFunctionFilter()(func.getName());
+            }
+        
+        private:
+            
+            void doTransform() const {
+                const Api api("BranchExecution", module);
+                IRBuilderExt irbe(module);
+                SmallVector<Constant*, 0> functionPointers;
+                for (auto& function : module) {
+                    if (!shouldRemove(function)) {
+                        FunctionPass(function, api, irbe)();
+                        functionPointers.push_back(ConstantExpr::getBitCast(&function, &api.funcPtrType));
+                    }
+                }
+                api.addFunctionTable(module, functionPointers);
+            }
+        
+        public:
+            
+            bool transform() const {
+                doTransform();
                 return true;
             }
             
-            bool operator()() {
+            bool operator()() const {
                 return transform();
             }
             
@@ -249,73 +350,7 @@ namespace llvm::pass::coverage::branch {
         static constexpr auto name = "Branch Execution Pass";
         
         bool runOnModule(Module& module) override {
-//            errs() << *module.getFunction("ada_demangle");
-            
-            using llvm::Api;
-            const Api api("BranchExecution", module);
-            using runtime::coverage::branch::execute::Func;
-            const BranchExecutionPass::Api ownApi = {
-                    .nextBranch = {
-                            .single = api.func<bool()>("nextSingleBranch"),
-                            .multi = api.func<u64(u64)>("nextMultiBranch"),
-                            .infinite = api.func<Func*()>("nextInfiniteBranch"),
-                    },
-                    .onEdge = api.func<void(u64, u64)>("onEdge"),
-            };
-            SmallVector<Constant*, 0> functions;
-            IRBuilderExt irbe(module);
-//            u64 blockIndex = 0;
-            const bool modified = filteredFunctions(module)
-                    .forEach([&](BasicBlock& block) -> bool {
-//                        errs() << &block << '\n';
-//                        errs() << '\t' << "BranchExecution: block: " << blockIndex++;
-//                        errs() << '\n';
-//                        errs() << block;
-                        const bool ret = BlockPass(ownApi, block, irbe)();
-//                        errs() << block;
-                        return ret;
-                    }, [&](Function& function) {
-//                        errs() << "BranchExecution: function: " << function.getName() << '\n';
-                        functions.emplace_back(&function);
-                        // make all functions 0 arg and void, i.e. void()
-//                        errs() << function << '\n';
-//                        errs() << function.getType() << '\n';
-//                        errs() << function.getFunctionType() << '\n';
-                    });
-            api.global<u64>("numFunctions", Api::GlobalArgs {
-                    .module = &module,
-                    .isConstant = true,
-                    .initializer = Constants(module.getContext()).getInt(functions.size()),
-            });
-            auto& arrayType = api.types.array<Func>(functions.size());
-            api.global(
-                    "functions",
-                    arrayType,
-                    Api::GlobalArgs {
-                            .module = &module,
-                            .isConstant = true,
-                            .initializer = *ConstantArray::get(&arrayType, functions),
-                    });
-
-//            auto& f = *module.getFunction("ada_demangle");
-//            errs() << f.getName() << '\n';
-//            for (auto& b : f) {
-//                for (auto& i : b) {
-//                    errs() << &i << '\n';
-//                    errs() << i.getOpcodeName() << '\n';
-//                    switch (i.getOpcode()) {
-//                        case Instruction::Call: {
-//                            auto& call = cast<CallInst>(i);
-//                            errs() << call.getCalledFunction()->getName() << '\n';
-//                            errs() << *call.getFunctionType() << '\n';
-//                        }
-//                    }
-////                    errs() << i << '\n';
-//                    errs() << '\n';
-//                }
-//            }
-            errs() << "\n\n\n";
-            return modified;
+            return ModulePass(module)();
         }
         
     };

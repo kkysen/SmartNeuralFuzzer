@@ -48,7 +48,7 @@ namespace llvm {
         }
         
         constexpr IRBuilderExt& setInsertPoint(BasicBlock& block, bool insertAtBeginning = false) {
-            if (insertAtBeginning) {
+            if (insertAtBeginning && !block.empty()) {
                 setInsertPoint(*block.getFirstInsertionPt());
             } else {
                 irb.SetInsertPoint(&block);

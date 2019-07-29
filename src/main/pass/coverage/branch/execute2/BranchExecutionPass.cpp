@@ -34,13 +34,13 @@ namespace llvm::pass::coverage::branch {
             
             const NextBranch nextBranch;
             const FunctionCallee onEdge;
-            FunctionType& funcType;
+            FunctionType& funcPtrType;
             
             explicit Api(const llvm::Api& api)
                     : api(api),
                       nextBranch(api),
                       onEdge(api.func<void(u64, u64)>("onEdge")),
-                      funcType(api.types.func<Func>()) {}
+                      funcPtrType(api.types.func<Func>()) {}
             
             Api(std::string_view name, Module& module) : Api(llvm::Api(name, module)) {}
             
@@ -305,7 +305,7 @@ namespace llvm::pass::coverage::branch {
                     } else {
                         auto& original = function;
                         auto& transformed = *Function::Create(
-                                &api.funcType,
+                                &api.funcPtrType,
                                 GlobalValue::InternalLinkage,
                                 module.getDataLayout().getProgramAddressSpace(),
                                 function.getName()

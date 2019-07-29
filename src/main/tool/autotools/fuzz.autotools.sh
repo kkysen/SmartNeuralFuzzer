@@ -1,13 +1,16 @@
 #!/bin/bash
 
-buildDir=${__buildDir}
-srcDir=${__srcDir}
-libraries=${__libraries}
+buildDir="${__buildDir}"
+srcDir="${__srcDir}"
+libraries="${__libraries}"
 
-originalLDFlagsCache=__LDFLAGS.txt
+originalLDFlagsCache="__LDFLAGS.txt"
 
-cc=clang
-cxx=clang++
+debug=".Debug"
+clang="clang-9${debug}"
+
+cc="${clang}"
+cxx="${clang} --driver-mode=g++"
 flto="-flto -fuse-ld=lld" # flto makes .o files .bc files
 myLDFLAGS="${flto} -Wl,-plugin-opt=save-temps" # generates .bc files also
 
@@ -89,7 +92,7 @@ compileTargetWithPass() {
     local allOpt="${target}.${name}.opt.bc"
     local obj="${target}.${name}.o"
     local exe="${target}.${name}"
-    local opt="opt-9"
+    local opt="opt-9${debug}"
     local link="llvm-link"
     local optLevel="-O3"
     local optArgs="${loadPass} ${src}"
@@ -109,8 +112,7 @@ compileTarget() {
 	local target=${1}
 	local originalLDFlags=${2}
 
-	# "branch.execute"
-	local passes="block edge branch"
+	local passes="block edge branch branch.execute"
 	for pass in ${passes}; do
 		compileTargetWithPass ${pass} ${target} ${originalLDFlags} &
 	done
